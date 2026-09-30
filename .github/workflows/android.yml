@@ -1,5 +1,6 @@
 name: android
 
+# Commit message markers: [testlab] runs Firebase Test Lab, [deliver] sends the APK to App Distribution group "dev".
 on:
   push:
     branches: [master]
@@ -8,6 +9,10 @@ on:
 concurrency:
   group: android-${{ github.ref }}
   cancel-in-progress: true
+
+env:
+  FIREBASE_PROJECT: agent-farm-f0701
+  FIREBASE_APP_ID: "1:426334010939:android:ead4c441732d1dbf17e61e"
 
 jobs:
   build:
@@ -42,3 +47,93 @@ jobs:
         with:
           name: unit-tests-b${{ github.run_number }}
           path: app/build/reports/tests/
+
+  emulator:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: apks-b${{ github.run_number }}
+          path: apks
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Run tests and capture screens on emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          profile: pixel_6
+          disable-animations: true
+          script: bash scripts/ci/emulator-run.sh
+
+      - name: Upload emulator results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: emulator-b${{ github.run_number }}
+          path: emulator-out/
+
+  testlab:
+    needs: build
+    if: contains(github.event.head_commit.message, '[testlab]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: apks-b${{ github.run_number }}
+          path: apks
+
+      - uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Run on Firebase Test Lab
+        run: bash scripts/ci/testlab-run.sh
+
+      - name: Upload Test Lab results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: testlab-b${{ github.run_number }}
+          path: testlab-out/
+
+  deliver:
+    needs: [build, emulator]
+    if: contains(github.event.head_commit.message, '[deliver]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: apks-b${{ github.run_number }}
+          path: apks
+
+      - uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Send to App Distribution
+        env:
+          RELEASE_NOTES: "b${{ github.run_number }} - ${{ github.event.head_commit.message }}"
+        run: |
+          gcloud services enable firebaseappdistribution.googleapis.com --project "$FIREBASE_PROJECT" --quiet
+          APK=$(find apks -name app-debug.apk | head -1)
+          npx --yes firebase-tools@latest appdistribution:distribute "$APK" \
+            --app "$FIREBASE_APP_ID" --groups dev --release-notes "$RELEASE_NOTES"

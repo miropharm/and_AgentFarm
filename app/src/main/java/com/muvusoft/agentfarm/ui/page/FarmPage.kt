@@ -15,6 +15,8 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -38,12 +40,14 @@ import kotlinx.serialization.json.JsonElement
 @Composable
 fun FarmPage(farmId: String, page: String, manager: ConnectionManager, onBack: () -> Unit) {
     BackHandler(onBack = onBack)
-    val viewId = remember { "v_" + UUID.randomUUID().toString().take(8) }
+    // A dead renderer bumps the generation: the old WebView is dropped and a new one opens a new view.
+    var generation by remember { mutableIntStateOf(0) }
+    val viewId = remember(generation) { "v_" + UUID.randomUUID().toString().take(8) }
     val state by manager.state.collectAsState()
     val link = state.farm(farmId)?.link
     Surface(Modifier.fillMaxSize()) {
         if (link is Link.Online) {
-            PageView(farmId, page, viewId, manager)
+            key(generation) { PageView(farmId, page, viewId, manager, onRendererGone = { generation++ }) }
         } else {
             Box(Modifier.fillMaxSize().padding(16.dp)) {
                 val text = link?.let { LinkText.of(it, System.currentTimeMillis()).long } ?: "Bu çiftlik artık eşli değil."
@@ -55,7 +59,7 @@ fun FarmPage(farmId: String, page: String, manager: ConnectionManager, onBack: (
 
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
-private fun PageView(farmId: String, page: String, viewId: String, manager: ConnectionManager) {
+private fun PageView(farmId: String, page: String, viewId: String, manager: ConnectionManager, onRendererGone: () -> Unit) {
     var web by remember { mutableStateOf<WebView?>(null) }
     // Host messages that arrive before the page has loaded wait here; all of this runs on the main thread.
     val pending = remember { mutableListOf<String>() }
@@ -93,6 +97,7 @@ private fun PageView(farmId: String, page: String, viewId: String, manager: Conn
                         pending.forEach { evaluateJavascript(PageRoute.deliverScript(it), null) }
                         pending.clear()
                     },
+                    onRendererGone = onRendererGone,
                 )
                 addJavascriptInterface(
                     PageBridge { json ->

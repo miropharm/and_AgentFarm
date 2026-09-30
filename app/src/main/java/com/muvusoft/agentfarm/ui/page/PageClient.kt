@@ -18,7 +18,19 @@ import java.io.ByteArrayInputStream
  * pinned client with the socket's session; everything else is refused. A tapped outside link opens
  * in the phone's browser, never inside the shell.
  */
-class PageClient(private val access: () -> PageAccess?, private val onLoaded: () -> Unit) : WebViewClient() {
+class PageClient(
+    private val access: () -> PageAccess?,
+    private val onLoaded: () -> Unit,
+    /** The renderer died (crash or memory); the caller drops this WebView and builds a new one. */
+    private val onRendererGone: () -> Unit,
+) : WebViewClient() {
+    // Unhandled, a renderer death kills the whole app process - the link service with it.
+    override fun onRenderProcessGone(view: WebView, detail: android.webkit.RenderProcessGoneDetail): Boolean {
+        Log.w(TAG, "renderer gone (crash=${detail.didCrash()})")
+        onRendererGone()
+        return true
+    }
+
     override fun onPageStarted(view: WebView, url: String, favicon: android.graphics.Bitmap?) { Log.i(TAG, "started $url") }
 
     override fun onPageFinished(view: WebView, url: String) {

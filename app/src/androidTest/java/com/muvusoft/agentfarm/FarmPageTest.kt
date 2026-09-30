@@ -52,15 +52,18 @@ class FarmPageTest {
      */
     private fun warmWebView() {
         val done = CountDownLatch(1)
+        var warm: WebView? = null
         rule.activityRule.scenario.onActivity { a ->
-            WebView(a).apply {
+            warm = WebView(a).apply {
                 webViewClient = object : android.webkit.WebViewClient() {
-                    override fun onPageFinished(view: WebView, url: String) { done.countDown(); view.destroy() }
+                    override fun onPageFinished(view: WebView, url: String) = done.countDown()
                 }
                 loadData("<p>warm</p>", "text/html", null)
             }
         }
         done.await(180, TimeUnit.SECONDS)
+        // Destroyed afterwards, never from inside its own callback (that killed the renderer, run 36696690290).
+        rule.activityRule.scenario.onActivity { warm?.destroy() }
     }
 
     private fun webView(): WebView? {

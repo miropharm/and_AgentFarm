@@ -107,6 +107,8 @@ Tasarımın gerekçesi: vault projesi `10_Notes/A-PLN - Android Uygulaması Yeni
 | `notice.posted` | Notices'e yeni kayıt düştü |
 | `quota.warn` | Bir motorun kota penceresi eşiği geçti |
 | `session.ended` | Bir oturum kapandı |
+| `ask.closed` | Bir soru cevaplandı ya da geri çekildi — masada, Telegram'da ya da bir telefonda; o sorunun uyarısı her telefondan kalkar |
+| `permission.closed` | Bir izin cevaplandı ya da geri çekildi, nerede olursa olsun; o iznin uyarısı her telefondan kalkar |
 
 ## 8. Kurallar
 

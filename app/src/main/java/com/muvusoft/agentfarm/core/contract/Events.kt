@@ -47,6 +47,14 @@ data class QuotaWarn(val engine: String, val percent: Double, val window: String
 @Serializable
 data class SessionEnded(val session: String, val agent: String) : FarmEventData
 
+/** A question was answered or withdrawn, wherever that happened: its alert leaves the phone. */
+@Serializable
+data class AskClosed(val session: String, val askId: String) : FarmEventData
+
+/** A permission was answered or withdrawn, wherever that happened: its alert leaves the phone. */
+@Serializable
+data class PermissionClosed(val session: String, val permId: String) : FarmEventData
+
 val EVENT_TYPES: Map<String, KSerializer<out FarmEventData>> = mapOf(
     "needs.changed" to NeedsChanged.serializer(),
     "ask.opened" to AskOpened.serializer(),
@@ -55,4 +63,6 @@ val EVENT_TYPES: Map<String, KSerializer<out FarmEventData>> = mapOf(
     "notice.posted" to NoticePosted.serializer(),
     "quota.warn" to QuotaWarn.serializer(),
     "session.ended" to SessionEnded.serializer(),
+    "ask.closed" to AskClosed.serializer(),
+    "permission.closed" to PermissionClosed.serializer(),
 )

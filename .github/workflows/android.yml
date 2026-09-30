@@ -8,7 +8,8 @@ on:
 
 concurrency:
   group: android-${{ github.ref }}
-  cancel-in-progress: true
+  # Never cancel a running pipeline: it may be a [testlab]/[deliver] run.
+  cancel-in-progress: false
 
 env:
   FIREBASE_PROJECT: agent-farm-f0701

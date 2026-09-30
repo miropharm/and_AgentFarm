@@ -30,10 +30,11 @@ delivers on `[deliver]`. Local work is editing plus the node repo gate. Details:
 
 ## 2. Parity with Agent Farm
 
-- `docs/PROTOKOL-VE-MIMARI.md` is the single source for every event and command between the phone and Agent Farm. A protocol change lands there in the same commit as the code.
-- **Every phone capability that reads data or triggers an action exists on the Agent Farm side as a bridge op / remote-bridge handler**, added under `_REF/agentfarm-dev.md` (the vsc parity gate) in the same work item. The phone never reaches around the bridge.
-- **The phone is a session launch entry point** — the twelfth, beside Telegram's `/new`. A session dimension added to Agent Farm's `LaunchOptions` must be carried here; it reaches the phone through Agent Farm's last-launch layer (`seedLastLaunch`), never through a hand-written field list.
-- When `net/` lands, a test derives the method list from the protocol document and fails on a method with no Kotlin counterpart (a rule is measured by reading the source, never by a list in the test).
+- **The phone shows Agent Farm's own pages**, served by `vsc_AgentFarm/src/remote/`. It never re-implements a screen; `ui/` holds only the shell's screens (pairing, connection, device settings).
+- **The contract is Agent Farm's.** Its owner is `vsc_AgentFarm/src/remote/contract`; this repo carries the versioned copy in `contract/`, refreshed with `node tools/sync_contract.js` in the same work item as the change. `docs/PROTOKOL-VE-MIMARI.md` describes it; `test/test_contract.js` holds the copy, the owner and the document together.
+- **Every phone capability that reads data or triggers an action is an existing bridge op**, called through a `call` frame. A missing one is added in `vsc_AgentFarm` under `_REF/agentfarm-dev.md` (the vsc parity gate) in the same work item. The phone never reaches around the bridge.
+- **No new launch door.** Remotely opened pages are the desktop's own doors. A native "new session" (share, voice, widget) uses the Telegram `/new` launch verdict and inherits the last launch (`seedLastLaunch`); `sessions.start` records without inheriting, so it is not used.
+- When `net/` lands, a test derives every frame kind and event type from `contract/` and fails on one with no Kotlin model (a rule is measured by reading the source, never by a list in the test).
 
 ## 3. Design — the five names, on a phone
 

@@ -1,80 +1,145 @@
-# Agent Farm Android Companion — Protokol, Veri Sözleşmesi ve Ekran Mimarisi
+# Agent Farm Android — Protokol ve Mimari
 
-Bu döküman, Masaüstü VS Code Eklentisi (`vsc_AgentFarm`) ile Android Uygulaması (`and_AgentFarm`) arasındaki iletişim protokolünü, JSON-RPC olay ve komut şemasını, ekran navigasyonunu ve TalkScribe ZEP entegrasyon modelini tanımlar.
+Telefon ile Agent Farm arasındaki bağın özeti. **Tek doğru sözleşme dosyasıdır:**
+`contract/remote-contract.v1.json`. Bu belge onu insan için anlatır; ikisi ayrışırsa dosya haklıdır
+ve `test/test_contract.js` dosyadaki her çerçeve ve olayın burada anıldığını ölçer.
 
----
-
-## 1. Ağ İletişim Protokolü ve JSON-RPC Şeması
-
-Tüm iletişim WebSocket (port 8378 veya güvenli TLS tüneli) üzerinden çift yönlü JSON-RPC 2.0 tabanlı mesajlaşma ile gerçekleşir.
-
-### A. Sunucudan Telefona Akan Canlı Olaylar (Downstream Events)
-
-| Olay Adı (`event`) | Açıklama | Örnek Payload |
-| :--- | :--- | :--- |
-| `session.list` | Açık oturumların tam anlık görüntüsü | `{"sessions": [{"id": "s1", "agent": "developer", "state": "running", "turns": 3, "cost": 0.04}]}` |
-| `turn.started` | Ajan yeni bir tura başladığında | `{"sessionId": "s1", "turnIndex": 4, "prompt": "Testleri çalıştır", "startedAt": 1787893200}` |
-| `stream.chunk` | Terminal çıktısının canlı akan metin parçası | `{"sessionId": "s1", "delta": "Running tests...\n", "type": "stdout"}` |
-| `tool.invoked` | Ajan bir aracı çağırdığında (Terminal modunda akordeon) | `{"sessionId": "s1", "tool": "run_command", "args": {"CommandLine": "npm test"}}` |
-| `tool.result` | Aracın çalışma sonucu döndüğünde | `{"sessionId": "s1", "tool": "run_command", "status": "done", "durationMs": 1200}` |
-| `ask.question` | Ajan onay veya çoktan seçmeli soru sorduğunda | `{"sessionId": "s1", "questionId": "q1", "text": "Hangi modelle devam edilsin?", "options": ["Haiku", "Sonnet"]}` |
-| `turn.finished` | Tur tamamlandığında özet ve metrikler | `{"sessionId": "s1", "turnIndex": 4, "summary": "14 test geçti", "cost": 0.03, "durationSec": 28}` |
-| `metrics.updated`| Filo kotaları ve bütçe güncellendiğinde | `{"todayCost": 0.42, "claudeQuotaPct": 68, "codexQuotaPct": 40}` |
+Tasarımın gerekçesi: vault projesi `10_Notes/A-PLN - Android Uygulaması Yeniden Tasarım Raporu - Telefondan Tam Agent Farm - 260930.md`.
 
 ---
 
-### B. Telefondan Sunucuya Gönderilen Komutlar (Upstream Commands)
-
-| Komut (`method`) | Açıklama | Örnek Parametreler |
-| :--- | :--- | :--- |
-| `session.send` | Ajan oturumuna yeni tur promptu gönderme | `{"sessionId": "s1", "prompt": "Şimdi build al"}` |
-| `session.cancel` | Çalışan turu durdurma (Interrupt) | `{"sessionId": "s1"}` |
-| `question.answer`| Soruya veya onay talebine yanıt verme | `{"sessionId": "s1", "questionId": "q1", "choice": "Haiku"}` |
-| `task.create` | Sıfırdan yeni görev oluşturma | `{"agent": "developer", "project": "PRS.AgentFarm", "prompt": "..."}` |
-| `sync.replay` | Bağlantı kopması sonrası kaçan olayları isteme | `{"lastEventId": 4820}` |
-
----
-
-## 2. Android Ekran Mimarisi ve Navigasyon Haritası
-
-Jetpack Compose tabanlı 5 ana ekran sekmesi ve 2 alt modal akışı:
+## 1. Mimari — ince kabuk, sayfalar Agent Farm'dan
 
 ```
-[MainActivity (BottomNavigationBar)]
-  ├── 📱 1. Filo & Oturumlar (Fleet Hub)
-  │      └── Canlı Oturum Kartları, Çalışan Ajanlar, Hızlı Durum
-  ├── 💬 2. Canlı Konsol & Diyalog (Live Console Screen)
-  │      ├── Üst: Oturum Geçiş Şeridi [Developer 🟢] [Basit 🟡]
-  │      ├── Orta: Çift Modlu Akış (Diyalog Sohbeti / Terminal Logları)
-  │      └── Alt: Çok Satırlı Komuta Kutusu + ZEP Mikrofon Butonu + Slash Seçici
-  ├── 📋 3. Görevler & Kuyruk (Tasks & Queue)
-  │      └── Bekleyen Görevler, Yeniden Sıralama, Yeni Görev Formu
-  ├── 📊 4. Metrikler & Kotalar (Metrics & Quotas)
-  │      └── Harcama Grafikleri, Kalan Kotalar, Bütçe Çubukları
-  └── ⚙️ 5. Ayarlar & Bağlantı (Settings & Pairing)
-         └── QR Tarayıcı, mDNS Keşif Listesi, TTS & Bildirim Sesleri
-
-[Modallar / Bottom Sheets]
-  ├── 🚨 AskUserQuestion & İzin Yanıtlayıcı (Alt Çekmece)
-  └── ⚡ Hızlı Slash & Snippet Seçici
+ PC: VS Code + Agent Farm
+   sayfalar (Şimdi, Bekleyenler, Konsol, ...) ── aynı kod ──> Panel Host
+   köprü op'ları + olay yayını ──> Remote Host (src/remote)  HTTPS + WebSocket
+                                        │ LAN doğrudan · Tailscale · (ileride relay)
+ Telefon: Android kabuğu (bu repo)
+   WebView (Agent Farm sayfaları + mobil katman) ── yerel taşıma ──┐
+   bağlantı yöneticisi · eşleşme · Keystore anahtarı ──────────────┤── tek WebSocket
+   ön plan servisi · bildirimler · ses · paylaşım · widget ────────┘
 ```
 
----
+- **Ekranları Agent Farm çizer.** Telefon hiçbir Agent Farm ekranını yeniden yazmaz; sayfaları
+  `vsc_AgentFarm/src/remote/` sunar, kabuk gösterir.
+- **Kotlin'in payı** telefonun yerel yapabildiği ve web'in yapamadığı işlerdir: eşleşme, bağlantı,
+  bildirim, ses, paylaşım, hızlı erişim, çevrimdışı giden kutusu, uygulama kilidi. `ui/` yalnız kabuk
+  ekranlarını tutar: eşleşme, bağlantı durumu, cihaz ayarları.
+- **WebView ağa kendisi çıkmaz.** Sayfa ve kaynak istekleri `shouldInterceptRequest` ile, canlı mesajlar
+  sayfadaki `afRemote.js`'in yerel köprüsüyle yerel koda gider; yerel kod sabitlenmiş sertifikayla
+  bağlanır. Kendinden imzalı sertifikayı WebView'de "kabul et" diye geçiştirmek yoktur.
 
-## 3. TalkScribe (ZEP) Entegrasyon Modeli
+## 2. Sözleşmenin sahibi ve kopyası
 
-Agent Farm ile ZEP aynı Android cihazda şu iki yöntemle iletişim kurar:
+| | Yer |
+|---|---|
+| Sahibi | `vsc_AgentFarm/src/remote/contract/remote-contract.v1.json` (Agent Farm) |
+| Kopya | `contract/remote-contract.v1.json` (bu repo) |
+| Yenileme | `node tools/sync_contract.js` — iki repo yan yanaysa kopyalar; `--check` yalnız karşılaştırır |
 
-1. **Doğrudan Intent / Contract Modu (Hafif):**
-   * Komut kutusundaki mikrofona basıldığında `com.miropharm.talkscribe.ACTION_DICTATE` Intent'i çağrılır.
-   * ZEP arka planda sesi çözer ve transkripsiyonu `ActivityResult` olarak Agent Farm'a döndürür.
-2. **Yerel AIDL / Bound Service Modu (Canlı Streaming):**
-   * ZEP'in `ITranscriptionService` servisine bağlanarak kullanıcı konuştukça kelime kelime komut kutusuna canlı dökülür.
+- Sözleşme değişikliği Agent Farm'da yapılır; kopya aynı iş kaleminde yenilenir.
+- Yeni sürüm yeni dosyadır (`remote-contract.v2.json`); eski sürüm konuşan telefonlar için durur.
+- Kotlin modelleri kopyadan türetilir; CI'daki sahte sunucu da kopyayı okur.
 
----
+## 3. Taşıma
 
-## 4. Mobil Güvenlik ve Yıkıcı Eylem Kalkanı
+| Uç | Ne yapar |
+|---|---|
+| `GET /health` | Kimlik doğrulamasız: `{ ok, farm: { id, name }, contract }` |
+| `POST /pair` | Eşleşme isteği → eşleşme cevabı ya da `{ error }` |
+| `GET /ws` | WebSocket; her mesaj `kind` taşıyan tek bir JSON çerçevesi |
 
-1. **Kritik Komut Kalkanı:** Dosya silme (`rm`, `del`), git hard reset (`git reset --hard`) veya formatlama içeren araç çağrılarında telefon ekranında kırmızı uyarı modalı çıkar (`"Kritik Dosya Değişikliği: Onaylıyor musunuz?"`).
-2. **Mobil Bütçe Limiti:** Telefondan tetiklenen işlemlerin günlük maliyeti `$1.00`'ı aştığında sistem duraklar ve telefondan açık onay ister.
-3. **Cihaz Yetkilendirme (Allowed Devices):** Sadece QR kod ile eşleşmiş kayıtlı `DeviceId`'lerden gelen komutlar kabul edilir; yabancı cihazlar sessizce reddedilir.
+- **TLS:** Agent Farm kendi sertifikasını üretir. Telefon, eşleşme bağlantısından okuduğu SHA-256
+  parmak izini sabitler ve başka hiçbir sertifikaya güvenmez.
+- **İmza:** ECDSA P-256 + SHA-256 (DER). İmzalanan metin UTF-8 olarak
+  `agentfarm.remote/1|<farm id>|<device id>|<nonce>`. Cihazın açık anahtarı X.509 SPKI DER, base64.
+- **Adresler:** eşleşme bağlantısı aday adres listesi taşır (en yerel önce). Bağlantı yöneticisi
+  sırayla dener; kullanıcı yol seçmez, yalnız durum şeridinde görür.
+
+## 4. Eşleşme
+
+1. Agent Farm QR gösterir:
+   `agentfarm://pair?v=1&farm=<id>&name=<ad>&code=<tek kullanımlık kod>&fp=<sha256>&a=<host:port>,...`
+2. Telefon Android Keystore'da kendi P-256 anahtar çiftini üretir (özel anahtar cihazdan çıkmaz).
+3. `POST /pair` gövdesi: `code`, `name` (cihaz adı), `publicKey`, `platform`, `app`.
+4. Cevap: `device` (cihaz kimliği), `farm`, `scope`. Bundan sonra token gezmez; her bağlantı imzayla açılır.
+
+## 5. El sıkışma (`/ws`)
+
+1. Agent Farm önce konuşur: `challenge` (`nonce`, `farm`, `contract`).
+2. Telefon `hello` ile cevaplar: `device`, `contract`, nonce üzerindeki `signature`, isteğe bağlı `resumeAfter`.
+3. Agent Farm `welcome` (yetki, özellikler, `lastSeq`) ya da `refuse` döner.
+   `refuse` nedenleri: `unknown-device`, `revoked`, `bad-signature`, `contract`, `not-allowed`, `busy`.
+4. `welcome` gelmeden başka hiçbir çerçeve kabul edilmez.
+
+## 6. Çerçeveler
+
+| Çerçeve | Gönderen | İş |
+|---|---|---|
+| `challenge` | Agent Farm | Bağlantıyı açar, imzalanacak nonce'u verir |
+| `hello` | telefon | Cihaz kimliği + imza; kaçırılan olaylar için `resumeAfter` |
+| `welcome` | Agent Farm | Bağlantı kabul: yetki, özellik cevapları, son olay numarası |
+| `refuse` | Agent Farm | Bağlantı reddi, nedeniyle; sürüm uyuşmazlığında gereken sürüm |
+| `event` | Agent Farm | Numaralı olay (`seq`, `type`, `ts`, `data`) |
+| `gap` | Agent Farm | İstenen olayların bir kısmı artık tutulmuyor: `from`–`to` arası kayıp |
+| `call` | telefon | Bir köprü op'u çağırır: `id`, `op`, `args` |
+| `result` | Agent Farm | Çağrının cevabı; aynı `id` tekrar gelirse saklı cevap + `duplicate` |
+| `view.open` | telefon | Bir Agent Farm sayfasını açar (`view`, `page`) |
+| `view.post` | Agent Farm | Sayfaya host mesajı |
+| `view.msg` | telefon | Sayfadan host'a mesaj |
+| `view.close` | ikisi de | Görünümü kapatır |
+| `ping` / `pong` | ikisi de | Canlılık |
+
+## 7. Olaylar
+
+| Olay | Ne zaman |
+|---|---|
+| `needs.changed` | Bekleyenler sayısı değişti (en üstteki kalemle) |
+| `ask.opened` | Bir oturum soru sordu (seçenekleriyle) |
+| `permission.opened` | Bir oturum araç izni istiyor |
+| `turn.finished` | Bir tur bitti (başlık + özet) |
+| `notice.posted` | Notices'e yeni kayıt düştü |
+| `quota.warn` | Bir motorun kota penceresi eşiği geçti |
+| `session.ended` | Bir oturum kapandı |
+
+## 8. Kurallar
+
+- Telefon tanımadığı olay türünü yok sayar; Agent Farm tanımadığı çerçeveyi reddeder (`call` için `ok:false`).
+- **Tam bir kez:** her `call` telefonun ürettiği bir `id` taşır; aynı `id` ikinci kez gelirse op yeniden
+  çalışmaz, saklı cevap `duplicate:true` ile döner. Çevrimdışı giden kutusu bu yüzden güvenle yeniden gönderir.
+- **Olay numaraları yalnız artar.** `resumeAfter` sonrası olaylar verilir; tutulmayanlar için önce bir `gap`.
+- Sürüm uyuşmazlığı: `refuse` nedeni `contract`, gereken sürümle (`minContract`).
+- **Gizli değerler hiçbir çerçevede gezmez**; yalnız var olup olmadıkları.
+
+## 9. Yetki ve özellikler
+
+- **Yetki seviyeleri** (cihaz başına, azdan çoğa): `read` → `answer` (soru/izin cevabı) → `manage`
+  (oturum, mesaj, iptal, görev) → `admin` (ayarlar, hesaplar, ajan dosyaları). Kullanıcının kendi
+  telefonunda varsayılan `manage`.
+- **Özellik kimlikleri:** `remote.access`, `remote.control`, `remote.devices`, `remote.voice`,
+  `remote.share`, `remote.wake`. `welcome.features` her biri için `{ allowed, reason? }` verir.
+- Cihaz tek dokunuşla iptal edilir; uzaktan yapılan her eylem cihaz adıyla denetim kaydına yazılır.
+
+## 10. Kabuğun yerel girişleri
+
+- Bildirim düğmeleri, paylaşım, ses, widget, hızlı ayar **var olan köprü op'larını** `call` ile çağırır;
+  telefon köprünün etrafından dolaşmaz. Eksik bir yetenek Agent Farm'a op olarak eklenir.
+- **Yerel "yeni oturum"** (paylaşım, ses, widget) Telegram `/new` ile aynı kararı kullanır ve son ayarları
+  devralır (`seedLastLaunch`). Köprüdeki `sessions.start` devralmadığı için kullanılmaz.
+- Uzaktan açılan sayfalar yeni bir oturum kapısı değildir; masaüstündeki kapıların kendisidir.
+- Sayfanın host'a özgü istekleri telefonda karşılanır: kopyalama telefonun panosuna, dış bağlantı
+  telefonun tarayıcısına, dosya açma salt okunur görüntüleyiciye gider.
+
+## 11. Ses — TalkScribe (ZEP)
+
+Komut kutusundaki mikrofon: ZEP yüklüyse onun dikte Intent'i (`com.miropharm.talkscribe.ACTION_DICTATE`,
+sonuç `ActivityResult` ile döner), değilse Android'in konuşma tanıma servisi. Kulaklık modunda tur özeti
+ve sorular TTS ile okunur.
+
+## 12. Güvenlik kalkanı
+
+- **Yıkıcı eylemler** (silme, hard reset, hesap değişikliği) Agent Farm'ın şekil filtresinden geçer ve
+  telefonda biyometrik onay ister.
+- **Bütçe:** uzaktan kanal bütçesi Telegram ile ortaktır; aşılınca sistem durur ve açık onay ister.
+- Yalnız eşleşmiş ve iptal edilmemiş cihazların imzası kabul edilir.

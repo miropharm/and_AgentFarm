@@ -22,6 +22,10 @@ ALIAS=$(echo "$GROUPS_JSON" | jq -r --arg w "$WANT" '
   [.groups[]? | select((.displayName | ascii_downcase) == ($w | ascii_downcase) or (.name | split("/") | last) == $w)]
   | if length > 0 then (.[0].name | split("/") | last) else "" end')
 
+if [ -z "$ALIAS" ] && [ "$(echo "$GROUPS_JSON" | jq '.groups | length')" = "1" ]; then
+  ALIAS=$(echo "$GROUPS_JSON" | jq -r '.groups[0].name | split("/") | last')
+  echo "::warning::No group named '$WANT'; using the project's only group '$ALIAS'"
+fi
 if [ -z "$ALIAS" ]; then
   echo "::error::No App Distribution group named '$WANT' in project $FIREBASE_PROJECT"
   exit 1

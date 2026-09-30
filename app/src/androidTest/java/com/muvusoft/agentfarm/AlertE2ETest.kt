@@ -78,4 +78,17 @@ class AlertE2ETest {
             assertTrue(!deny.isAuthenticationRequired)
         }
     }
+
+    @Test
+    fun aQuestionAnsweredAtTheDeskLeavesThePhone() {
+        online()
+        val data = "{\"session\":\"s_stale\",\"agent\":\"developer\",\"askId\":\"a_stale\",\"question\":\"Sürsün mü?\",\"options\":[{\"label\":\"Evet\"}]}"
+        FakeHost.post("/_test/event", "{\"type\":\"ask.opened\",\"data\":$data}")
+        assertNotNull("no notification for the question", waitFor("ask:a_stale"))
+        FakeHost.post("/_test/event", "{\"type\":\"needs.changed\",\"data\":{\"count\":0}}")
+        val nm = ctx.getSystemService(NotificationManager::class.java)
+        val end = System.currentTimeMillis() + 10_000
+        while (nm.activeNotifications.any { it.tag == "ask:a_stale" } && System.currentTimeMillis() < end) Thread.sleep(250)
+        assertTrue("the answered question still shows", nm.activeNotifications.none { it.tag == "ask:a_stale" })
+    }
 }

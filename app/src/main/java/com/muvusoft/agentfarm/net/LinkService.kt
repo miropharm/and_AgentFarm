@@ -17,6 +17,7 @@ import com.muvusoft.agentfarm.MainActivity
 import com.muvusoft.agentfarm.R
 import com.muvusoft.agentfarm.core.contract.Codec
 import com.muvusoft.agentfarm.core.contract.EventFrame
+import com.muvusoft.agentfarm.core.notify.AlertBook
 import com.muvusoft.agentfarm.core.notify.Alerts
 import com.muvusoft.agentfarm.core.notify.Channel
 import com.muvusoft.agentfarm.core.notify.StatusLine
@@ -32,6 +33,7 @@ import kotlinx.coroutines.launch
 class LinkService : Service() {
     private var job: Job? = null
     private var alerts: Job? = null
+    private val book = AlertBook()
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -46,7 +48,11 @@ class LinkService : Service() {
                     val ev = f.frame as? EventFrame ?: return@collect
                     val data = Codec.eventData(ev) ?: return@collect
                     val name = app.manager.state.value.farm(f.farm)?.farm?.name ?: f.farm
-                    Alerts.of(name, data)?.let { AlertPoster.post(this@LinkService, f.farm, it) }
+                    book.settle(f.farm, data).forEach { AlertPoster.cancel(this@LinkService, it) }
+                    Alerts.of(name, data)?.let {
+                        AlertPoster.post(this@LinkService, f.farm, it)
+                        book.posted(f.farm, data, it)
+                    }
                 }
             }
         }

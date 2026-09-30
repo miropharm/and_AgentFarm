@@ -2,6 +2,7 @@ package com.muvusoft.agentfarm.ui.page
 
 import android.content.Intent
 import android.net.Uri
+import android.util.Log
 import android.webkit.JavascriptInterface
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
@@ -18,12 +19,26 @@ import java.io.ByteArrayInputStream
  * in the phone's browser, never inside the shell.
  */
 class PageClient(private val access: () -> PageAccess?, private val onLoaded: () -> Unit) : WebViewClient() {
-    override fun onPageFinished(view: WebView, url: String) = onLoaded()
+    override fun onPageStarted(view: WebView, url: String, favicon: android.graphics.Bitmap?) { Log.i(TAG, "started $url") }
+
+    override fun onPageFinished(view: WebView, url: String) {
+        Log.i(TAG, "finished $url")
+        onLoaded()
+    }
+
+    override fun onReceivedError(view: WebView, request: WebResourceRequest, error: android.webkit.WebResourceError) {
+        Log.w(TAG, "error ${error.errorCode} ${error.description} ${request.url}")
+    }
 
     override fun shouldInterceptRequest(view: WebView, request: WebResourceRequest): WebResourceResponse {
-        val path = PageRoute.hostPath(request.url.toString()) ?: return text(403, "Bu adres kabuktan açılmaz.")
-        val a = access() ?: return text(503, "Çiftlik şu an bağlı değil.")
+        val path = PageRoute.hostPath(request.url.toString())
+        if (path == null) {
+            Log.i(TAG, "blocked ${request.url}")
+            return text(403, "Bu adres kabuktan açılmaz.")
+        }
+        val a = access() ?: return text(503, "Çiftlik şu an bağlı değil.").also { Log.i(TAG, "offline $path") }
         val page = PageLoader.fetch(a, path)
+        Log.i(TAG, "${page.status} ${page.mime} ${page.bytes.size}B $path")
         return WebResourceResponse(page.mime, page.charset, page.status, reason(page.status), emptyMap(), ByteArrayInputStream(page.bytes))
     }
 
@@ -49,6 +64,8 @@ class PageClient(private val access: () -> PageAccess?, private val onLoaded: ()
         else -> "Status $status"
     }
 }
+
+const val TAG = "AFPage"
 
 /** What a page's afRemote.js calls as `afShell.post(json)`: one message from the page to its host view. */
 class PageBridge(private val onMessage: (String) -> Unit) {

@@ -34,6 +34,10 @@ rm -f "$OUT/fh-key.pem"
 for _ in $(seq 60); do adb shell ping -c 1 -W 1 10.0.2.2 > /dev/null 2>&1 && break; sleep 1; done
 adb shell ping -c 1 -W 1 10.0.2.2 > /dev/null 2>&1 || echo "::warning::emulator cannot reach 10.0.2.2 yet"
 
+# The shell's own log tags, streamed to their own file so a wrapped system log cannot hide them.
+adb logcat -v time -s AFPage:V chromium:V > "$OUT/logcat-shell.txt" 2>&1 &
+SHELL_LOG_PID=$!
+
 set +e
 adb shell am instrument -w -e pairUri "'$PAIR_URI'" "$PKG.test/androidx.test.runner.AndroidJUnitRunner" | tee "$OUT/instrumentation.txt"
 set -e
@@ -93,6 +97,7 @@ shot main-dark 0
 adb shell cmd uimode night no
 
 adb logcat -d > "$OUT/logcat.txt"
+kill "$SHELL_LOG_PID" 2> /dev/null || true
 
 status=0
 if ! grep -q "^OK (" "$OUT/instrumentation.txt"; then

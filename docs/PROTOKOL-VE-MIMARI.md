@@ -113,6 +113,11 @@ Tasarımın gerekçesi: vault projesi `10_Notes/A-PLN - Android Uygulaması Yeni
 - Telefon tanımadığı olay türünü yok sayar; Agent Farm tanımadığı çerçeveyi reddeder (`call` için `ok:false`).
 - **Tam bir kez:** her `call` telefonun ürettiği bir `id` taşır; aynı `id` ikinci kez gelirse op yeniden
   çalışmaz, saklı cevap `duplicate:true` ile döner. Çevrimdışı giden kutusu bu yüzden güvenle yeniden gönderir.
+- **Giden kutusu diskte durur, altı saatten eski çağrı atılır:** süreç ölse de bekleyen çağrı ilk `welcome`
+  sonrasında gider; bekleyen bir soruya saatler sonra düşen cevap yeni bir istem gibi okunabileceği için
+  `createdAt` üzerinden altı saati geçen çağrı gönderilmez (`core/state/Outbox.kt`).
+- **Bekleyen sayısı 0'a inince** (`needs.changed`) o çiftliğin soru/izin bildirimleri, `session.ended` gelince
+  o oturumunkiler telefondan kalkar.
 - **Olay numaraları yalnız artar.** `resumeAfter` sonrası olaylar verilir; tutulmayanlar için önce bir `gap`.
 - Sürüm uyuşmazlığı: `refuse` nedeni `contract`, gereken sürümle (`minContract`).
 - **Gizli değerler hiçbir çerçevede gezmez**; yalnız var olup olmadıkları.

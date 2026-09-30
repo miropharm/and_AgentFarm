@@ -17,7 +17,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -47,7 +46,8 @@ class ConnectionManager(
     val frames: SharedFlow<FarmFrame> = _frames
 
     init {
-        scope.launch { _state.map { it.outbox }.distinctUntilChanged().drop(1).collect { save(it) } }
+        // No drop(1): a call made before this collector subscribes is already in its first value.
+        scope.launch { _state.map { it.outbox }.distinctUntilChanged().collect { save(it) } }
     }
 
     /** Makes the connections match the paired farms: new ones start, forgotten ones stop, re-paired ones restart. */

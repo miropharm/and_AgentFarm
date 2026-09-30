@@ -17,24 +17,38 @@ set +e
 adb shell am instrument -w "$PKG.test/androidx.test.runner.AndroidJUnitRunner" | tee "$OUT/instrumentation.txt"
 set -e
 
+# Each screenshot is logged with the rotation and night mode actually in effect, so a capture can be trusted.
 shot() {
   adb shell am force-stop "$PKG"
   adb shell am start -W -n "$PKG/.MainActivity" > /dev/null
-  sleep 3
+  sleep 4
   adb exec-out screencap -p > "$OUT/$1.png"
+  {
+    echo "== $1"
+    adb shell dumpsys window displays | grep -m1 -o 'mCurrentRotation=[^ ]*' || true
+    adb shell cmd uimode night
+  } >> "$OUT/screen-state.txt"
 }
 
-adb shell settings put system accelerometer_rotation 0
-adb shell settings put system user_rotation 0
+rotate() {
+  adb shell cmd window user-rotation lock "$1" || {
+    adb shell settings put system accelerometer_rotation 0
+    adb shell settings put system user_rotation "$1"
+  }
+  sleep 2
+}
+
+rotate 0
 shot main-portrait
 adb shell uiautomator dump /sdcard/ui.xml > /dev/null
 adb pull /sdcard/ui.xml "$OUT/main-portrait-ui.xml" > /dev/null
 
-adb shell settings put system user_rotation 1
+rotate 1
 shot main-landscape
-adb shell settings put system user_rotation 0
+rotate 0
 
 adb shell cmd uimode night yes
+sleep 2
 shot main-dark
 adb shell cmd uimode night no
 

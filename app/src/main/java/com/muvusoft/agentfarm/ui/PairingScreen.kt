@@ -31,6 +31,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
+import com.muvusoft.agentfarm.core.link.LinkText
 import com.muvusoft.agentfarm.core.state.PairedFarm
 
 /** What the pairing screen shows; ShellApp owns it. */
@@ -46,6 +47,8 @@ data class PairingUi(
 fun PairingScreen(
     versionName: String,
     farms: List<PairedFarm>,
+    /** Each farm's link in the status strip's words, by farm id. */
+    links: Map<String, LinkText.Text>,
     ui: PairingUi,
     onLinkChange: (String) -> Unit,
     onPair: () -> Unit,
@@ -58,7 +61,7 @@ fun PairingScreen(
             if (farms.isEmpty()) {
                 Text("Henüz eşlenmiş çiftlik yok.", Modifier.testTag("farms-empty"), style = MaterialTheme.typography.bodyMedium)
             }
-            farms.forEach { FarmRow(it, onForget = onForget) }
+            farms.forEach { FarmRow(it, links[it.id], onForget = onForget) }
             Spacer(Modifier.height(16.dp))
             Text("Yeni eşleşme", style = MaterialTheme.typography.titleMedium)
             Text(
@@ -95,7 +98,7 @@ fun PairingScreen(
 }
 
 @Composable
-private fun FarmRow(farm: PairedFarm, onForget: (PairedFarm) -> Unit) {
+private fun FarmRow(farm: PairedFarm, link: LinkText.Text?, onForget: (PairedFarm) -> Unit) {
     var confirm by remember { mutableStateOf(false) }
     if (confirm) {
         AlertDialog(
@@ -110,7 +113,11 @@ private fun FarmRow(farm: PairedFarm, onForget: (PairedFarm) -> Unit) {
         Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text(farm.name, style = MaterialTheme.typography.titleSmall)
-                Text("${farm.scope} · ${farm.addresses.firstOrNull().orEmpty()}", style = MaterialTheme.typography.bodySmall)
+                Text(
+                    link?.short ?: farm.addresses.firstOrNull().orEmpty(),
+                    Modifier.testTag("link-${farm.id}"),
+                    style = MaterialTheme.typography.bodySmall,
+                )
             }
             TextButton(onClick = { confirm = true }) { Text("Unut") }
         }

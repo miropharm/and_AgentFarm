@@ -3,24 +3,36 @@ package com.muvusoft.agentfarm.ui
 import android.os.Build
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import com.muvusoft.agentfarm.core.link.LinkText
 import com.muvusoft.agentfarm.core.pairing.PairingStep
 import com.muvusoft.agentfarm.core.pairing.PairingVerdict
+import com.muvusoft.agentfarm.net.ConnectionManager
 import com.muvusoft.agentfarm.net.DeviceIdentity
 import com.muvusoft.agentfarm.net.FarmStore
 import com.muvusoft.agentfarm.net.PairClient
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /** The shell's state and actions. `incomingLink` is a pairing link the system handed over (QR via camera, a tapped link). */
 @Composable
-fun ShellApp(versionName: String, store: FarmStore, incomingLink: String?) {
+fun ShellApp(versionName: String, store: FarmStore, manager: ConnectionManager, incomingLink: String?) {
     var farms by remember { mutableStateOf(store.load()) }
     var ui by remember { mutableStateOf(PairingUi()) }
     val scope = rememberCoroutineScope()
+    val shell by manager.state.collectAsState()
+    var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
+
+    LaunchedEffect(farms) { manager.setFarms(farms) }
+    LaunchedEffect(Unit) {
+        while (true) { delay(1_000); now = System.currentTimeMillis() }
+    }
 
     LaunchedEffect(incomingLink) {
         if (!incomingLink.isNullOrBlank()) ui = PairingUi(link = incomingLink)
@@ -48,6 +60,7 @@ fun ShellApp(versionName: String, store: FarmStore, incomingLink: String?) {
     PairingScreen(
         versionName = versionName,
         farms = farms,
+        links = shell.farms.associate { it.farm.id to LinkText.of(it.link, now) },
         ui = ui,
         onLinkChange = { ui = ui.copy(link = it, message = null, failed = false) },
         onPair = pair,

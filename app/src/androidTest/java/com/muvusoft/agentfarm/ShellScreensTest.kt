@@ -124,6 +124,21 @@ class ShellScreensTest {
     }
 
     @Test
+    fun theWidgetsMicrophoneNeverCrashesTheShell() {
+        pairedApp().use { }
+        // The emulator may have no recogniser: the shell must stay on its own screen, not fall over.
+        val voice = Intent(ctx, MainActivity::class.java).putExtra(MainActivity.OPEN_VOICE, true)
+        ActivityScenario.launch<MainActivity>(voice).use {
+            val shown = { rule.onAllNodes(hasTestTag(farm)).fetchSemanticsNodes().isNotEmpty() }
+            // A recogniser that did open sits on top: Back gives it up, which offers nothing to share.
+            if (!runCatching { rule.waitUntil(5_000) { shown() } }.isSuccess) {
+                InstrumentationRegistry.getInstrumentation().sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
+            }
+            rule.waitUntil(15_000) { shown() }
+        }
+    }
+
+    @Test
     fun forgettingAFarmAsksFirstAndGivingUpKeepsIt() {
         pairedApp().use {
             rule.onNodeWithTag("forget-farm_fake").performClick()

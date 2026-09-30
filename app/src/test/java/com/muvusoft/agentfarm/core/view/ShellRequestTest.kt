@@ -57,6 +57,13 @@ class ShellRequestTest {
     }
 
     @Test
+    fun whatWasHeardIsTheFirstRealResult() {
+        assertEquals("devam et", ShellRequest.heard(listOf("", " devam et ", "devam")))
+        assertEquals(null, ShellRequest.heard(listOf(" ")))
+        assertEquals(null, ShellRequest.heard(null))
+    }
+
+    @Test
     fun theDictationAnswerCarriesTheFirstRealResultOrNothing() {
         assertEquals(
             """{"type":"afVoiceDone","token":7,"text":"testleri çalıştır"}""",

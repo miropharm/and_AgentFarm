@@ -33,7 +33,16 @@ object StatusSurfaces {
             setTextViewText(R.id.widget_title, text.title)
             setTextViewText(R.id.widget_body, text.body)
             setOnClickPendingIntent(R.id.widget_root, openNow(context))
+            setOnClickPendingIntent(R.id.widget_mic, openVoice(context))
         }
+
+    /** The widget's microphone: dictate, then choose the session the words go to. */
+    fun openVoice(context: Context): PendingIntent = PendingIntent.getActivity(
+        context, 8,
+        Intent(context, MainActivity::class.java).putExtra(MainActivity.OPEN_VOICE, true)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP),
+        PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+    )
 
     fun openNow(context: Context): PendingIntent = PendingIntent.getActivity(
         context, 7, openNowIntent(context),

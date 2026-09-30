@@ -50,9 +50,12 @@ sealed interface ShellRequest {
         fun voiceDone(token: JsonElement, results: List<String>?, error: String? = null): JsonObject = buildJsonObject {
             put("type", "afVoiceDone")
             put("token", token)
-            results?.map { it.trim() }?.firstOrNull { it.isNotEmpty() }?.let { put("text", it) }
+            heard(results)?.let { put("text", it) }
             if (error != null) put("error", error)
         }
+
+        /** What the recogniser heard: its first non-blank result, or null (a cancel). */
+        fun heard(results: List<String>?): String? = results?.map { it.trim() }?.firstOrNull { it.isNotEmpty() }
 
         /** The language dictation asks the recogniser for. */
         const val VOICE_LANGUAGE = "tr-TR"

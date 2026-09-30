@@ -16,6 +16,12 @@ import com.muvusoft.agentfarm.R
 import com.muvusoft.agentfarm.core.view.ShellRequest
 import kotlinx.serialization.json.JsonElement
 
+/** The one recogniser request every dictation makes (a page's box, the widget's microphone). */
+fun speechIntent(prompt: String): Intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
+    .putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+    .putExtra(RecognizerIntent.EXTRA_LANGUAGE, ShellRequest.VOICE_LANGUAGE)
+    .putExtra(RecognizerIntent.EXTRA_PROMPT, prompt)
+
 /** Whether this phone can dictate, and the one way a page's `afVoice` starts it. */
 class Dictation internal constructor(val available: Boolean, private val launch: (JsonElement) -> Unit) {
     fun start(token: JsonElement) = launch(token)
@@ -40,12 +46,7 @@ fun rememberDictation(deliver: (String) -> Unit): Dictation {
         val results = if (r.resultCode == Activity.RESULT_OK) r.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS) else null
         send(ShellRequest.voiceDone(token, results).toString())
     }
-    val intent = remember(prompt) {
-        Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
-            .putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-            .putExtra(RecognizerIntent.EXTRA_LANGUAGE, ShellRequest.VOICE_LANGUAGE)
-            .putExtra(RecognizerIntent.EXTRA_PROMPT, prompt)
-    }
+    val intent = remember(prompt) { speechIntent(prompt) }
     val available = remember(intent) { intent.resolveActivity(context.packageManager) != null }
     return remember(launcher, intent, available) {
         Dictation(available) { token ->

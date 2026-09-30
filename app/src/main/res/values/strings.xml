@@ -61,6 +61,7 @@
     <!-- Widget and quick settings tile -->
     <string name="widget_description">Bağlı çiftlikler, seni bekleyenler ve çalışan oturumlar; dokununca Şimdi sayfası.</string>
     <string name="tile_label">Agent Farm</string>
+    <string name="widget_mic">Sesle bir oturuma söyle</string>
 
     <!-- Farm pages -->
     <string name="farm_unpaired">Bu çiftlik artık eşli değil.</string>

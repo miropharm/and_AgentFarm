@@ -3,6 +3,7 @@ package com.muvusoft.agentfarm.ui
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
+import android.webkit.WebStorage
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.ui.platform.LocalContext
@@ -46,6 +47,8 @@ fun ShellApp(versionName: String, store: FarmStore, prefs: ShellPrefs, manager: 
     LockGate(
         enabled = lockOnOpen && availability == LockPolicy.Availability.READY,
         ask = { askOwner("Agent Farm'ı aç", it) },
+        // Pages keep no copy of the farm behind the lock; their HTTP cache goes with each WebView's release.
+        onLocked = { WebStorage.getInstance().deleteAllData() },
     ) {
         Shell(
             versionName = versionName,

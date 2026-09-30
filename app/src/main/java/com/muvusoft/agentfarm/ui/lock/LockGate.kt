@@ -27,10 +27,16 @@ import com.muvusoft.agentfarm.core.lock.LockPolicy
 
 /**
  * Shows `content` only to the owner when the open lock is on. A lock switched on while the app is open
- * does not lock it: the owner just proved themselves to switch it on.
+ * does not lock it: the owner just proved themselves to switch it on. `onLocked` runs each time the
+ * locked screen takes over, after `content` left the composition.
  */
 @Composable
-fun LockGate(enabled: Boolean, ask: (onResult: (Boolean) -> Unit) -> Unit, content: @Composable () -> Unit) {
+fun LockGate(
+    enabled: Boolean,
+    ask: (onResult: (Boolean) -> Unit) -> Unit,
+    onLocked: () -> Unit,
+    content: @Composable () -> Unit,
+) {
     var unlocked by rememberSaveable { mutableStateOf(!enabled) }
     var backgroundSince by rememberSaveable { mutableStateOf<Long?>(null) }
     val owner = LocalLifecycleOwner.current
@@ -57,7 +63,10 @@ fun LockGate(enabled: Boolean, ask: (onResult: (Boolean) -> Unit) -> Unit, conte
             ask { ok -> asking = false; if (ok) unlocked = true }
         }
     }
-    LaunchedEffect(Unit) { askNow() }
+    LaunchedEffect(Unit) {
+        onLocked()
+        askNow()
+    }
     LockedScreen(onOpen = askNow)
 }
 

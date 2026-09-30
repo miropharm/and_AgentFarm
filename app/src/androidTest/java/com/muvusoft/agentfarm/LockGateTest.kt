@@ -23,12 +23,14 @@ class LockGateTest {
     @Test
     fun aRefusedOwnerStaysOutAnAcceptedOneGetsIn() {
         var asked = 0
+        var locked = 0
         var answer = false
         rule.setContent {
-            LockGate(enabled = true, ask = { onResult -> asked++; onResult(answer) }) { Text("içerik") }
+            LockGate(enabled = true, ask = { onResult -> asked++; onResult(answer) }, onLocked = { locked++ }) { Text("içerik") }
         }
         rule.onNodeWithTag("lock-screen").assertIsDisplayed()
         assertEquals(1, asked)
+        assertEquals(1, locked)
         assertEquals(0, rule.onAllNodes(hasText("içerik")).fetchSemanticsNodes().size)
 
         answer = true
@@ -40,10 +42,12 @@ class LockGateTest {
     @Test
     fun anOffLockNeverAsks() {
         var asked = 0
+        var locked = 0
         rule.setContent {
-            LockGate(enabled = false, ask = { asked++ }) { Text("içerik") }
+            LockGate(enabled = false, ask = { asked++ }, onLocked = { locked++ }) { Text("içerik") }
         }
         rule.onNodeWithText("içerik").assertIsDisplayed()
         assertEquals(0, asked)
+        assertEquals(0, locked)
     }
 }

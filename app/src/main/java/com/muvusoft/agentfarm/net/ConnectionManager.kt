@@ -68,6 +68,12 @@ class ConnectionManager(
 
     fun focus(farmId: String) = _state.update { ShellReducer.focus(it, farmId) }
 
+    /** Where a farm's pages come from right now; null while it is not online. */
+    fun pageAccess(farmId: String): PageAccess? = conns[farmId]?.pageAccess()
+
+    /** Sends a page frame (view.open / view.msg / view.close); false when the farm is not online. Not queued: a page reopens. */
+    fun send(farmId: String, frame: Frame): Boolean = conns[farmId]?.send(frame) == true
+
     @Synchronized
     fun stopAll() {
         conns.values.forEach { it.stop() }

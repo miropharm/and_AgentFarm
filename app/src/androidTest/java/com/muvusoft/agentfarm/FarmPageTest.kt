@@ -1,0 +1,95 @@
+package com.muvusoft.agentfarm
+
+import android.view.View
+import android.view.ViewGroup
+import android.webkit.WebView
+import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.performClick
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
+import com.muvusoft.agentfarm.core.contract.Pairing
+import com.muvusoft.agentfarm.core.pairing.PairingVerdict
+import com.muvusoft.agentfarm.net.DeviceIdentity
+import com.muvusoft.agentfarm.net.FarmStore
+import com.muvusoft.agentfarm.net.PairClient
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.runBlocking
+import org.junit.Assert.assertEquals
+import org.junit.Before
+import org.junit.Rule
+import org.junit.Test
+import org.junit.runner.RunWith
+
+/** A farm row opens the farm's page in the WebView: HTML and resources come through the native interceptor. */
+@RunWith(AndroidJUnit4::class)
+class FarmPageTest {
+    @get:Rule
+    val rule = createAndroidComposeRule<MainActivity>()
+
+    private lateinit var farmId: String
+
+    @Before
+    fun pairFirst() {
+        val ctx = InstrumentationRegistry.getInstrumentation().targetContext
+        val r = runBlocking { PairClient.pair(Pairing.parse(FakeHost.freshLink())!!, DeviceIdentity("Emulator", "android test", "test")) }
+        val farm = (r as PairingVerdict.Result.Paired).farm
+        FarmStore(ctx).save(farm)
+        farmId = farm.id
+        rule.activityRule.scenario.recreate()
+    }
+
+    private fun webView(): WebView? {
+        var found: WebView? = null
+        rule.activityRule.scenario.onActivity { a -> found = find(a.window.decorView) }
+        return found
+    }
+
+    private fun find(v: View): WebView? = when (v) {
+        is WebView -> v
+        is ViewGroup -> (0 until v.childCount).firstNotNullOfOrNull { find(v.getChildAt(it)) }
+        else -> null
+    }
+
+    private fun js(script: String): String {
+        var out = ""
+        val done = CountDownLatch(1)
+        rule.activityRule.scenario.onActivity { a ->
+            val w = find(a.window.decorView)
+            if (w == null) done.countDown() else w.evaluateJavascript(script) { out = it; done.countDown() }
+        }
+        done.await(5, TimeUnit.SECONDS)
+        return out.trim('"')
+    }
+
+    private fun jsUntil(script: String, want: (String) -> Boolean): String {
+        val end = System.currentTimeMillis() + 20_000
+        var last = ""
+        while (System.currentTimeMillis() < end) {
+            if (webView() != null) { last = js(script); if (want(last)) return last }
+            Thread.sleep(300)
+        }
+        return last
+    }
+
+    @Test
+    fun aFarmRowOpensItsPageThroughTheShell() {
+        rule.waitUntil(20_000) {
+            rule.onAllNodes(hasTestTag("link-$farmId") and hasText("Bağlı", substring = true)).fetchSemanticsNodes().isNotEmpty()
+        }
+        rule.onNodeWithTag("farm-$farmId").performClick()
+
+        assertEquals("Sahte sayfa: now", jsUntil("document.getElementById('title') ? document.getElementById('title').textContent : ''") { it.startsWith("Sahte") })
+        assertEquals("function", js("typeof acquireVsCodeApi"))
+        assertEquals("16px", js("getComputedStyle(document.body).marginTop"))
+
+        // The host's answer to view.open reaches the page even if it arrived before the page loaded.
+        assertEquals(true, jsUntil("document.body.getAttribute('data-seen') || ''") { it.contains("state") }.contains("state"))
+        // Page -> shell -> host -> page: a posted message comes back as the host's echo.
+        js("acquireVsCodeApi().postMessage({type:'hello'})")
+        assertEquals(true, jsUntil("document.body.getAttribute('data-seen') || ''") { it.contains("echo") }.contains("echo"))
+    }
+}

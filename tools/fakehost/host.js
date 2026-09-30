@@ -7,6 +7,7 @@ const http = require('http');
 const https = require('https');
 const ws = require('./ws');
 const K = require('./contract');
+const pages = require('./pages');
 
 const OPS = {
     'farm.ping': () => ({ pong: true }),
@@ -19,7 +20,7 @@ function createHost(opts = {}) {
     const c = opts.contract || K.load();
     const farm = opts.farm || { id: 'farm_fake', name: 'Sahte Çiftlik' };
     const keep = opts.keep || 100;
-    const h = { c, farm, codes: new Set([opts.code || 'FAKE-CODE']), devices: new Map(), events: [], seq: 0, results: new Map(), calls: [], conns: new Set() };
+    const h = { c, farm, codes: new Set([opts.code || 'FAKE-CODE']), devices: new Map(), events: [], seq: 0, results: new Map(), calls: [], conns: new Set(), sessions: new Map() };
 
     const reply = (res, status, body) => { res.writeHead(status, { 'content-type': 'application/json' }); res.end(JSON.stringify(body)); };
     const body = req => new Promise(r => { let s = ''; req.on('data', d => { s += d; }); req.on('end', () => { try { r(JSON.parse(s || '{}')); } catch { r(null); } }); });
@@ -36,6 +37,13 @@ function createHost(opts = {}) {
 
     async function onRequest(req, res) {
         const url = req.url.split('?')[0];
+        if (req.method === 'GET' && /^\/(view|res)\//.test(url)) {
+            const m = /^AF (\S+)$/.exec(req.headers.authorization || '');
+            if (!m || !h.sessions.has(m[1])) { return reply(res, 401, { error: 'session' }); }
+            const page = pages.serve(req.url);
+            res.writeHead(page.status, { 'content-type': page.type });
+            return res.end(page.body);
+        }
         if (req.method === 'GET' && url === '/health') { return reply(res, 200, { ok: true, farm, contract: c.version }); }
         if (req.method === 'POST' && url === '/pair') {
             const b = await body(req);
@@ -70,8 +78,10 @@ function createHost(opts = {}) {
         if (!verify(d, K.signedText(c, farm.id, f.device, conn.nonce), f.signature)) { return refuse(conn, 'bad-signature'); }
         conn.welcomed = true;
         conn.device = f.device;
+        conn.session = 's_' + crypto.randomBytes(12).toString('base64url');
+        h.sessions.set(conn.session, f.device);
         const features = Object.fromEntries(c.features.map(x => [x, { allowed: true }]));
-        conn.send(JSON.stringify({ kind: 'welcome', farm, device: f.device, scope: d.scope, features, lastSeq: h.seq }));
+        conn.send(JSON.stringify({ kind: 'welcome', farm, device: f.device, scope: d.scope, features, lastSeq: h.seq, session: conn.session }));
         if (typeof f.resumeAfter === 'number') {
             const oldest = h.events.length ? h.events[0].seq : h.seq + 1;
             if (oldest > f.resumeAfter + 1) { conn.send(JSON.stringify({ kind: 'gap', from: f.resumeAfter + 1, to: oldest - 1 })); }
@@ -108,7 +118,7 @@ function createHost(opts = {}) {
         if (!conn) { return; }
         conn.nonce = 'b64:' + crypto.randomBytes(16).toString('base64');
         h.conns.add(conn);
-        conn.on('close', () => h.conns.delete(conn));
+        conn.on('close', () => { h.conns.delete(conn); if (conn.session) { h.sessions.delete(conn.session); } });
         conn.on('message', t => onFrame(conn, t));
         conn.send(JSON.stringify({ kind: 'challenge', nonce: conn.nonce, farm, contract: c.version }));
     });

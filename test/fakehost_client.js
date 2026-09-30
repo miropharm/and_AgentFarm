@@ -6,13 +6,16 @@ const http = require('http');
 const ws = require('../tools/fakehost/ws');
 const K = require('../tools/fakehost/contract');
 
-function request(port, method, path, body) {
+function request(port, method, path, body, headers = {}) {
     return new Promise((resolve, reject) => {
         const data = body === undefined ? '' : JSON.stringify(body);
-        const req = http.request({ host: '127.0.0.1', port, method, path, headers: { 'content-type': 'application/json', 'content-length': Buffer.byteLength(data) } }, res => {
+        const req = http.request({ host: '127.0.0.1', port, method, path, headers: { 'content-type': 'application/json', 'content-length': Buffer.byteLength(data), ...headers } }, res => {
             let s = '';
             res.on('data', d => { s += d; });
-            res.on('end', () => resolve({ status: res.statusCode, body: JSON.parse(s || '{}') }));
+            res.on('end', () => {
+                const json = /json/.test(res.headers['content-type'] || '');
+                resolve({ status: res.statusCode, type: res.headers['content-type'], text: s, body: json ? JSON.parse(s || '{}') : null });
+            });
         });
         req.on('error', reject);
         req.end(data);

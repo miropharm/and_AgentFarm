@@ -57,9 +57,21 @@ async function main() {
     const post = await s1.waitFor(f => f.kind === 'view.post' && f.view === 'v1');
     t.ok(post && post.message.page === 'needs', 'view.open answers with a view.post for that view');
 
+    const session = s1.answer.session;
+    const auth = { authorization: 'AF ' + session };
+    t.ok(typeof session === 'string' && session.length > 8, 'welcome carries a session');
+    const page = await P.request(port, 'GET', '/view/now?view=v1', undefined, auth);
+    t.ok(page.status === 200 && /text\/html/.test(page.type) && page.text.includes('/res/afRemote.js'), 'the session opens a page whose HTML loads afRemote.js');
+    const css = await P.request(port, 'GET', '/res/common.css', undefined, auth);
+    t.ok(css.status === 200 && /text\/css/.test(css.type), 'the session opens a page resource');
+    t.ok((await P.request(port, 'GET', '/res/../host.js', undefined, auth)).status === 404, 'a path outside the resources is not served');
+    t.ok((await P.request(port, 'GET', '/view/now')).status === 401, 'a page without a session is refused');
+    t.ok((await P.request(port, 'GET', '/view/now', undefined, { authorization: 'AF s_forged' })).status === 401, 'a page with an unknown session is refused');
+
     const drop = await P.request(port, 'POST', '/_test/drop');
     await P.tick();
     t.ok(drop.body.dropped && s1.closed, '/_test/drop closes the sockets');
+    t.ok((await P.request(port, 'GET', '/view/now', undefined, auth)).status === 401, 'a closed socket\'s session no longer opens pages');
 
     host.emit('notice.posted');
     host.emit('needs.changed');

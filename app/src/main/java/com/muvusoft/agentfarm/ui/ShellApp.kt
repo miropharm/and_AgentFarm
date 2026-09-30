@@ -10,7 +10,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.saveable.rememberSaveable
 import com.muvusoft.agentfarm.core.link.LinkText
+import com.muvusoft.agentfarm.core.view.PageRoute
+import com.muvusoft.agentfarm.ui.page.FarmPage
 import com.muvusoft.agentfarm.core.pairing.PairingStep
 import com.muvusoft.agentfarm.core.pairing.PairingVerdict
 import com.muvusoft.agentfarm.net.ConnectionManager
@@ -28,6 +31,7 @@ fun ShellApp(versionName: String, store: FarmStore, manager: ConnectionManager, 
     val scope = rememberCoroutineScope()
     val shell by manager.state.collectAsState()
     var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
+    var opened by rememberSaveable { mutableStateOf<String?>(null) }
 
     LaunchedEffect(farms) { manager.setFarms(farms) }
     LaunchedEffect(Unit) {
@@ -57,6 +61,12 @@ fun ShellApp(versionName: String, store: FarmStore, manager: ConnectionManager, 
         Unit
     }
 
+    val open = opened
+    if (open != null) {
+        FarmPage(farmId = open, page = PageRoute.HOME_PAGE, manager = manager, onBack = { opened = null })
+        return
+    }
+
     PairingScreen(
         versionName = versionName,
         farms = farms,
@@ -65,5 +75,6 @@ fun ShellApp(versionName: String, store: FarmStore, manager: ConnectionManager, 
         onLinkChange = { ui = ui.copy(link = it, message = null, failed = false) },
         onPair = pair,
         onForget = { farms = store.forget(it.id) },
+        onOpen = { manager.focus(it.id); opened = it.id },
     )
 }

@@ -53,6 +53,7 @@ fun PairingScreen(
     onLinkChange: (String) -> Unit,
     onPair: () -> Unit,
     onForget: (PairedFarm) -> Unit,
+    onOpen: (PairedFarm) -> Unit,
 ) {
     Surface(Modifier.fillMaxSize()) {
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
@@ -61,7 +62,7 @@ fun PairingScreen(
             if (farms.isEmpty()) {
                 Text("Henüz eşlenmiş çiftlik yok.", Modifier.testTag("farms-empty"), style = MaterialTheme.typography.bodyMedium)
             }
-            farms.forEach { FarmRow(it, links[it.id], onForget = onForget) }
+            farms.forEach { FarmRow(it, links[it.id], onForget = onForget, onOpen = onOpen) }
             Spacer(Modifier.height(16.dp))
             Text("Yeni eşleşme", style = MaterialTheme.typography.titleMedium)
             Text(
@@ -98,7 +99,7 @@ fun PairingScreen(
 }
 
 @Composable
-private fun FarmRow(farm: PairedFarm, link: LinkText.Text?, onForget: (PairedFarm) -> Unit) {
+private fun FarmRow(farm: PairedFarm, link: LinkText.Text?, onForget: (PairedFarm) -> Unit, onOpen: (PairedFarm) -> Unit) {
     var confirm by remember { mutableStateOf(false) }
     if (confirm) {
         AlertDialog(
@@ -109,7 +110,7 @@ private fun FarmRow(farm: PairedFarm, link: LinkText.Text?, onForget: (PairedFar
             dismissButton = { TextButton(onClick = { confirm = false }) { Text("Vazgeç") } },
         )
     }
-    Card(Modifier.fillMaxWidth().padding(top = 8.dp).testTag("farm-${farm.id}")) {
+    Card(onClick = { onOpen(farm) }, modifier = Modifier.fillMaxWidth().padding(top = 8.dp).testTag("farm-${farm.id}")) {
         Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text(farm.name, style = MaterialTheme.typography.titleSmall)

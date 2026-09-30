@@ -12,6 +12,8 @@ TEST=$(find apks -name app-debug-androidTest.apk | head -1)
 adb install -r -t "$APP"
 adb install -r -t "$TEST"
 adb logcat -c
+# A slow emulator's own "isn't responding" dialogs otherwise cover the app's screenshots.
+adb shell settings put global hide_error_dialogs 1 || true
 
 # The fake Agent Farm host, over TLS with a throwaway certificate; the emulator reaches the runner at 10.0.2.2.
 FH_PORT=8743
@@ -33,11 +35,13 @@ set -e
 # Each screenshot is logged with the rotation and night mode actually in effect, so a capture can be trusted.
 shot() {
   adb shell am force-stop "$PKG"
+  adb shell am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS > /dev/null 2>&1 || true
   adb shell am start -W -n "$PKG/.MainActivity" > /dev/null
   sleep 4
   adb exec-out screencap -p > "$OUT/$1.png"
   {
     echo "== $1"
+    adb shell dumpsys window | grep -m1 -o 'mCurrentFocus=[^ ]* [^ ]*' || true
     adb shell dumpsys window displays | grep -m1 -o 'mCurrentRotation=[^ ]*' || true
     adb shell cmd uimode night
   } >> "$OUT/screen-state.txt"

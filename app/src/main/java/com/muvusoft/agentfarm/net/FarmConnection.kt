@@ -42,9 +42,21 @@ class FarmConnection(
     @Volatile private var socket: WebSocket? = null
     @Volatile private var welcomed = false
     private var lastGood: String? = null
+    @Volatile private var current: String? = null
     private var job: Job? = null
 
     val online: Boolean get() = welcomed
+
+    /** The page credential of the open socket (welcome.session); memory only, gone when the socket closes. */
+    @Volatile var session: String? = null
+        private set
+
+    /** Pages of this farm can be fetched while its socket is welcomed. */
+    fun pageAccess(): PageAccess? {
+        val s = session ?: return null
+        val a = current ?: return null
+        return if (welcomed) PageAccess(a, s, client) else null
+    }
 
     fun start(scope: CoroutineScope) {
         if (job?.isActive == true) return
@@ -56,6 +68,7 @@ class FarmConnection(
         socket?.close(1000, "stopped")
         socket = null
         welcomed = false
+        session = null
         events.onLink(Link.Offline("stopped", clock()))
     }
 
@@ -82,6 +95,7 @@ class FarmConnection(
     private class End(val welcomed: Boolean, val refuse: Refuse?)
 
     private suspend fun session(address: String): End {
+        current = address
         val done = CompletableDeferred<End>()
         var refused: Refuse? = null
         var wasWelcomed = false
@@ -90,7 +104,7 @@ class FarmConnection(
                 val frame = Codec.decode(text) ?: return
                 when (frame) {
                     is Challenge -> webSocket.send(Codec.encode(hello(frame)))
-                    is Welcome -> { welcomed = true; wasWelcomed = true }
+                    is Welcome -> { session = frame.session; welcomed = true; wasWelcomed = true }
                     is Refuse -> refused = frame
                     else -> Unit
                 }
@@ -103,6 +117,7 @@ class FarmConnection(
 
             private fun finish() {
                 welcomed = false
+                session = null
                 if (!done.isCompleted && wasWelcomed && refused == null) events.onLink(Link.Offline("closed", clock()))
                 done.complete(End(wasWelcomed, refused))
             }

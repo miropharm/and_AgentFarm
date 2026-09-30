@@ -66,6 +66,7 @@ private fun PageView(farmId: String, page: String, viewId: String, manager: Conn
     // Host messages that arrive before the page has loaded wait here; all of this runs on the main thread.
     val pending = remember { mutableListOf<String>() }
     var loaded by remember { mutableStateOf(false) }
+    val chrome = rememberPageChrome()
     val deliver = { json: String ->
         val w = web
         if (loaded && w != null) w.evaluateJavascript(PageRoute.deliverScript(json), null) else pending += json
@@ -94,6 +95,7 @@ private fun PageView(farmId: String, page: String, viewId: String, manager: Conn
                 settings.allowFileAccess = false
                 settings.allowContentAccess = false
                 settings.cacheMode = WebSettings.LOAD_NO_CACHE
+                webChromeClient = chrome
                 webViewClient = PageClient(
                     access = { manager.pageAccess(farmId) },
                     onLoaded = {

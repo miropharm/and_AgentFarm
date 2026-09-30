@@ -31,8 +31,11 @@ sealed interface Link {
         val features: Map<String, FeatureAnswer>,
         override val since: Long,
     ) : Link
-    /** The farm said no; `reason` is the contract's refuse reason, `detail` the farm's own sentence. */
-    data class Refused(val reason: String, val detail: String?, override val since: Long) : Link
+    /**
+     * The farm said no; `reason` is the contract's refuse reason, `detail` the farm's own sentence,
+     * `minContract` the contract version the farm needs (sent with reason "contract").
+     */
+    data class Refused(val reason: String, val detail: String?, override val since: Long, val minContract: Long? = null) : Link
 }
 
 data class FarmStatus(

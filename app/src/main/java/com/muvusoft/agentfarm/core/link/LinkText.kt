@@ -1,6 +1,7 @@
 package com.muvusoft.agentfarm.core.link
 
 import com.muvusoft.agentfarm.core.Time.ago
+import com.muvusoft.agentfarm.core.contract.CONTRACT_VERSION
 import com.muvusoft.agentfarm.core.state.Link
 
 /**
@@ -21,9 +22,9 @@ object LinkText {
             "Bağlı değil: ${offline(link.reason)}, ${ago(now - link.since)}. Çiftliğe ulaşılınca kendiliğinden bağlanır.",
         )
         is Link.Refused -> Text(
-            "Reddedildi · ${refused(link.reason)}",
-            "Çiftlik bağlantıyı reddetti: ${refused(link.reason)}" + (link.detail?.let { " ($it)" } ?: "") +
-                ". " + clears(link.reason),
+            "Reddedildi · ${refused(link.reason, link.minContract)}",
+            "Çiftlik bağlantıyı reddetti: ${refused(link.reason, link.minContract)}" + (link.detail?.let { " ($it)" } ?: "") +
+                ". " + clears(link.reason, link.minContract),
         )
     }
 
@@ -31,18 +32,29 @@ object LinkText {
     fun sheet(link: Link, addresses: List<String>, now: Long): List<String> =
         listOf(of(link, now).long) + (if (addresses.isEmpty()) emptyList() else listOf("Adresler: " + addresses.joinToString(", ")))
 
-    fun refused(reason: String): String = when (reason) {
+    /** Which side is behind: the farm needs a newer contract than this app speaks, or the other way round. */
+    private fun appIsBehind(minContract: Long?): Boolean? = minContract?.let { it > CONTRACT_VERSION }
+
+    fun refused(reason: String, minContract: Long? = null): String = when (reason) {
+        "contract" -> when (appIsBehind(minContract)) {
+            true -> "bu uygulama eski"
+            false -> "Agent Farm eski"
+            null -> "sürümler uyuşmuyor"
+        }
         "revoked" -> "bu cihazın izni kaldırılmış"
         "unknown-device" -> "çiftlik bu cihazı tanımıyor"
         "bad-signature" -> "cihaz imzası doğrulanamadı"
-        "contract" -> "sürümler uyuşmuyor"
         "not-allowed" -> "izin verilmedi"
         "busy" -> "çiftlik meşgul"
         else -> reason
     }
 
-    private fun clears(reason: String): String = when (reason) {
-        "contract" -> "Uygulamayı ya da Agent Farm'ı güncelleyin."
+    private fun clears(reason: String, minContract: Long?): String = when (reason) {
+        "contract" -> when (appIsBehind(minContract)) {
+            true -> "Telefondaki uygulamayı güncelleyin: çiftlik sözleşme $minContract istiyor, bu uygulama $CONTRACT_VERSION konuşuyor."
+            false -> "Agent Farm'ı güncelleyin: bu uygulama sözleşme $CONTRACT_VERSION konuşuyor, çiftlik daha eskisini."
+            null -> "Uygulamayı ya da Agent Farm'ı güncelleyin."
+        }
         "busy", "not-allowed" -> "Biraz sonra yeniden denenecek."
         else -> "Agent Farm'da yeni QR ile yeniden eşleyin."
     }

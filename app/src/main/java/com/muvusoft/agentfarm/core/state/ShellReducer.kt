@@ -36,7 +36,7 @@ object ShellReducer {
         is Welcome -> update(s, farmId) {
             it.copy(link = Link.Online(address, frame.scope, frame.features, now))
         }
-        is Refuse -> update(s, farmId) { it.copy(link = Link.Refused(frame.reason, frame.detail, now)) }
+        is Refuse -> update(s, farmId) { it.copy(link = Link.Refused(frame.reason, frame.detail, now, frame.minContract)) }
         is EventFrame -> update(s, farmId) { event(it.copy(lastSeq = maxOf(it.lastSeq, frame.seq)), frame) }
         is Gap -> update(s, farmId) { it.copy(lastSeq = maxOf(it.lastSeq, frame.to)) }
         is CallResult -> s.copy(outbox = s.outbox.filterNot { it.id == frame.id && it.farm == farmId })

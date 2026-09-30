@@ -62,6 +62,18 @@ class LinkTest {
     }
 
     @Test
+    fun aVersionRefusalNamesTheSideToUpdate() {
+        val newer = com.muvusoft.agentfarm.core.contract.CONTRACT_VERSION + 1
+        val app = LinkText.of(Link.Refused("contract", null, 0, minContract = newer), 0)
+        assertTrue(app.short.contains("uygulama eski"))
+        assertTrue(app.long.contains("Telefondaki uygulamayı güncelleyin") && app.long.contains("$newer"))
+        val farm = LinkText.of(Link.Refused("contract", null, 0, minContract = 0), 0)
+        assertTrue(farm.long.contains("Agent Farm'ı güncelleyin"))
+        val unknown = LinkText.of(Link.Refused("contract", null, 0), 0)
+        assertTrue(unknown.long.contains("Uygulamayı ya da Agent Farm'ı"))
+    }
+
+    @Test
     fun elapsedTimeIsShort() {
         assertEquals("0 sn", Time.ago(-5))
         assertEquals("59 sn", Time.ago(59_999))

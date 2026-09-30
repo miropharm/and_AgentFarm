@@ -15,8 +15,8 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class ShellReducerTest {
-    private val home = PairedFarm("farm_a", "Masaüstü", "dev_1", "manage", "ab", listOf("192.168.1.2:8378"))
-    private val office = PairedFarm("farm_b", "Ofis", "dev_2", "read", "cd", listOf("10.0.0.5:8378"))
+    private val home = PairedFarm("farm_a", "Masaüstü", "dev_1", "manage", "ab", listOf("192.168.1.2:8378"), "k_a")
+    private val office = PairedFarm("farm_b", "Ofis", "dev_2", "read", "cd", listOf("10.0.0.5:8378"), "k_b")
     private val empty = JsonObject(emptyMap())
     private fun item(id: String, farm: String = "farm_a", at: Long = 1) = OutboxItem(id, farm, "console.send", null, at)
 

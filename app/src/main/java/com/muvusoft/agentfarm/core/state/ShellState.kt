@@ -1,9 +1,11 @@
 package com.muvusoft.agentfarm.core.state
 
 import com.muvusoft.agentfarm.core.contract.FeatureAnswer
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonObject
 
 /** A farm this phone has paired with. Everything needed to reach it again without the QR. */
+@Serializable
 data class PairedFarm(
     val id: String,
     val name: String,
@@ -13,6 +15,8 @@ data class PairedFarm(
     val fp: String,
     /** host:port candidates, most local first. */
     val addresses: List<String>,
+    /** The Keystore alias of this pairing's device key; each pairing has its own, so a failed re-pair leaves the old one working. */
+    val key: String,
 )
 
 /** Where the link to one farm stands. Every non-online state is a wait: kind, reason, since. */

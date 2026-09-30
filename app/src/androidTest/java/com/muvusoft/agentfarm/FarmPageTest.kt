@@ -66,7 +66,8 @@ class FarmPageTest {
     }
 
     private fun jsUntil(script: String, want: (String) -> Boolean): String {
-        val end = System.currentTimeMillis() + 20_000
+        // The first WebView of a cold emulator starts its engine process in ~25 s (logcat, CI 36693541296).
+        val end = System.currentTimeMillis() + 60_000
         var last = ""
         while (System.currentTimeMillis() < end) {
             if (webView() != null) { last = js(script); if (want(last)) return last }

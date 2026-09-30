@@ -8,6 +8,7 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import com.muvusoft.agentfarm.R
 import com.muvusoft.agentfarm.core.view.PageRoute
 import com.muvusoft.agentfarm.net.PageAccess
 import com.muvusoft.agentfarm.net.PageLoader
@@ -46,9 +47,9 @@ class PageClient(
         val path = PageRoute.hostPath(request.url.toString())
         if (path == null) {
             Log.i(TAG, "blocked ${request.url}")
-            return text(403, "Bu adres kabuktan açılmaz.")
+            return text(403, view.context.getString(R.string.page_blocked))
         }
-        val a = access() ?: return text(503, "Çiftlik şu an bağlı değil.").also { Log.i(TAG, "offline $path") }
+        val a = access() ?: return text(503, view.context.getString(R.string.page_offline)).also { Log.i(TAG, "offline $path") }
         val page = PageLoader.fetch(a, path)
         Log.i(TAG, "${page.status} ${page.mime} ${page.bytes.size}B $path")
         return WebResourceResponse(page.mime, page.charset, page.status, reason(page.status), emptyMap(), ByteArrayInputStream(page.bytes))

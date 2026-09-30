@@ -1,4 +1,60 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Agent Farm</string>
+
+    <!-- Common -->
+    <string name="back">Geri</string>
+    <string name="cancel">Vazgeç</string>
+    <string name="clear">Temizle</string>
+
+    <!-- Farms and pairing -->
+    <string name="open_settings">Ayarlar</string>
+    <string name="farms">Çiftlikler</string>
+    <string name="farms_empty">Henüz eşlenmiş çiftlik yok.</string>
+    <string name="pair_new">Yeni eşleşme</string>
+    <string name="pair_hint">Agent Farm\'daki eşleşme QR\'ını kamerayla okutun ya da bağlantıyı yapıştırın.</string>
+    <string name="pair_link">Eşleşme bağlantısı</string>
+    <string name="pair_go">Eşleş</string>
+    <string name="pair_busy">Eşleşiyor…</string>
+    <string name="paired_with">%1$s ile eşlendi.</string>
+    <string name="farm_open">Çiftliği aç</string>
+    <string name="farm_link_detail">Bağlantı ayrıntısı</string>
+    <string name="forget">Unut</string>
+    <string name="forget_title">%1$s unutulsun mu?</string>
+    <string name="forget_detail">Bu telefonun bu çiftlikteki anahtarı silinir; yeniden bağlanmak için yeni bir QR gerekir.</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Ayarlar</string>
+    <string name="settings_lock">Uygulama kilidi</string>
+    <string name="lock_on_open">Açılışta kimlik sor</string>
+    <string name="lock_on_open_detail">Uygulama açılırken ve bir dakikadan uzun arka planda kaldıktan sonra.</string>
+    <string name="lock_destructive_asks">Çiftliği unutmak gibi geri alınamayan eylemler her zaman kimlik sorar.</string>
+    <string name="lock_destructive_confirms">Geri alınamayan eylemler bu telefonda onay penceresiyle sorulur.</string>
+    <string name="settings_battery">Pil optimizasyonu</string>
+    <string name="settings_device">Bu cihaz</string>
+    <string name="device_line">%1$s %2$s · Android %3$s</string>
+
+    <!-- The lock -->
+    <string name="lock_ask_open">Agent Farm\'ı aç</string>
+    <string name="lock_ask_turn_on">Açılış kilidini aç</string>
+    <string name="lock_ask_turn_off">Açılış kilidini kapat</string>
+    <string name="locked_title">Agent Farm kilitli</string>
+    <string name="locked_detail">Açmak için kimliğinizi doğrulayın.</string>
+    <string name="unlock">Aç</string>
+
+    <!-- Farm pages -->
+    <string name="farm_unpaired">Bu çiftlik artık eşli değil.</string>
+    <string name="clipboard_refused">Pano bunu kabul etmedi.</string>
+    <string name="page_blocked">Bu adres kabuktan açılmaz.</string>
+    <string name="page_offline">Çiftlik şu an bağlı değil.</string>
+
+    <!-- Notification channels (system settings show these) -->
+    <string name="channel_ask">Soru ve izin</string>
+    <string name="channel_ask_detail">Bir ajan cevap ya da izin bekliyor</string>
+    <string name="channel_notice">Duyurular</string>
+    <string name="channel_notice_detail">Ajanların duyuruları ve kota uyarıları</string>
+    <string name="channel_turn">Tur bitti</string>
+    <string name="channel_turn_detail">Bir ajanın turu bitti</string>
+    <string name="channel_link">Bağlantı</string>
+    <string name="channel_link_detail">Çiftliklere bağlantının sürekli durum satırı</string>
 </resources>

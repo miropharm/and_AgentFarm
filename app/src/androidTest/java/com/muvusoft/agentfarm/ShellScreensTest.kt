@@ -4,7 +4,13 @@ import android.content.Intent
 import android.net.Uri
 import android.os.PowerManager
 import android.view.KeyEvent
+import androidx.compose.ui.test.assert
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.isHeading
+import androidx.compose.ui.test.isToggleable
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.hasTestTag
@@ -80,13 +86,28 @@ class ShellScreensTest {
     }
 
     @Test
+    fun talkBackReadsTheLockRowAsOneSwitchAndTheSectionsAsHeadings() {
+        pairedApp().use {
+            rule.onNodeWithContentDescription(ctx.getString(R.string.open_settings)).performClick()
+            rule.onNodeWithTag("lock-switch")
+                .assert(isToggleable())
+                .assert(hasText(ctx.getString(R.string.lock_on_open), substring = true))
+                .assert(hasText(ctx.getString(R.string.lock_on_open_detail), substring = true))
+            // The screen title and its three sections.
+            rule.onAllNodes(isHeading()).assertCountEquals(4)
+            rule.onNodeWithContentDescription(ctx.getString(R.string.back)).performClick()
+            rule.onNodeWithTag(farm).assert(hasClickAction())
+        }
+    }
+
+    @Test
     fun forgettingAFarmAsksFirstAndGivingUpKeepsIt() {
         pairedApp().use {
             rule.onNodeWithTag("forget-farm_fake").performClick()
             if (OwnerCheck.availability(ctx) != LockPolicy.Availability.READY) {
                 rule.onNodeWithTag("destructive-dialog").assertIsDisplayed()
                 shot("forget-confirm")
-                rule.onNodeWithText("Vazgeç").performClick()
+                rule.onNodeWithText(ctx.getString(R.string.cancel)).performClick()
             }
             rule.onNodeWithTag(farm).assertIsDisplayed()
         }

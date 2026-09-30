@@ -8,6 +8,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
+import com.muvusoft.agentfarm.R
 import com.muvusoft.agentfarm.net.LinkService
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -46,7 +47,7 @@ fun ShellApp(versionName: String, store: FarmStore, prefs: ShellPrefs, manager: 
     fun askOwner(title: String, then: (Boolean) -> Unit) = OwnerCheck.ask(context, title, null, then)
     LockGate(
         enabled = lockOnOpen && availability == LockPolicy.Availability.READY,
-        ask = { askOwner("Agent Farm'ı aç", it) },
+        ask = { askOwner(context.getString(R.string.lock_ask_open), it) },
         // Pages keep no copy of the farm behind the lock; their HTTP cache goes with each WebView's release.
         onLocked = { WebStorage.getInstance().deleteAllData() },
     ) {
@@ -56,7 +57,7 @@ fun ShellApp(versionName: String, store: FarmStore, prefs: ShellPrefs, manager: 
             manager = manager,
             incomingLink = incomingLink,
             settings = SettingsUi(lockOnOpen, availability) { wanted ->
-                askOwner(if (wanted) "Açılış kilidini aç" else "Açılış kilidini kapat") { ok ->
+                askOwner(context.getString(if (wanted) R.string.lock_ask_turn_on else R.string.lock_ask_turn_off)) { ok ->
                     if (ok) { prefs.lockOnOpen = wanted; lockOnOpen = wanted }
                 }
             },
@@ -105,7 +106,7 @@ private fun Shell(versionName: String, store: FarmStore, manager: ConnectionMana
             ui = when (val r = PairClient.pair(info, who)) {
                 is PairingVerdict.Result.Paired -> {
                     farms = store.save(r.farm)
-                    PairingUi(message = "${r.farm.name} ile eşlendi.")
+                    PairingUi(message = context.getString(R.string.paired_with, r.farm.name))
                 }
                 is PairingVerdict.Result.Failed -> ui.copy(busy = false, message = r.problem.message, failed = true)
             }
@@ -141,9 +142,9 @@ private fun Shell(versionName: String, store: FarmStore, manager: ConnectionMana
         onForget = { farm ->
             confirm(
                 Destructive(
-                    title = "${farm.name} unutulsun mu?",
-                    detail = "Bu telefonun bu çiftlikteki anahtarı silinir; yeniden bağlanmak için yeni bir QR gerekir.",
-                    verb = "Unut",
+                    title = context.getString(R.string.forget_title, farm.name),
+                    detail = context.getString(R.string.forget_detail),
+                    verb = context.getString(R.string.forget),
                     run = { farms = store.forget(farm.id) },
                 ),
             )

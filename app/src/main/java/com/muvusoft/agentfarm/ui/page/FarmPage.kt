@@ -27,8 +27,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import com.muvusoft.agentfarm.R
 import com.muvusoft.agentfarm.core.contract.Codec
 import com.muvusoft.agentfarm.core.contract.ViewClose
 import com.muvusoft.agentfarm.core.contract.ViewMsg
@@ -68,7 +70,7 @@ fun FarmPage(farmId: String, page: String, manager: ConnectionManager, onBack: (
             }
         } else {
             Box(Modifier.fillMaxSize().padding(16.dp)) {
-                val text = link?.let { LinkText.of(it, System.currentTimeMillis()).long } ?: "Bu çiftlik artık eşli değil."
+                val text = link?.let { LinkText.of(it, System.currentTimeMillis()).long } ?: stringResource(R.string.farm_unpaired)
                 Text(text, Modifier.testTag("page-wait"), style = MaterialTheme.typography.bodyLarge)
             }
         }
@@ -86,6 +88,7 @@ private fun PageView(
     onOpen: (String) -> Unit,
 ) {
     val clipboard = LocalContext.current.getSystemService(ClipboardManager::class.java)
+    val clipboardRefused = stringResource(R.string.clipboard_refused)
     val main = remember { Handler(Looper.getMainLooper()) }
     var web by remember { mutableStateOf<WebView?>(null) }
     // Host messages that arrive before the page has loaded wait here; all of this runs on the main thread.
@@ -139,7 +142,7 @@ private fun PageView(
                             is ShellRequest.Open -> main.post { onOpen(r.page) }
                             is ShellRequest.Copy -> main.post {
                                 val ok = runCatching { checkNotNull(clipboard).setPrimaryClip(ClipData.newPlainText("Agent Farm", r.text)) }.isSuccess
-                                deliver(ShellRequest.copyDone(r.token, ok, if (ok) null else "Pano bunu kabul etmedi.").toString())
+                                deliver(ShellRequest.copyDone(r.token, ok, if (ok) null else clipboardRefused).toString())
                             }
                             ShellRequest.Refused -> Unit
                         }

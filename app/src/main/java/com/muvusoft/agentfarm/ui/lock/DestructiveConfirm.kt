@@ -11,6 +11,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
+import com.muvusoft.agentfarm.R
 import com.muvusoft.agentfarm.core.lock.LockPolicy
 
 /** A destructive action waiting for its confirmation. `verb` names the confirm button (1-2 words). */
@@ -31,7 +33,7 @@ fun rememberDestructiveConfirm(): (Destructive) -> Unit {
             title = { Text(d.title) },
             text = { Text(d.detail) },
             confirmButton = { TextButton(onClick = { pending = null; d.run() }) { Text(d.verb) } },
-            dismissButton = { TextButton(onClick = { pending = null }) { Text("Vazgeç") } },
+            dismissButton = { TextButton(onClick = { pending = null }) { Text(stringResource(R.string.cancel)) } },
         )
     }
     return remember(context) {

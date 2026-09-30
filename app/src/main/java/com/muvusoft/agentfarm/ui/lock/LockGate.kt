@@ -19,7 +19,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import com.muvusoft.agentfarm.R
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -78,9 +82,9 @@ private fun LockedScreen(onOpen: () -> Unit) {
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Text("Agent Farm kilitli", style = MaterialTheme.typography.titleLarge)
-            Text("Açmak için kimliğinizi doğrulayın.", Modifier.padding(top = 8.dp), style = MaterialTheme.typography.bodyMedium)
-            Button(onClick = onOpen, modifier = Modifier.padding(top = 24.dp).testTag("lock-open")) { Text("Aç") }
+            Text(stringResource(R.string.locked_title), Modifier.semantics { heading() }, style = MaterialTheme.typography.titleLarge)
+            Text(stringResource(R.string.locked_detail), Modifier.padding(top = 8.dp), style = MaterialTheme.typography.bodyMedium)
+            Button(onClick = onOpen, modifier = Modifier.padding(top = 24.dp).testTag("lock-open")) { Text(stringResource(R.string.unlock)) }
         }
     }
 }

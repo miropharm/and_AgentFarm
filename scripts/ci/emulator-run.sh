@@ -101,6 +101,15 @@ sleep 2
 shot main-dark 0
 adb shell cmd uimode night no
 
+# The largest system font the user can pick: nothing clipped, nothing overlapping (measured from the dump).
+adb shell settings put system font_scale 2.0
+sleep 2
+shot main-font200 0
+adb shell settings get system font_scale | sed 's/^/font_scale: /' >> "$OUT/screen-state.txt"
+adb shell uiautomator dump /sdcard/ui.xml > /dev/null
+adb pull /sdcard/ui.xml "$OUT/main-font200-ui.xml" > /dev/null
+adb shell settings put system font_scale 1.0
+
 adb logcat -d > "$OUT/logcat.txt"
 kill "$SHELL_LOG_PID" 2> /dev/null || true
 

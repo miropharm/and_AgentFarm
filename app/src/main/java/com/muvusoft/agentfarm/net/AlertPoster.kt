@@ -16,17 +16,17 @@ import com.muvusoft.agentfarm.core.notify.Channel
 /** Draws an Alert as a notification; its buttons go to AlertActionReceiver, which calls the op. */
 object AlertPoster {
     private val SPEC = mapOf(
-        Channel.ASK to Triple("Soru ve izin", NotificationManager.IMPORTANCE_HIGH, "Bir ajan cevap ya da izin bekliyor"),
-        Channel.NOTICE to Triple("Duyurular", NotificationManager.IMPORTANCE_DEFAULT, "Ajanların duyuruları ve kota uyarıları"),
-        Channel.TURN to Triple("Tur bitti", NotificationManager.IMPORTANCE_LOW, "Bir ajanın turu bitti"),
-        Channel.LINK to Triple("Bağlantı", NotificationManager.IMPORTANCE_MIN, "Çiftliklere bağlantının sürekli durum satırı"),
+        Channel.ASK to Triple(R.string.channel_ask, NotificationManager.IMPORTANCE_HIGH, R.string.channel_ask_detail),
+        Channel.NOTICE to Triple(R.string.channel_notice, NotificationManager.IMPORTANCE_DEFAULT, R.string.channel_notice_detail),
+        Channel.TURN to Triple(R.string.channel_turn, NotificationManager.IMPORTANCE_LOW, R.string.channel_turn_detail),
+        Channel.LINK to Triple(R.string.channel_link, NotificationManager.IMPORTANCE_MIN, R.string.channel_link_detail),
     )
 
     fun channels(context: Context) {
         val nm = context.getSystemService(NotificationManager::class.java)
         for ((ch, spec) in SPEC) {
-            nm.createNotificationChannel(NotificationChannel(ch.id, spec.first, spec.second).apply {
-                description = spec.third
+            nm.createNotificationChannel(NotificationChannel(ch.id, context.getString(spec.first), spec.second).apply {
+                description = context.getString(spec.third)
                 setShowBadge(ch == Channel.ASK || ch == Channel.NOTICE)
             })
         }

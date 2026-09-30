@@ -34,7 +34,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import com.muvusoft.agentfarm.R
 import com.muvusoft.agentfarm.core.link.LinkText
 import com.muvusoft.agentfarm.core.state.PairedFarm
 
@@ -66,35 +70,32 @@ fun PairingScreen(
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
             Row(verticalAlignment = Alignment.Top) {
                 Box(Modifier.weight(1f)) { ShellHeader(versionName) }
-                IconButton(onClick = onSettings, modifier = Modifier.testTag("open-settings")) { Icon(Icons.Filled.Settings, "Ayarlar") }
+                IconButton(onClick = onSettings, modifier = Modifier.testTag("open-settings")) { Icon(Icons.Filled.Settings, stringResource(R.string.open_settings)) }
             }
-            Text("Çiftlikler", style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.farms), Modifier.semantics { heading() }, style = MaterialTheme.typography.titleMedium)
             if (farms.isEmpty()) {
-                Text("Henüz eşlenmiş çiftlik yok.", Modifier.testTag("farms-empty"), style = MaterialTheme.typography.bodyMedium)
+                Text(stringResource(R.string.farms_empty), Modifier.testTag("farms-empty"), style = MaterialTheme.typography.bodyMedium)
             }
             farms.forEach { FarmRow(it, links[it.id], tips[it.id].orEmpty(), onForget = onForget, onOpen = onOpen) }
             Spacer(Modifier.height(16.dp))
-            Text("Yeni eşleşme", style = MaterialTheme.typography.titleMedium)
-            Text(
-                "Agent Farm'daki eşleşme QR'ını kamerayla okutun ya da bağlantıyı yapıştırın.",
-                style = MaterialTheme.typography.bodySmall,
-            )
+            Text(stringResource(R.string.pair_new), Modifier.semantics { heading() }, style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.pair_hint), style = MaterialTheme.typography.bodySmall)
             OutlinedTextField(
                 value = ui.link,
                 onValueChange = onLinkChange,
                 modifier = Modifier.fillMaxWidth().testTag("pair-link"),
-                label = { Text("Eşleşme bağlantısı") },
+                label = { Text(stringResource(R.string.pair_link)) },
                 singleLine = true,
                 enabled = !ui.busy,
                 trailingIcon = {
                     if (ui.link.isNotEmpty()) {
-                        IconButton(onClick = { onLinkChange("") }) { Icon(Icons.Filled.Clear, "Temizle") }
+                        IconButton(onClick = { onLinkChange("") }) { Icon(Icons.Filled.Clear, stringResource(R.string.clear)) }
                     }
                 },
             )
             Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.End) {
                 Button(onClick = onPair, enabled = !ui.busy && ui.link.isNotBlank(), modifier = Modifier.testTag("pair-go")) {
-                    Text(if (ui.busy) "Eşleşiyor…" else "Eşleş")
+                    Text(stringResource(if (ui.busy) R.string.pair_busy else R.string.pair_go))
                 }
             }
             ui.message?.let {
@@ -121,7 +122,12 @@ private fun FarmRow(
     if (showTip && tip.isNotEmpty()) AFTip(tip, onDismiss = { showTip = false })
     Card(Modifier.fillMaxWidth().padding(top = 8.dp).testTag("farm-${farm.id}")) {
         Row(
-            Modifier.combinedClickable(onClick = { onOpen(farm) }, onLongClick = { showTip = true }, onLongClickLabel = "Bağlantı ayrıntısı")
+            Modifier.combinedClickable(
+                onClickLabel = stringResource(R.string.farm_open),
+                onClick = { onOpen(farm) },
+                onLongClickLabel = stringResource(R.string.farm_link_detail),
+                onLongClick = { showTip = true },
+            )
                 .padding(12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -133,7 +139,7 @@ private fun FarmRow(
                     style = MaterialTheme.typography.bodySmall,
                 )
             }
-            TextButton(onClick = { onForget(farm) }, modifier = Modifier.testTag("forget-${farm.id}")) { Text("Unut") }
+            TextButton(onClick = { onForget(farm) }, modifier = Modifier.testTag("forget-${farm.id}")) { Text(stringResource(R.string.forget)) }
         }
     }
 }

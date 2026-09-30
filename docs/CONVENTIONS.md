@@ -58,6 +58,8 @@ The rest of the house rules, as they apply here:
 - **A text filter box has ✕ inside it**, Back clears or dismisses, and a live filter keeps focus and caret across recomposition.
 - **Time:** every clock through one `core/` helper — short in a row, full with UTC and offset in the sheet. A missing timestamp prints nothing.
 - **Copy:** one copy path; the ✓ appears only after the write happened.
+- **The shell's words live in `res/values/strings.xml`** (Turkish, the default locale): a screen's text, a TalkBack label, a dialog, a notification channel name through `R.string`, never a Kotlin literal; `core/` verdict sentences stay in `core/` (pure, JVM-tested). `test/test_shell_strings.js` holds it, both ways (every name exists, every string is used).
+- **TalkBack reads what the eye groups:** a label + detail + switch row is ONE `toggleable` node (`Role.Switch`), a screen title and section titles are `heading()`, a row with a long press names both gestures (`onClickLabel` / `onLongClickLabel`), an icon-only button has a label. The system font scale is honoured (no fixed text heights; the CI shoots `main-font200` at 200%).
 - **A backlog code never reaches the user** (`test/test_no_dev_codes.js`). Codes live in comments, commit bodies and backlog records.
 - **Making things:** one form per object and every route opens it; the refusal is shown in the form; saving a whole form can remove a field and never removes one it never showed.
 - **A wait is an answer.** Connecting, reconnecting, a parked run, a question pending: one shape — kind · reason (the source's own sentence) · since · what clears it.

@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -21,7 +22,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import com.muvusoft.agentfarm.R
 import com.muvusoft.agentfarm.core.buildLabel
 import com.muvusoft.agentfarm.core.lock.LockPolicy
 
@@ -40,39 +46,43 @@ fun SettingsScreen(
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 IconButton(onClick = onBack, modifier = Modifier.testTag("settings-back")) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, "Geri")
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.back))
                 }
-                Text("Ayarlar", style = MaterialTheme.typography.titleLarge)
+                Text(stringResource(R.string.settings_title), Modifier.semantics { heading() }, style = MaterialTheme.typography.titleLarge)
             }
-            Section("Uygulama kilidi")
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Section(stringResource(R.string.settings_lock))
+            // One toggle for TalkBack: the label, its detail and the state are read together, and the whole row takes the tap.
+            Row(
+                Modifier.fillMaxWidth().toggleable(
+                    value = lockOnOpen,
+                    enabled = reason == null,
+                    role = Role.Switch,
+                    onValueChange = onLockToggle,
+                ).testTag("lock-switch"),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
                 Column(Modifier.weight(1f)) {
-                    Text("Açılışta kimlik sor", style = MaterialTheme.typography.bodyLarge)
-                    Text(
-                        "Uygulama açılırken ve bir dakikadan uzun arka planda kaldıktan sonra.",
-                        style = MaterialTheme.typography.bodySmall,
-                    )
+                    Text(stringResource(R.string.lock_on_open), style = MaterialTheme.typography.bodyLarge)
+                    Text(stringResource(R.string.lock_on_open_detail), style = MaterialTheme.typography.bodySmall)
                 }
                 Switch(
                     checked = lockOnOpen,
-                    onCheckedChange = onLockToggle,
+                    onCheckedChange = null,
                     enabled = reason == null,
-                    modifier = Modifier.testTag("lock-switch"),
                 )
             }
             if (reason != null) {
                 Text(reason, Modifier.padding(top = 4.dp).testTag("lock-reason"), color = MaterialTheme.colorScheme.error)
             }
             Text(
-                if (reason == null) "Çiftliği unutmak gibi geri alınamayan eylemler her zaman kimlik sorar."
-                else "Geri alınamayan eylemler bu telefonda onay penceresiyle sorulur.",
+                stringResource(if (reason == null) R.string.lock_destructive_asks else R.string.lock_destructive_confirms),
                 Modifier.padding(top = 8.dp),
                 style = MaterialTheme.typography.bodySmall,
             )
-            Section("Pil optimizasyonu")
+            Section(stringResource(R.string.settings_battery))
             BatteryRow()
-            Section("Bu cihaz")
-            Text("${Build.MANUFACTURER} ${Build.MODEL} · Android ${Build.VERSION.RELEASE}", style = MaterialTheme.typography.bodyMedium)
+            Section(stringResource(R.string.settings_device))
+            Text(stringResource(R.string.device_line, Build.MANUFACTURER, Build.MODEL, Build.VERSION.RELEASE), style = MaterialTheme.typography.bodyMedium)
             Text(buildLabel(versionName), style = MaterialTheme.typography.bodySmall)
         }
     }
@@ -80,5 +90,5 @@ fun SettingsScreen(
 
 @Composable
 private fun Section(title: String) {
-    Text(title, Modifier.padding(top = 20.dp, bottom = 4.dp), style = MaterialTheme.typography.titleMedium)
+    Text(title, Modifier.padding(top = 20.dp, bottom = 4.dp).semantics { heading() }, style = MaterialTheme.typography.titleMedium)
 }

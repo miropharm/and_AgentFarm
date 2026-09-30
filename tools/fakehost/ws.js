@@ -109,9 +109,10 @@ function connect({ host, port, path = '/ws', secure = false, rejectUnauthorized 
             const text = head.subarray(0, end).toString();
             if (!/^HTTP\/1\.1 101/.test(text) || !text.includes(acceptKey(key))) { reject(new Error('upgrade refused: ' + text.split('\r\n')[0])); return; }
             const conn = new Conn(socket, { client: true });
+            // Frames that rode in with the 101 wait until the caller has attached its listeners.
+            conn.buf = head.subarray(end + 4);
             resolve(conn);
-            const rest = head.subarray(end + 4);
-            if (rest.length) { socket.emit('data', rest); }
+            setImmediate(() => conn.drain());
         };
         socket.on('data', onData);
     });

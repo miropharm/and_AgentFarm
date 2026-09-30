@@ -13,8 +13,21 @@ adb install -r -t "$APP"
 adb install -r -t "$TEST"
 adb logcat -c
 
+# The fake Agent Farm host, over TLS with a throwaway certificate; the emulator reaches the runner at 10.0.2.2.
+FH_PORT=8743
+openssl req -x509 -newkey ec -pkeyopt ec_paramgen_curve:prime256v1 -nodes -days 1 -subj "/CN=fakehost" \
+  -keyout "$OUT/fh-key.pem" -out "$OUT/fh-cert.pem" 2> /dev/null
+node tools/fake_host.js --port "$FH_PORT" --cert "$OUT/fh-cert.pem" --key "$OUT/fh-key.pem" \
+  --addr "10.0.2.2:$FH_PORT" > "$OUT/fake-host.txt" 2>&1 &
+FH_PID=$!
+trap 'kill $FH_PID 2> /dev/null || true' EXIT
+for _ in $(seq 20); do grep -q '^PAIR ' "$OUT/fake-host.txt" && break; sleep 0.5; done
+PAIR_URI=$(sed -n 's/^PAIR //p' "$OUT/fake-host.txt")
+if [ -z "$PAIR_URI" ]; then echo "::error::fake host did not start"; cat "$OUT/fake-host.txt"; exit 1; fi
+rm -f "$OUT/fh-key.pem"
+
 set +e
-adb shell am instrument -w "$PKG.test/androidx.test.runner.AndroidJUnitRunner" | tee "$OUT/instrumentation.txt"
+adb shell am instrument -w -e pairUri "'$PAIR_URI'" "$PKG.test/androidx.test.runner.AndroidJUnitRunner" | tee "$OUT/instrumentation.txt"
 set -e
 
 # Each screenshot is logged with the rotation and night mode actually in effect, so a capture can be trusted.

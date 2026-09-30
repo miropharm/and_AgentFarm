@@ -1,6 +1,10 @@
 package com.muvusoft.agentfarm.ui.page
 
 import android.annotation.SuppressLint
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.os.Handler
+import android.os.Looper
 import android.webkit.WebSettings
 import android.webkit.WebView
 import androidx.activity.compose.BackHandler
@@ -21,6 +25,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -32,6 +37,8 @@ import com.muvusoft.agentfarm.core.contract.ViewPost
 import com.muvusoft.agentfarm.core.link.LinkText
 import com.muvusoft.agentfarm.core.state.Link
 import com.muvusoft.agentfarm.core.view.PageRoute
+import com.muvusoft.agentfarm.core.view.PageStack
+import com.muvusoft.agentfarm.core.view.ShellRequest
 import com.muvusoft.agentfarm.net.ConnectionManager
 import java.util.UUID
 import kotlinx.coroutines.Dispatchers
@@ -41,15 +48,24 @@ import kotlinx.serialization.json.JsonElement
 /** One of the farm's own pages, carried by a WebView. While the farm is not online the wait is shown instead. */
 @Composable
 fun FarmPage(farmId: String, page: String, manager: ConnectionManager, onBack: () -> Unit) {
-    BackHandler(onBack = onBack)
+    // A page's own links open the next page here; Back walks back through them, then leaves the farm.
+    var stack by remember(page) { mutableStateOf(listOf(page)) }
+    BackHandler { PageStack.back(stack)?.let { stack = it } ?: onBack() }
+    val current = stack.last()
     // A dead renderer bumps the generation: the old WebView is dropped and a new one opens a new view.
     var generation by remember { mutableIntStateOf(0) }
-    val viewId = remember(generation) { "v_" + UUID.randomUUID().toString().take(8) }
+    val viewId = remember(generation, current) { "v_" + UUID.randomUUID().toString().take(8) }
     val state by manager.state.collectAsState()
     val link = state.farm(farmId)?.link
     Surface(Modifier.fillMaxSize()) {
         if (link is Link.Online) {
-            key(generation) { PageView(farmId, page, viewId, manager, onRendererGone = { generation++ }) }
+            key(generation, current) {
+                PageView(
+                    farmId = farmId, page = current, viewId = viewId, manager = manager,
+                    onRendererGone = { generation++ },
+                    onOpen = { stack = PageStack.open(stack, it) },
+                )
+            }
         } else {
             Box(Modifier.fillMaxSize().padding(16.dp)) {
                 val text = link?.let { LinkText.of(it, System.currentTimeMillis()).long } ?: "Bu çiftlik artık eşli değil."
@@ -61,7 +77,16 @@ fun FarmPage(farmId: String, page: String, manager: ConnectionManager, onBack: (
 
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
-private fun PageView(farmId: String, page: String, viewId: String, manager: ConnectionManager, onRendererGone: () -> Unit) {
+private fun PageView(
+    farmId: String,
+    page: String,
+    viewId: String,
+    manager: ConnectionManager,
+    onRendererGone: () -> Unit,
+    onOpen: (String) -> Unit,
+) {
+    val clipboard = LocalContext.current.getSystemService(ClipboardManager::class.java)
+    val main = remember { Handler(Looper.getMainLooper()) }
     var web by remember { mutableStateOf<WebView?>(null) }
     // Host messages that arrive before the page has loaded wait here; all of this runs on the main thread.
     val pending = remember { mutableListOf<String>() }
@@ -108,7 +133,16 @@ private fun PageView(farmId: String, page: String, viewId: String, manager: Conn
                 addJavascriptInterface(
                     PageBridge { json ->
                         val msg = runCatching { Codec.json.parseToJsonElement(json) }.getOrNull() ?: return@PageBridge
-                        manager.send(farmId, ViewMsg(viewId, msg))
+                        // The bridge calls on its own thread; the WebView and Compose state live on the main one.
+                        when (val r = ShellRequest.of(msg)) {
+                            null -> manager.send(farmId, ViewMsg(viewId, msg))
+                            is ShellRequest.Open -> main.post { onOpen(r.page) }
+                            is ShellRequest.Copy -> main.post {
+                                val ok = runCatching { checkNotNull(clipboard).setPrimaryClip(ClipData.newPlainText("Agent Farm", r.text)) }.isSuccess
+                                deliver(ShellRequest.copyDone(r.token, ok, if (ok) null else "Pano bunu kabul etmedi.").toString())
+                            }
+                            ShellRequest.Refused -> Unit
+                        }
                     },
                     "afShell",
                 )

@@ -32,6 +32,12 @@ class PageRouteTest {
         ).forEach { assertNull(it, PageRoute.hostPath(it)) }
     }
 
+    @Test
+    fun aPageIdIsOneSafeName() {
+        listOf("now", "needs", "a2a.notes", "x_1-2").forEach { assertEquals(it, true, PageRoute.isPage(it)) }
+        listOf("", "a/b", "../x", "a?b", "a b", "ş").forEach { assertEquals(it, false, PageRoute.isPage(it)) }
+    }
+
     @Test(expected = IllegalArgumentException::class)
     fun aPageIdCannotCarryAPath() {
         PageRoute.pageUrl("../x", "v1")

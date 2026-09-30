@@ -1,5 +1,6 @@
 package com.muvusoft.agentfarm
 
+import android.content.ClipboardManager
 import android.view.View
 import android.view.ViewGroup
 import android.webkit.WebView
@@ -112,14 +113,49 @@ class FarmPageTest {
         return "WebView at ${js("location.href")}; body=[${js("document.body ? document.body.innerText.slice(0,200) : 'no body'")}]; link=$link"
     }
 
-    @Test
-    fun aFarmRowOpensItsPageThroughTheShell() {
+    private fun openFarm() {
         rule.waitUntil(20_000) {
             // The row is clickable, so its texts are merged into it; the link line is found in the unmerged tree.
             rule.onAllNodes(hasTestTag("link-$farmId") and hasText("Bağlı", substring = true), useUnmergedTree = true)
                 .fetchSemanticsNodes().isNotEmpty()
         }
         rule.onNodeWithTag("farm-$farmId").performClick()
+    }
+
+    private fun titleUntil(want: String): String =
+        jsUntil("document.getElementById('title') ? document.getElementById('title').textContent : ''") { it == want }
+
+    @Test
+    fun aPageLinkOpensTheNextPageInTheShellAndBackReturns() {
+        openFarm()
+        assertEquals(diagnosis(), "Sahte sayfa: now", titleUntil("Sahte sayfa: now"))
+        // X-443: afnav is the shell's, not the farm's; the next page opens here, in a view of its own.
+        js("acquireVsCodeApi().postMessage({type:'afnav',to:'needs'})")
+        assertEquals(diagnosis(), "Sahte sayfa: needs", titleUntil("Sahte sayfa: needs"))
+        rule.activityRule.scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }
+        assertEquals(diagnosis(), "Sahte sayfa: now", titleUntil("Sahte sayfa: now"))
+        // A link to something that is not a page opens nothing.
+        js("acquireVsCodeApi().postMessage({type:'afnav',to:'../x'})")
+        Thread.sleep(500)
+        assertEquals("Sahte sayfa: now", titleUntil("Sahte sayfa: now"))
+    }
+
+    @Test
+    fun aCopyFromAPageLandsOnThePhonesClipboard() {
+        openFarm()
+        assertEquals(diagnosis(), "Sahte sayfa: now", titleUntil("Sahte sayfa: now"))
+        js("acquireVsCodeApi().postMessage({type:'afClipboard',token:'t1',text:'kopya metni'})")
+        assertEquals(true, jsUntil("document.body.getAttribute('data-seen') || ''") { it.contains("afClipboardDone") }.contains("afClipboardDone"))
+        var clip = ""
+        rule.activityRule.scenario.onActivity { a ->
+            clip = a.getSystemService(ClipboardManager::class.java)?.primaryClip?.getItemAt(0)?.text?.toString().orEmpty()
+        }
+        assertEquals("kopya metni", clip)
+    }
+
+    @Test
+    fun aFarmRowOpensItsPageThroughTheShell() {
+        openFarm()
 
         val title = jsUntil("document.getElementById('title') ? document.getElementById('title').textContent : ''") { it.startsWith("Sahte") }
         assertEquals(diagnosis(), "Sahte sayfa: now", title)

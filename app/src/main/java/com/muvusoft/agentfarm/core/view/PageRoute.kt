@@ -15,6 +15,9 @@ object PageRoute {
 
     private val PAGE = Regex("^[A-Za-z0-9._-]+$")
 
+    /** Whether [id] can name a page (or a view): no path, no query, nothing to escape. */
+    fun isPage(id: String): Boolean = PAGE.matches(id)
+
     /** The URL the WebView opens for a page and view. */
     fun pageUrl(page: String, view: String): String {
         require(PAGE.matches(page) && PAGE.matches(view)) { "bad page or view id" }

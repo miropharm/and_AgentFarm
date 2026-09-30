@@ -140,6 +140,16 @@ Tasarımın gerekçesi: vault projesi `10_Notes/A-PLN - Android Uygulaması Yeni
 - Uzaktan açılan sayfalar yeni bir oturum kapısı değildir; masaüstündeki kapıların kendisidir.
 - Sayfanın host'a özgü istekleri telefonda karşılanır: kopyalama telefonun panosuna, dış bağlantı
   telefonun tarayıcısına, dosya açma salt okunur görüntüleyiciye gider.
+- **Kabuğun karşıladığı sayfa mesajları** (`core/view/ShellRequest`) çiftliğe hiç gitmez:
+  `afnav` (`to` = sayfa kimliği) aynı kabukta o sayfayı kendi görünümüyle açar, Geri önceki sayfaya
+  döner, ilk sayfada Geri çiftlikten çıkar (`core/view/PageStack`, en çok 20 sayfa); sayfa kimliği
+  olmayan bir hedef hiçbir şey açmaz. `afClipboard` (`token`, `text`) metni telefonun panosuna
+  koyar ve sayfaya masaüstündeki biçimle `afClipboardDone` (`token`, `ok`, `error?`) döner.
+  Diğer bütün sayfa mesajları `view.msg` olarak gider.
+- Çiftlik tarafında sayfa başına bir kural vardır (`vsc_AgentFarm/src/panels/remotePages.ts`): bir
+  mesaj ya yalnız PC'de çalışır (telefondan hiç çalışmaz), ya bakar (`read`), ya cevaplar
+  (`answer`), ya da sayfanın işlem yetkisini ister. Bugün telefonda açılan sayfalar: `needs`,
+  `console`; listede olmayan sayfa `view.close` `unavailable` alır.
 
 ## 11. Ses — TalkScribe (ZEP)
 

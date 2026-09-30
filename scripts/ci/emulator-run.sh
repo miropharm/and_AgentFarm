@@ -9,10 +9,6 @@ mkdir -p "$OUT"
 APP=$(find apks -name app-debug.apk | head -1)
 TEST=$(find apks -name app-debug-androidTest.apk | head -1)
 
-# A fresh google_apis image lets Play update Play services mid-run; every app using its providers (the
-# WebView's fonts) is then killed with it (CI 36697433659: "depends on provider ... in dying proc").
-adb shell pm disable-user --user 0 com.android.vending > /dev/null 2>&1 || true
-
 adb install -r -t "$APP"
 adb install -r -t "$TEST"
 # A permission dialog would cover the UI tests; the prompt itself is the user's first-run experience.

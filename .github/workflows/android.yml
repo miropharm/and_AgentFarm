@@ -76,7 +76,9 @@ jobs:
         with:
           api-level: 34
           arch: x86_64
-          target: google_apis
+          # No Play services: on a fresh google_apis image they restart themselves mid-run and kill every
+          # app holding one of their providers (the WebView's fonts). Real devices with Play: Test Lab.
+          target: default
           profile: pixel_6
           disable-animations: true
           script: bash scripts/ci/emulator-run.sh

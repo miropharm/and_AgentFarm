@@ -31,7 +31,7 @@ object FakeHost {
         PinnedTls.client(info.fp).newCall(Request.Builder().url("https://${info.addresses.first()}$path").build())
             .execute().use { it.body!!.string() }
 
-    /** POSTs a /_test/* control request (emit an event, drop sockets, revoke a device). */
+    /** POSTs a test control request under /_test (emit an event, drop sockets, revoke a device). */
     fun post(path: String, json: String): String {
         val info = Pairing.parse(requireLink())!!
         val req = Request.Builder().url("https://${info.addresses.first()}$path")

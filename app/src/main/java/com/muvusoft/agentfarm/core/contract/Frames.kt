@@ -38,6 +38,8 @@ data class Welcome(
     val scope: String,
     val features: Map<String, FeatureAnswer>,
     val lastSeq: Long,
+    /** Authorizes /view and /res while this socket is open; held in memory only. */
+    val session: String? = null,
 ) : Frame()
 
 @Serializable

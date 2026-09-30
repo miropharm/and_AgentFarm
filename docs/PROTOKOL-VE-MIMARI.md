@@ -69,9 +69,14 @@ Tasarımın gerekçesi: vault projesi `10_Notes/A-PLN - Android Uygulaması Yeni
 
 1. Agent Farm önce konuşur: `challenge` (`nonce`, `farm`, `contract`).
 2. Telefon `hello` ile cevaplar: `device`, `contract`, nonce üzerindeki `signature`, isteğe bağlı `resumeAfter`.
-3. Agent Farm `welcome` (yetki, özellikler, `lastSeq`) ya da `refuse` döner.
+3. Agent Farm `welcome` (yetki, özellikler, `lastSeq`, isteğe bağlı `session`) ya da `refuse` döner.
    `refuse` nedenleri: `unknown-device`, `revoked`, `bad-signature`, `contract`, `not-allowed`, `busy`.
 4. `welcome` gelmeden başka hiçbir çerçeve kabul edilmez.
+5. **Sayfalar ve kaynaklar:** `GET /view/<sayfa>?view=<id>` sayfanın HTML'ini (`acquireVsCodeApi` yerine
+   `afRemote.js`), `GET /res/<yol>` sayfanın yüklediği dosyaları verir; ikisi de
+   `Authorization: AF <welcome.session>` ister. `session` yalnız o cihazın soketi açıkken geçerlidir,
+   telefon onu diske yazmaz. WebView ağa kendisi çıkmaz: bu istekleri `shouldInterceptRequest` yakalar
+   ve yerel kod sabitlenmiş sertifikalı istemciyle getirir.
 
 ## 6. Çerçeveler
 

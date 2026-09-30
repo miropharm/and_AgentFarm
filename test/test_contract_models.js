@@ -48,7 +48,7 @@ function checkFields(what, className, fields) {
 }
 
 // The reader bites.
-t.ok(JSON.stringify(Object.keys(params('Welcome') || {})) === JSON.stringify(['farm', 'device', 'scope', 'features', 'lastSeq']), 'the parser reads a multi-line constructor with a generic type');
+t.ok(JSON.stringify(Object.keys(params('Welcome') || {})) === JSON.stringify(['farm', 'device', 'scope', 'features', 'lastSeq', 'session']), 'the parser reads a multi-line constructor with a generic type');
 t.ok(classForSerialName('no.such.kind') === null, 'an unknown kind finds no model');
 
 for (const [kind, spec] of Object.entries(c.frames)) {

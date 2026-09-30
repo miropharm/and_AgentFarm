@@ -3,6 +3,8 @@ package com.muvusoft.agentfarm
 import android.view.View
 import android.view.ViewGroup
 import android.webkit.WebView
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -79,7 +81,7 @@ class FarmPageTest {
     /** What was on screen instead of the page: the wait sentence, or the WebView's address and text. */
     private fun diagnosis(): String {
         val wait = rule.onAllNodes(hasTestTag("page-wait"), useUnmergedTree = true).fetchSemanticsNodes()
-            .joinToString { n -> n.config.getOrNull(androidx.compose.ui.semantics.SemanticsProperties.Text)?.joinToString().orEmpty() }
+            .joinToString { n -> n.config.getOrNull(SemanticsProperties.Text)?.joinToString().orEmpty() }
         val link = AgentFarmApp.of(InstrumentationRegistry.getInstrumentation().targetContext).manager.state.value.farm(farmId)?.link
         if (webView() == null) return "no WebView; wait=[$wait]; link=$link"
         return "WebView at ${js("location.href")}; body=[${js("document.body ? document.body.innerText.slice(0,200) : 'no body'")}]; link=$link"

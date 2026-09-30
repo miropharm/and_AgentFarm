@@ -44,3 +44,6 @@ Thumbs.db
 docs/Keys/
 *.json.key
 !app/debug.keystore
+
+# Screenshots shared with the user (local only, timestamp-first names)
+docs/Screenshots/

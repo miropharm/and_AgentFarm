@@ -119,6 +119,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
+      - uses: actions/checkout@v4
+
       - uses: actions/download-artifact@v4
         with:
           name: apks-b${{ github.run_number }}
@@ -133,8 +135,4 @@ jobs:
       - name: Send to App Distribution
         env:
           RELEASE_NOTES: "b${{ github.run_number }} - ${{ github.event.head_commit.message }}"
-        run: |
-          gcloud services enable firebaseappdistribution.googleapis.com --project "$FIREBASE_PROJECT" --quiet
-          APK=$(find apks -name app-debug.apk | head -1)
-          npx --yes firebase-tools@latest appdistribution:distribute "$APK" \
-            --app "$FIREBASE_APP_ID" --groups dev --release-notes "$RELEASE_NOTES"
+        run: bash scripts/ci/deliver.sh

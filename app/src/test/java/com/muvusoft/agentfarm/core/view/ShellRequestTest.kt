@@ -49,4 +49,23 @@ class ShellRequestTest {
             ShellRequest.copyDone(JsonNull, false, "x").toString(),
         )
     }
+
+    @Test
+    fun aDictationStaysOnThePhoneWithItsToken() {
+        assertEquals(ShellRequest.Voice(JsonPrimitive(7)), of("""{"type":"afVoice","token":7}"""))
+        assertEquals(ShellRequest.Voice(JsonNull), of("""{"type":"afVoice"}"""))
+    }
+
+    @Test
+    fun theDictationAnswerCarriesTheFirstRealResultOrNothing() {
+        assertEquals(
+            """{"type":"afVoiceDone","token":7,"text":"testleri çalıştır"}""",
+            ShellRequest.voiceDone(JsonPrimitive(7), listOf("  ", " testleri çalıştır ", "testler")).toString(),
+        )
+        assertEquals("""{"type":"afVoiceDone","token":7}""", ShellRequest.voiceDone(JsonPrimitive(7), null).toString())
+        assertEquals(
+            """{"type":"afVoiceDone","token":7,"error":"yok"}""",
+            ShellRequest.voiceDone(JsonPrimitive(7), emptyList(), "yok").toString(),
+        )
+    }
 }

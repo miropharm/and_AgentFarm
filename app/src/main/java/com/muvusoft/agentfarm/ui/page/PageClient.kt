@@ -81,7 +81,11 @@ class PageClient(
 const val TAG = "AFPage"
 
 /** What a page's afRemote.js calls as `afShell.post(json)`: one message from the page to its host view. */
-class PageBridge(private val onMessage: (String) -> Unit) {
+class PageBridge(private val canDictate: Boolean, private val onMessage: (String) -> Unit) {
     @JavascriptInterface
     fun post(json: String) = onMessage(json)
+
+    /** Whether the page may offer a microphone (media/afVoice.js asks before drawing one). */
+    @JavascriptInterface
+    fun voice(): Boolean = canDictate
 }

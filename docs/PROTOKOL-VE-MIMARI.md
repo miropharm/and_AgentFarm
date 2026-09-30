@@ -147,6 +147,9 @@ Tasarımın gerekçesi: vault projesi `10_Notes/A-PLN - Android Uygulaması Yeni
   döner, ilk sayfada Geri çiftlikten çıkar (`core/view/PageStack`, en çok 20 sayfa); sayfa kimliği
   olmayan bir hedef hiçbir şey açmaz. `afClipboard` (`token`, `text`) metni telefonun panosuna
   koyar ve sayfaya masaüstündeki biçimle `afClipboardDone` (`token`, `ok`, `error?`) döner.
+  `afVoice` (`token`) sistemin konuşma tanıyıcısını (`RECOGNIZE_SPEECH`, `tr-TR`) açar ve
+  `afVoiceDone` (`token`, `text?`, `error?`) döner — vazgeçilirse `text` yoktur. Sayfa mikrofonu
+  yalnız `afShell.voice()` doğru dönerse çizer (telefonda bir tanıyıcı var demektir).
   Diğer bütün sayfa mesajları `view.msg` olarak gider.
 - Çiftlik tarafında sayfa başına bir kural vardır (`vsc_AgentFarm/src/panels/remotePages.ts`): bir
   mesaj ya yalnız PC'de çalışır (telefondan hiç çalışmaz), ya bakar (`read`), ya cevaplar

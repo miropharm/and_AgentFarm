@@ -95,11 +95,17 @@ adb exec-out screencap -p > "$OUT/notification-shade.png"
 adb shell cmd statusbar collapse
 
 # The quick settings tile, added and shown with the farm paired by the tests.
+# (The shade was just collapsed: expanding at once lost the race and shot the app.)
+sleep 2
 adb shell cmd statusbar add-tile "$PKG/.widget.StatusTile" > /dev/null 2>&1 || echo "::warning::could not add the tile"
+sleep 2
 adb shell cmd statusbar expand-settings
-sleep 3
+sleep 4
 adb exec-out screencap -p > "$OUT/qs-tile.png"
-echo "== qs-tile" >> "$OUT/screen-state.txt"
+{
+  echo "== qs-tile"
+  adb shell dumpsys activity services "$PKG/.widget.StatusTile" | grep -m3 -E 'ServiceRecord|bound' || echo "tile service not bound"
+} >> "$OUT/screen-state.txt"
 adb shell cmd statusbar collapse
 
 bash scripts/ci/doze-probe.sh "$PKG" "$OUT" "$FH_PORT"

@@ -65,6 +65,8 @@
     <!-- Farm pages -->
     <string name="farm_unpaired">Bu çiftlik artık eşli değil.</string>
     <string name="clipboard_refused">Pano bunu kabul etmedi.</string>
+    <string name="voice_prompt">Konuşun…</string>
+    <string name="voice_unavailable">Bu telefonda konuşma tanıma yok.</string>
     <string name="page_blocked">Bu adres kabuktan açılmaz.</string>
     <string name="page_offline">Çiftlik şu an bağlı değil.</string>
 

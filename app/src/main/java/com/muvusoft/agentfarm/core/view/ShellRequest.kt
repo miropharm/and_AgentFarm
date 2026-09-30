@@ -20,6 +20,9 @@ sealed interface ShellRequest {
     /** Put text on the phone's clipboard; the page waits for `afClipboardDone` with its token. */
     data class Copy(val token: JsonElement, val text: String) : ShellRequest
 
+    /** Dictate into the page's focused text box; the page waits for `afVoiceDone` with its token. */
+    data class Voice(val token: JsonElement) : ShellRequest
+
     /** A shell request the shell refuses (a malformed page id): it goes nowhere. */
     data object Refused : ShellRequest
 
@@ -30,6 +33,7 @@ sealed interface ShellRequest {
             return when (o.str("type")) {
                 "afnav" -> o.str("to")?.takeIf(PageRoute::isPage)?.let(::Open) ?: Refused
                 "afClipboard" -> Copy(o["token"] ?: JsonNull, o.str("text").orEmpty())
+                "afVoice" -> Voice(o["token"] ?: JsonNull)
                 else -> null
             }
         }
@@ -41,6 +45,17 @@ sealed interface ShellRequest {
             put("ok", ok)
             if (error != null) put("error", error)
         }
+
+        /** The recogniser's answer: its first non-blank result; nothing (a cancel) carries no text. */
+        fun voiceDone(token: JsonElement, results: List<String>?, error: String? = null): JsonObject = buildJsonObject {
+            put("type", "afVoiceDone")
+            put("token", token)
+            results?.map { it.trim() }?.firstOrNull { it.isNotEmpty() }?.let { put("text", it) }
+            if (error != null) put("error", error)
+        }
+
+        /** The language dictation asks the recogniser for. */
+        const val VOICE_LANGUAGE = "tr-TR"
 
         private fun JsonObject.str(key: String): String? = (this[key] as? JsonPrimitive)?.takeIf { it.isString }?.contentOrNull
     }

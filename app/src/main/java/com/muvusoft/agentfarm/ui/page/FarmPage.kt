@@ -99,6 +99,7 @@ private fun PageView(
         val w = web
         if (loaded && w != null) w.evaluateJavascript(PageRoute.deliverScript(json), null) else pending += json
     }
+    val dictation = rememberDictation(deliver)
 
     LaunchedEffect(viewId) {
         manager.send(farmId, ViewOpen(viewId, page))
@@ -134,7 +135,7 @@ private fun PageView(
                     onRendererGone = onRendererGone,
                 )
                 addJavascriptInterface(
-                    PageBridge { json ->
+                    PageBridge(canDictate = dictation.available) { json ->
                         val msg = runCatching { Codec.json.parseToJsonElement(json) }.getOrNull() ?: return@PageBridge
                         // The bridge calls on its own thread; the WebView and Compose state live on the main one.
                         when (val r = ShellRequest.of(msg)) {
@@ -144,6 +145,7 @@ private fun PageView(
                                 val ok = runCatching { checkNotNull(clipboard).setPrimaryClip(ClipData.newPlainText("Agent Farm", r.text)) }.isSuccess
                                 deliver(ShellRequest.copyDone(r.token, ok, if (ok) null else clipboardRefused).toString())
                             }
+                            is ShellRequest.Voice -> main.post { dictation.start(r.token) }
                             ShellRequest.Refused -> Unit
                         }
                     },

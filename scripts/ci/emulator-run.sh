@@ -42,6 +42,9 @@ set +e
 adb shell am instrument -w -e pairUri "'$PAIR_URI'" "$PKG.test/androidx.test.runner.AndroidJUnitRunner" | tee "$OUT/instrumentation.txt"
 set -e
 
+# Scenes the UI tests reached by pressing (androidTest Shots.kt), kept in the app's external files.
+adb pull "/sdcard/Android/data/$PKG/files/shots" "$OUT/" > /dev/null 2>&1 || echo "::warning::no test scene shots were pulled"
+
 # Each screenshot is logged with the rotation and night mode actually in effect, so a capture can be trusted.
 # shot NAME ROTATION: the rotation is applied after the app is on screen (launching it reset an earlier one).
 shot() {

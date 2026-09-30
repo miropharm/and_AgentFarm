@@ -1,6 +1,7 @@
 package com.muvusoft.agentfarm.ui
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -21,7 +22,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material3.AlertDialog
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
+import com.muvusoft.agentfarm.ui.components.AFTip
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -49,20 +53,26 @@ fun PairingScreen(
     farms: List<PairedFarm>,
     /** Each farm's link in the status strip's words, by farm id. */
     links: Map<String, LinkText.Text>,
+    /** Each farm's link detail sheet (long-press on its row), by farm id. */
+    tips: Map<String, List<String>>,
     ui: PairingUi,
     onLinkChange: (String) -> Unit,
     onPair: () -> Unit,
     onForget: (PairedFarm) -> Unit,
     onOpen: (PairedFarm) -> Unit,
+    onSettings: () -> Unit,
 ) {
     Surface(Modifier.fillMaxSize()) {
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
-            ShellHeader(versionName)
+            Row(verticalAlignment = Alignment.Top) {
+                Box(Modifier.weight(1f)) { ShellHeader(versionName) }
+                IconButton(onClick = onSettings, modifier = Modifier.testTag("open-settings")) { Icon(Icons.Filled.Settings, "Ayarlar") }
+            }
             Text("Çiftlikler", style = MaterialTheme.typography.titleMedium)
             if (farms.isEmpty()) {
                 Text("Henüz eşlenmiş çiftlik yok.", Modifier.testTag("farms-empty"), style = MaterialTheme.typography.bodyMedium)
             }
-            farms.forEach { FarmRow(it, links[it.id], onForget = onForget, onOpen = onOpen) }
+            farms.forEach { FarmRow(it, links[it.id], tips[it.id].orEmpty(), onForget = onForget, onOpen = onOpen) }
             Spacer(Modifier.height(16.dp))
             Text("Yeni eşleşme", style = MaterialTheme.typography.titleMedium)
             Text(
@@ -98,20 +108,23 @@ fun PairingScreen(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun FarmRow(farm: PairedFarm, link: LinkText.Text?, onForget: (PairedFarm) -> Unit, onOpen: (PairedFarm) -> Unit) {
-    var confirm by remember { mutableStateOf(false) }
-    if (confirm) {
-        AlertDialog(
-            onDismissRequest = { confirm = false },
-            title = { Text("${farm.name} unutulsun mu?") },
-            text = { Text("Bu telefonun bu çiftlikteki anahtarı silinir; yeniden bağlanmak için yeni bir QR gerekir.") },
-            confirmButton = { TextButton(onClick = { confirm = false; onForget(farm) }) { Text("Unut") } },
-            dismissButton = { TextButton(onClick = { confirm = false }) { Text("Vazgeç") } },
-        )
-    }
-    Card(onClick = { onOpen(farm) }, modifier = Modifier.fillMaxWidth().padding(top = 8.dp).testTag("farm-${farm.id}")) {
-        Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+private fun FarmRow(
+    farm: PairedFarm,
+    link: LinkText.Text?,
+    tip: List<String>,
+    onForget: (PairedFarm) -> Unit,
+    onOpen: (PairedFarm) -> Unit,
+) {
+    var showTip by remember { mutableStateOf(false) }
+    if (showTip && tip.isNotEmpty()) AFTip(tip, onDismiss = { showTip = false })
+    Card(Modifier.fillMaxWidth().padding(top = 8.dp).testTag("farm-${farm.id}")) {
+        Row(
+            Modifier.combinedClickable(onClick = { onOpen(farm) }, onLongClick = { showTip = true }, onLongClickLabel = "Bağlantı ayrıntısı")
+                .padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             Column(Modifier.weight(1f)) {
                 Text(farm.name, style = MaterialTheme.typography.titleSmall)
                 Text(
@@ -120,7 +133,7 @@ private fun FarmRow(farm: PairedFarm, link: LinkText.Text?, onForget: (PairedFar
                     style = MaterialTheme.typography.bodySmall,
                 )
             }
-            TextButton(onClick = { confirm = true }) { Text("Unut") }
+            TextButton(onClick = { onForget(farm) }, modifier = Modifier.testTag("forget-${farm.id}")) { Text("Unut") }
         }
     }
 }

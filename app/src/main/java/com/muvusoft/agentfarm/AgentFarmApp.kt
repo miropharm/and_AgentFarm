@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.Context
 import com.muvusoft.agentfarm.net.ConnectionManager
 import com.muvusoft.agentfarm.net.FarmStore
+import com.muvusoft.agentfarm.net.ShellPrefs
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -12,6 +13,7 @@ import kotlinx.coroutines.SupervisorJob
 class AgentFarmApp : Application() {
     val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     val store by lazy { FarmStore(this) }
+    val prefs by lazy { ShellPrefs(this) }
     val manager by lazy { ConnectionManager(scope) }
 
     companion object {

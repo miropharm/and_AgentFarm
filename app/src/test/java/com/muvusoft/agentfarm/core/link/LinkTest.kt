@@ -68,4 +68,13 @@ class LinkTest {
         assertEquals("2 sa", Time.ago(7_200_000))
         assertEquals("3 gün", Time.ago(3 * 86_400_000L))
     }
+
+    @Test
+    fun theSheetOpensWithTheLongFormAndListsTheAddresses() {
+        val link = Link.Offline("unreachable", 0)
+        val lines = LinkText.sheet(link, listOf("10.0.0.2:7443", "pc.local:7443"), 60_000)
+        assertEquals(LinkText.of(link, 60_000).long, lines.first())
+        assertEquals("Adresler: 10.0.0.2:7443, pc.local:7443", lines[1])
+        assertEquals(1, LinkText.sheet(link, emptyList(), 60_000).size)
+    }
 }

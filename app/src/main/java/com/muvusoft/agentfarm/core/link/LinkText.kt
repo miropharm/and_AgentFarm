@@ -27,6 +27,10 @@ object LinkText {
         )
     }
 
+    /** The link detail sheet: the long form first, then where the phone looks for the farm. */
+    fun sheet(link: Link, addresses: List<String>, now: Long): List<String> =
+        listOf(of(link, now).long) + (if (addresses.isEmpty()) emptyList() else listOf("Adresler: " + addresses.joinToString(", ")))
+
     fun refused(reason: String): String = when (reason) {
         "revoked" -> "bu cihazın izni kaldırılmış"
         "unknown-device" -> "çiftlik bu cihazı tanımıyor"

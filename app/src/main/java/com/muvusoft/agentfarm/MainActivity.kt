@@ -2,13 +2,14 @@ package com.muvusoft.agentfarm
 
 import android.content.Intent
 import android.os.Bundle
-import androidx.activity.ComponentActivity
+import androidx.fragment.app.FragmentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.mutableStateOf
 import com.muvusoft.agentfarm.ui.AppTheme
 import com.muvusoft.agentfarm.ui.ShellApp
 
-class MainActivity : ComponentActivity() {
+/** A FragmentActivity because the system owner prompt (biometric or screen lock) needs one. */
+class MainActivity : FragmentActivity() {
     private val incomingLink = mutableStateOf<String?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -17,7 +18,7 @@ class MainActivity : ComponentActivity() {
         val app = AgentFarmApp.of(this)
         setContent {
             AppTheme {
-                ShellApp(versionName = BuildConfig.VERSION_NAME, store = app.store, manager = app.manager, incomingLink = incomingLink.value)
+                ShellApp(versionName = BuildConfig.VERSION_NAME, store = app.store, prefs = app.prefs, manager = app.manager, incomingLink = incomingLink.value)
             }
         }
     }

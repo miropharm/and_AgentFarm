@@ -27,18 +27,53 @@ import com.muvusoft.agentfarm.net.ConnectionManager
 import com.muvusoft.agentfarm.net.DeviceIdentity
 import com.muvusoft.agentfarm.net.FarmStore
 import com.muvusoft.agentfarm.net.PairClient
+import com.muvusoft.agentfarm.core.lock.LockPolicy
+import com.muvusoft.agentfarm.net.ShellPrefs
+import com.muvusoft.agentfarm.ui.lock.Destructive
+import com.muvusoft.agentfarm.ui.lock.LockGate
+import com.muvusoft.agentfarm.ui.lock.OwnerCheck
+import com.muvusoft.agentfarm.ui.lock.rememberDestructiveConfirm
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /** The shell's state and actions. `incomingLink` is a pairing link the system handed over (QR via camera, a tapped link). */
 @Composable
-fun ShellApp(versionName: String, store: FarmStore, manager: ConnectionManager, incomingLink: String?) {
+fun ShellApp(versionName: String, store: FarmStore, prefs: ShellPrefs, manager: ConnectionManager, incomingLink: String?) {
+    val context = LocalContext.current
+    var lockOnOpen by remember { mutableStateOf(prefs.lockOnOpen) }
+    val availability = OwnerCheck.availability(context)
+    fun askOwner(title: String, then: (Boolean) -> Unit) = OwnerCheck.ask(context, title, null, then)
+    LockGate(
+        enabled = lockOnOpen && availability == LockPolicy.Availability.READY,
+        ask = { askOwner("Agent Farm'ı aç", it) },
+    ) {
+        Shell(
+            versionName = versionName,
+            store = store,
+            manager = manager,
+            incomingLink = incomingLink,
+            settings = SettingsUi(lockOnOpen, availability) { wanted ->
+                askOwner(if (wanted) "Açılış kilidini aç" else "Açılış kilidini kapat") { ok ->
+                    if (ok) { prefs.lockOnOpen = wanted; lockOnOpen = wanted }
+                }
+            },
+        )
+    }
+}
+
+/** What the settings screen shows and the one way it changes the lock. */
+private data class SettingsUi(val lockOnOpen: Boolean, val availability: LockPolicy.Availability, val onLockToggle: (Boolean) -> Unit)
+
+@Composable
+private fun Shell(versionName: String, store: FarmStore, manager: ConnectionManager, incomingLink: String?, settings: SettingsUi) {
     var farms by remember { mutableStateOf(store.load()) }
     var ui by remember { mutableStateOf(PairingUi()) }
     val scope = rememberCoroutineScope()
     val shell by manager.state.collectAsState()
     var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
     var opened by rememberSaveable { mutableStateOf<String?>(null) }
+    var inSettings by rememberSaveable { mutableStateOf(false) }
+    val confirm = rememberDestructiveConfirm()
 
     val context = LocalContext.current
     val askNotifications = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { }
@@ -81,14 +116,36 @@ fun ShellApp(versionName: String, store: FarmStore, manager: ConnectionManager, 
         return
     }
 
+    if (inSettings) {
+        SettingsScreen(
+            versionName = versionName,
+            lockOnOpen = settings.lockOnOpen,
+            availability = settings.availability,
+            onLockToggle = settings.onLockToggle,
+            onBack = { inSettings = false },
+        )
+        return
+    }
+
     PairingScreen(
         versionName = versionName,
         farms = farms,
         links = shell.farms.associate { it.farm.id to LinkText.of(it.link, now) },
+        tips = shell.farms.associate { it.farm.id to LinkText.sheet(it.link, it.farm.addresses, now) },
         ui = ui,
         onLinkChange = { ui = ui.copy(link = it, message = null, failed = false) },
         onPair = pair,
-        onForget = { farms = store.forget(it.id) },
+        onForget = { farm ->
+            confirm(
+                Destructive(
+                    title = "${farm.name} unutulsun mu?",
+                    detail = "Bu telefonun bu çiftlikteki anahtarı silinir; yeniden bağlanmak için yeni bir QR gerekir.",
+                    verb = "Unut",
+                    run = { farms = store.forget(farm.id) },
+                ),
+            )
+        },
         onOpen = { manager.focus(it.id); opened = it.id },
+        onSettings = { inSettings = true },
     )
 }

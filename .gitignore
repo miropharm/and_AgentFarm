@@ -43,3 +43,4 @@ Thumbs.db
 # Local secrets - never commit (public repo)
 docs/Keys/
 *.json.key
+!app/debug.keystore

@@ -42,6 +42,25 @@ class FarmPageTest {
         FarmStore(ctx).save(farm)
         farmId = farm.id
         rule.activityRule.scenario.recreate()
+        warmWebView()
+    }
+
+    /**
+     * The CI emulator starts the WebView engine for the first time in 25-65 s (logcat of runs
+     * 36693541296 and 36695915061: the page's own requests began only then, and then took under a
+     * second). A throwaway page absorbs that start, so the test measures the shell, not the emulator.
+     */
+    private fun warmWebView() {
+        val done = CountDownLatch(1)
+        rule.activityRule.scenario.onActivity { a ->
+            WebView(a).apply {
+                webViewClient = object : android.webkit.WebViewClient() {
+                    override fun onPageFinished(view: WebView, url: String) { done.countDown(); view.destroy() }
+                }
+                loadData("<p>warm</p>", "text/html", null)
+            }
+        }
+        done.await(180, TimeUnit.SECONDS)
     }
 
     private fun webView(): WebView? {

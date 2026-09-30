@@ -34,6 +34,8 @@ import com.muvusoft.agentfarm.core.state.Link
 import com.muvusoft.agentfarm.core.view.PageRoute
 import com.muvusoft.agentfarm.net.ConnectionManager
 import java.util.UUID
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.JsonElement
 
 /** One of the farm's own pages, carried by a WebView. While the farm is not online the wait is shown instead. */
@@ -74,7 +76,9 @@ private fun PageView(farmId: String, page: String, viewId: String, manager: Conn
         manager.frames.collect { f ->
             val post = f.frame as? ViewPost ?: return@collect
             if (f.farm != farmId || post.view != viewId) return@collect
-            deliver(Codec.json.encodeToString(JsonElement.serializer(), post.message))
+            val json = Codec.json.encodeToString(JsonElement.serializer(), post.message)
+            // Frames are emitted on the socket's thread; a WebView only accepts calls on the main thread.
+            withContext(Dispatchers.Main.immediate) { deliver(json) }
         }
     }
     DisposableEffect(viewId) {

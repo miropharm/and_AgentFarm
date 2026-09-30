@@ -1,2 +1,4 @@
 *.sh text eol=lf
 *.yml text eol=lf
+# core.autocrlf=true would hand the hook a CRLF shebang on a fresh clone and sh would refuse to run it.
+.githooks/** text eol=lf

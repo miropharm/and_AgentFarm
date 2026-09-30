@@ -32,6 +32,9 @@ jobs:
         with:
           gradle-version: "8.11.1"
 
+      - name: Repo gate (encoding, credentials, dev codes, size, core purity, changelog, pipeline)
+        run: node test/run-all.js
+
       - name: Unit tests + debug APK + instrumentation APK
         run: gradle --no-daemon testDebugUnitTest assembleDebug assembleDebugAndroidTest
 
@@ -135,5 +138,5 @@ jobs:
 
       - name: Send to App Distribution
         env:
-          RELEASE_NOTES: "b${{ github.run_number }} - ${{ github.event.head_commit.message }}"
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
         run: bash scripts/ci/deliver.sh

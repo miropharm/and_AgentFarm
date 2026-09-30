@@ -1,4 +1,4 @@
-package com.muvusoft.agentfarm
+package com.muvusoft.agentfarm.core
 
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -6,6 +6,6 @@ import org.junit.Test
 class GreetingTest {
     @Test
     fun buildLabelShowsVersion() {
-        assertEquals("Sürüm 0.0.1-b7", buildLabel("0.0.1-b7"))
+        assertEquals("Sürüm 0.1.0-b7", buildLabel("0.1.0-b7"))
     }
 }

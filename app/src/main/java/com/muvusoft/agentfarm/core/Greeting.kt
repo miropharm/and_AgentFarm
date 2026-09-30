@@ -1,4 +1,4 @@
-package com.muvusoft.agentfarm
+package com.muvusoft.agentfarm.core
 
 const val GREETING_TITLE = "Merhaba, Agent Farm"
 

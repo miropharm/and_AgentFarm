@@ -24,3 +24,9 @@
 - **Faz 4 — TalkScribe ZEP & TTS:** TalkScribe sesli dikte entegrasyonu, TTS sesli asistan & hands-free araç modu
 - **Faz 5 — Hibrit Mod & Mobil LLM:** Standby Hub, bağımsız mobil LLM motoru & Obsidian Vault senkronizasyonu
 - **Faz 6 — Kararlılık & Dağıtım:** Offline replay dayanıklılığı, Doze modu pil optimizasyonu, imzalı APK/AAB paketi
+
+## Geliştirme Düzeni
+- **Her şey bulutta:** GitHub Actions derler ve emulator'da test eder; commit mesajında `[testlab]` → Firebase Test Lab gerçek cihaz testi, `[deliver]` → Firebase App Distribution ile telefona teslim. Yerel bilgisayarda Android derlemesi yapılmaz.
+- **Kurallar:** [`docs/CONVENTIONS.md`](docs/CONVENTIONS.md) (bağlayıcı; Agent Farm kurallarının telefon uyarlaması) · çalışma yöntemi: vault `10_Notes/A-SOP - Android Otonom Geliştirme ve Test Çalışma Yöntemi - 260930`.
+- **Commit öncesi kapı:** `.githooks/pre-commit` → `node test/run-all.js` + `tools/scan_staged.js`. Klon başına bir kez: `git config core.hooksPath .githooks`.
+- **Kayıt:** sürüm notları [`CHANGELOG.md`](CHANGELOG.md) · test senaryoları [`docs/test-plan.md`](docs/test-plan.md) · protokol [`docs/PROTOKOL-VE-MIMARI.md`](docs/PROTOKOL-VE-MIMARI.md).

@@ -4,6 +4,9 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
+// Release version: bumped with a CHANGELOG.md entry of the same number (test/test_changelog.js).
+val appVersion = "0.1.0"
+
 // CI run number becomes the build number, so every delivered APK is identifiable on the phone.
 val buildNumber = (System.getenv("GITHUB_RUN_NUMBER") ?: "1").toInt()
 
@@ -16,7 +19,7 @@ android {
         minSdk = 26
         targetSdk = 35
         versionCode = buildNumber
-        versionName = "0.0.1-b$buildNumber"
+        versionName = "$appVersion-b$buildNumber"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 

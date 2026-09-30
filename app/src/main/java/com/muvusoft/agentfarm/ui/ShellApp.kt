@@ -1,6 +1,13 @@
 package com.muvusoft.agentfarm.ui
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.ContextCompat
+import com.muvusoft.agentfarm.net.LinkService
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -33,7 +40,14 @@ fun ShellApp(versionName: String, store: FarmStore, manager: ConnectionManager, 
     var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
     var opened by rememberSaveable { mutableStateOf<String?>(null) }
 
-    LaunchedEffect(farms) { manager.setFarms(farms) }
+    val context = LocalContext.current
+    val askNotifications = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { }
+    LaunchedEffect(farms) {
+        manager.setFarms(farms)
+        LinkService.sync(context, anyFarm = farms.isNotEmpty())
+        val granted = ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
+        if (farms.isNotEmpty() && Build.VERSION.SDK_INT >= 33 && !granted) askNotifications.launch(Manifest.permission.POST_NOTIFICATIONS)
+    }
     LaunchedEffect(Unit) {
         while (true) { delay(1_000); now = System.currentTimeMillis() }
     }

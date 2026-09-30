@@ -40,6 +40,10 @@ data class FarmStatus(
     val link: Link,
     /** The highest event seq received from this farm; 0 = none yet. */
     val lastSeq: Long = 0,
+    /** What waits for the user on this farm (needs.changed count). */
+    val needs: Long = 0,
+    /** When this farm last reported a finished turn (event ts); null = none seen. */
+    val lastTurnAt: Long? = null,
 )
 
 /** A call written while offline, sent when its farm is reachable; its id makes a resend harmless. */

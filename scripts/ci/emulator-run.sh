@@ -11,6 +11,8 @@ TEST=$(find apks -name app-debug-androidTest.apk | head -1)
 
 adb install -r -t "$APP"
 adb install -r -t "$TEST"
+# A permission dialog would cover the UI tests; the prompt itself is the user's first-run experience.
+adb shell pm grant "$PKG" android.permission.POST_NOTIFICATIONS || true
 adb logcat -c
 # A slow emulator's own "isn't responding" dialogs otherwise cover the app's screenshots.
 adb shell settings put global hide_error_dialogs 1 || true
@@ -48,11 +50,14 @@ shot() {
 }
 
 rotate() {
-  adb shell cmd window user-rotation lock "$1" || {
+  for _ in 1 2 3; do
     adb shell settings put system accelerometer_rotation 0
     adb shell settings put system user_rotation "$1"
-  }
-  sleep 2
+    adb shell cmd window user-rotation lock "$1" > /dev/null 2>&1 || true
+    sleep 2
+    adb shell dumpsys window displays | grep -q "mCurrentRotation=ROTATION_$(( $1 * 90 ))" && return 0
+  done
+  echo "::warning::display did not rotate to $1 (see screen-state.txt)"
 }
 
 rotate 0
@@ -63,6 +68,20 @@ adb pull /sdcard/ui.xml "$OUT/main-portrait-ui.xml" > /dev/null
 rotate 1
 shot main-landscape
 rotate 0
+
+# The link service's ongoing notification, as the user sees it in the shade.
+adb shell am start -W -n "$PKG/.MainActivity" > /dev/null
+sleep 6
+adb shell cmd statusbar expand-notifications
+sleep 2
+adb exec-out screencap -p > "$OUT/notification-shade.png"
+{
+  echo "== notification-shade"
+  adb shell dumpsys notification --noredact > "$OUT/notifications.txt" || true
+  grep -c "pkg=$PKG" "$OUT/notifications.txt" | sed 's/^/records from app: /'
+  grep -E 'android\.(title|text)=' "$OUT/notifications.txt" | head -6
+} >> "$OUT/screen-state.txt"
+adb shell cmd statusbar collapse
 
 adb shell cmd uimode night yes
 sleep 2

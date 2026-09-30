@@ -1,6 +1,9 @@
 package com.muvusoft.agentfarm.core.state
 
 import com.muvusoft.agentfarm.core.contract.CallResult
+import com.muvusoft.agentfarm.core.contract.Codec
+import com.muvusoft.agentfarm.core.contract.NeedsChanged
+import com.muvusoft.agentfarm.core.contract.TurnFinished
 import com.muvusoft.agentfarm.core.contract.EventFrame
 import com.muvusoft.agentfarm.core.contract.Frame
 import com.muvusoft.agentfarm.core.contract.Gap
@@ -34,7 +37,7 @@ object ShellReducer {
             it.copy(link = Link.Online(address, frame.scope, frame.features, now))
         }
         is Refuse -> update(s, farmId) { it.copy(link = Link.Refused(frame.reason, frame.detail, now)) }
-        is EventFrame -> update(s, farmId) { it.copy(lastSeq = maxOf(it.lastSeq, frame.seq)) }
+        is EventFrame -> update(s, farmId) { event(it.copy(lastSeq = maxOf(it.lastSeq, frame.seq)), frame) }
         is Gap -> update(s, farmId) { it.copy(lastSeq = maxOf(it.lastSeq, frame.to)) }
         is CallResult -> s.copy(outbox = s.outbox.filterNot { it.id == frame.id && it.farm == farmId })
         else -> s
@@ -52,6 +55,13 @@ object ShellReducer {
 
     fun sent(s: ShellState, id: String): ShellState =
         s.copy(outbox = s.outbox.map { if (it.id == id) it.copy(attempts = it.attempts + 1) else it })
+
+    /** What an event's data changes in the farm's summary; an unknown or malformed event changes nothing. */
+    private fun event(f: FarmStatus, frame: EventFrame): FarmStatus = when (val d = Codec.eventData(frame)) {
+        is NeedsChanged -> f.copy(needs = d.count)
+        is TurnFinished -> f.copy(lastTurnAt = maxOf(f.lastTurnAt ?: 0, frame.ts))
+        else -> f
+    }
 
     private fun update(s: ShellState, farmId: String, f: (FarmStatus) -> FarmStatus): ShellState =
         s.copy(farms = s.farms.map { if (it.farm.id == farmId) f(it) else it })

@@ -78,7 +78,9 @@ class FarmPageTest {
     @Test
     fun aFarmRowOpensItsPageThroughTheShell() {
         rule.waitUntil(20_000) {
-            rule.onAllNodes(hasTestTag("link-$farmId") and hasText("Bağlı", substring = true)).fetchSemanticsNodes().isNotEmpty()
+            // The row is clickable, so its texts are merged into it; the link line is found in the unmerged tree.
+            rule.onAllNodes(hasTestTag("link-$farmId") and hasText("Bağlı", substring = true), useUnmergedTree = true)
+                .fetchSemanticsNodes().isNotEmpty()
         }
         rule.onNodeWithTag("farm-$farmId").performClick()
 

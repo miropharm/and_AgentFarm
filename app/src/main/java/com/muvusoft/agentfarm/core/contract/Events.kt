@@ -31,6 +31,8 @@ data class PermissionOpened(
     val permId: String,
     val tool: String,
     val summary: String,
+    /** The Needs You row key: answered with needs.act { key, action }; never built on the phone. */
+    val key: String,
 ) : FarmEventData
 
 @Serializable

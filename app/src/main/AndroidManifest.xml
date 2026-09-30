@@ -31,6 +31,9 @@
             android:name=".net.LinkService"
             android:exported="false"
             android:foregroundServiceType="remoteMessaging" />
+        <receiver
+            android:name=".net.AlertActionReceiver"
+            android:exported="false" />
     </application>
 
 </manifest>

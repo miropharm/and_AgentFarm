@@ -30,16 +30,22 @@ PAIR_URI=$(sed -n 's/^PAIR //p' "$OUT/fake-host.txt")
 if [ -z "$PAIR_URI" ]; then echo "::error::fake host did not start"; cat "$OUT/fake-host.txt"; exit 1; fi
 rm -f "$OUT/fh-key.pem"
 
+# A freshly booted emulator can still answer ENETUNREACH; the first tests must not race its network.
+for _ in $(seq 60); do adb shell ping -c 1 -W 1 10.0.2.2 > /dev/null 2>&1 && break; sleep 1; done
+adb shell ping -c 1 -W 1 10.0.2.2 > /dev/null 2>&1 || echo "::warning::emulator cannot reach 10.0.2.2 yet"
+
 set +e
 adb shell am instrument -w -e pairUri "'$PAIR_URI'" "$PKG.test/androidx.test.runner.AndroidJUnitRunner" | tee "$OUT/instrumentation.txt"
 set -e
 
 # Each screenshot is logged with the rotation and night mode actually in effect, so a capture can be trusted.
+# shot NAME ROTATION: the rotation is applied after the app is on screen (launching it reset an earlier one).
 shot() {
   adb shell am force-stop "$PKG"
   adb shell am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS > /dev/null 2>&1 || true
   adb shell am start -W -n "$PKG/.MainActivity" > /dev/null
-  sleep 4
+  rotate "$2"
+  sleep 3
   adb exec-out screencap -p > "$OUT/$1.png"
   {
     echo "== $1"
@@ -55,18 +61,16 @@ rotate() {
     adb shell settings put system user_rotation "$1"
     adb shell cmd window user-rotation lock "$1" > /dev/null 2>&1 || true
     sleep 2
-    adb shell dumpsys window displays | grep -q "mCurrentRotation=ROTATION_$(( $1 * 90 ))" && return 0
+    adb shell dumpsys window displays | grep -m1 -o 'mCurrentRotation=[^ ]*' | grep -q "ROTATION_$(( $1 * 90 ))" && return 0
   done
   echo "::warning::display did not rotate to $1 (see screen-state.txt)"
 }
 
-rotate 0
-shot main-portrait
+shot main-portrait 0
 adb shell uiautomator dump /sdcard/ui.xml > /dev/null
 adb pull /sdcard/ui.xml "$OUT/main-portrait-ui.xml" > /dev/null
 
-rotate 1
-shot main-landscape
+shot main-landscape 1
 rotate 0
 
 # The link service's ongoing notification, as the user sees it in the shade.
@@ -85,7 +89,7 @@ adb shell cmd statusbar collapse
 
 adb shell cmd uimode night yes
 sleep 2
-shot main-dark
+shot main-dark 0
 adb shell cmd uimode night no
 
 adb logcat -d > "$OUT/logcat.txt"

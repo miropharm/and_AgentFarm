@@ -1,7 +1,6 @@
 package com.muvusoft.agentfarm.net
 
 import android.app.Notification
-import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
@@ -16,6 +15,10 @@ import androidx.core.content.ContextCompat
 import com.muvusoft.agentfarm.AgentFarmApp
 import com.muvusoft.agentfarm.MainActivity
 import com.muvusoft.agentfarm.R
+import com.muvusoft.agentfarm.core.contract.Codec
+import com.muvusoft.agentfarm.core.contract.EventFrame
+import com.muvusoft.agentfarm.core.notify.Alerts
+import com.muvusoft.agentfarm.core.notify.Channel
 import com.muvusoft.agentfarm.core.notify.StatusLine
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -28,14 +31,25 @@ import kotlinx.coroutines.launch
  */
 class LinkService : Service() {
     private var job: Job? = null
+    private var alerts: Job? = null
 
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val app = AgentFarmApp.of(this)
-        channel(this)
+        AlertPoster.channels(this)
         ServiceCompat.startForeground(this, NOTIFICATION_ID, build(StatusLine.of(app.manager.state.value, System.currentTimeMillis())), type())
         app.manager.setFarms(app.store.load())
+        if (alerts == null) {
+            alerts = app.scope.launch {
+                app.manager.frames.collect { f ->
+                    val ev = f.frame as? EventFrame ?: return@collect
+                    val data = Codec.eventData(ev) ?: return@collect
+                    val name = app.manager.state.value.farm(f.farm)?.farm?.name ?: f.farm
+                    Alerts.of(name, data)?.let { AlertPoster.post(this@LinkService, f.farm, it) }
+                }
+            }
+        }
         if (job == null) {
             job = app.scope.launch {
                 app.manager.state.collectLatest { s ->
@@ -53,6 +67,8 @@ class LinkService : Service() {
     override fun onDestroy() {
         job?.cancel()
         job = null
+        alerts?.cancel()
+        alerts = null
         super.onDestroy()
     }
 
@@ -81,17 +97,8 @@ class LinkService : Service() {
         if (Build.VERSION.SDK_INT >= 34) ServiceInfo.FOREGROUND_SERVICE_TYPE_REMOTE_MESSAGING else 0
 
     companion object {
-        const val CHANNEL = "link"
+        val CHANNEL = Channel.LINK.id
         const val NOTIFICATION_ID = 1
-
-        fun channel(context: Context) {
-            if (Build.VERSION.SDK_INT < 26) return
-            val ch = NotificationChannel(CHANNEL, "Bağlantı", NotificationManager.IMPORTANCE_LOW).apply {
-                description = "Çiftliklere bağlantının sürekli durum satırı"
-                setShowBadge(false)
-            }
-            context.getSystemService(NotificationManager::class.java).createNotificationChannel(ch)
-        }
 
         /** Runs the service while any farm is paired, stops it when none is. */
         fun sync(context: Context, anyFarm: Boolean) {

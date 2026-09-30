@@ -41,6 +41,7 @@ class FarmConnection(
 ) {
     @Volatile private var socket: WebSocket? = null
     @Volatile private var welcomed = false
+    @Volatile private var stopped = false
     private var lastGood: String? = null
     @Volatile private var current: String? = null
     private var job: Job? = null
@@ -64,13 +65,18 @@ class FarmConnection(
     }
 
     fun stop() {
+        link(Link.Offline("stopped", clock()))
+        // A stopped connection says nothing more: its socket closes asynchronously, and a late "closed"
+        // would overwrite the state of the connection that replaced it under the same farm id.
+        stopped = true
         job?.cancel()
         socket?.close(1000, "stopped")
         socket = null
         welcomed = false
         session = null
-        events.onLink(Link.Offline("stopped", clock()))
     }
+
+    private fun link(l: Link) { if (!stopped) events.onLink(l) }
 
     /** Sends a frame when the farm has welcomed this device; false otherwise (the caller keeps it queued). */
     fun send(frame: Frame): Boolean = welcomed && socket?.send(Codec.encode(frame)) == true
@@ -80,14 +86,14 @@ class FarmConnection(
         while (true) {
             for (address in Reconnect.order(farm.addresses, lastGood)) {
                 attempt++
-                events.onLink(Link.Connecting(address, attempt, clock()))
+                link(Link.Connecting(address, attempt, clock()))
                 val end = session(address)
                 if (end.welcomed) { lastGood = address; attempt = 0 }
                 val refuse = end.refuse
                 if (refuse != null && Reconnect.isFinal(refuse.reason)) return
                 if (end.welcomed) break
             }
-            if (attempt > 0) events.onLink(Link.Offline("unreachable", clock()))
+            if (attempt > 0) link(Link.Offline("unreachable", clock()))
             delay(Reconnect.delayMs(attempt.coerceAtLeast(1), Math.random()))
         }
     }
@@ -108,7 +114,7 @@ class FarmConnection(
                     is Refuse -> refused = frame
                     else -> Unit
                 }
-                if (frame !is Challenge) events.onFrame(frame, address)
+                if (frame !is Challenge && !stopped) events.onFrame(frame, address)
             }
 
             override fun onClosing(webSocket: WebSocket, code: Int, reason: String) { webSocket.close(1000, null) }
@@ -118,7 +124,7 @@ class FarmConnection(
             private fun finish() {
                 welcomed = false
                 session = null
-                if (!done.isCompleted && wasWelcomed && refused == null) events.onLink(Link.Offline("closed", clock()))
+                if (!done.isCompleted && wasWelcomed && refused == null) link(Link.Offline("closed", clock()))
                 done.complete(End(wasWelcomed, refused))
             }
         }

@@ -41,7 +41,16 @@ import kotlinx.coroutines.launch
 
 /** The shell's state and actions. `incomingLink` is a pairing link the system handed over (QR via camera, a tapped link). */
 @Composable
-fun ShellApp(versionName: String, store: FarmStore, prefs: ShellPrefs, manager: ConnectionManager, incomingLink: String?) {
+fun ShellApp(
+    versionName: String,
+    store: FarmStore,
+    prefs: ShellPrefs,
+    manager: ConnectionManager,
+    incomingLink: String?,
+    /** Text another app shared to Agent Farm; `onShareDone` once it was sent or given up. */
+    incomingShare: String?,
+    onShareDone: () -> Unit,
+) {
     val context = LocalContext.current
     var lockOnOpen by remember { mutableStateOf(prefs.lockOnOpen) }
     var speakMode by remember { mutableStateOf(prefs.speakMode) }
@@ -53,6 +62,10 @@ fun ShellApp(versionName: String, store: FarmStore, prefs: ShellPrefs, manager: 
         // Pages keep no copy of the farm behind the lock; their HTTP cache goes with each WebView's release.
         onLocked = { WebStorage.getInstance().deleteAllData() },
     ) {
+        if (incomingShare != null) {
+            ShareScreen(text = incomingShare, manager = manager, onDone = onShareDone)
+            return@LockGate
+        }
         Shell(
             versionName = versionName,
             store = store,

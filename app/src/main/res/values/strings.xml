@@ -47,6 +47,17 @@
     <string name="locked_detail">Açmak için kimliğinizi doğrulayın.</string>
     <string name="unlock">Aç</string>
 
+    <!-- Sharing into a session -->
+    <string name="share_title">Oturuma gönder</string>
+    <string name="share_whole">Metnin tamamı</string>
+    <string name="share_farm">Çiftlik</string>
+    <string name="share_session">Oturum</string>
+    <string name="share_loading">Oturumlar okunuyor…</string>
+    <string name="share_no_farm">Bağlı çiftlik yok; paylaşılan metin bir çiftlik bağlanınca gönderilebilir.</string>
+    <string name="share_no_session">Bu çiftlikte açık bir Console oturumu yok.</string>
+    <string name="share_send">Gönder</string>
+    <string name="close">Kapat</string>
+
     <!-- Farm pages -->
     <string name="farm_unpaired">Bu çiftlik artık eşli değil.</string>
     <string name="clipboard_refused">Pano bunu kabul etmedi.</string>

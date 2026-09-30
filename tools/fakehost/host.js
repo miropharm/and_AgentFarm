@@ -13,6 +13,11 @@ const OPS = {
     'farm.ping': () => ({ pong: true }),
     'console.answer': () => ({ answered: true }),
     'console.send': () => ({ sent: true }),
+    'console.sessions': () => [
+        { id: 'c_dev', agent: 'developer', status: 'running', steerable: true, asking: null },
+        { id: 'c_psy', agent: 'psikolog', status: 'idle', steerable: true, asking: null },
+        { id: 'c_old', agent: 'yazar', status: 'ended', steerable: false, asking: null },
+    ],
     'needs.act': () => ({ done: true }),
 };
 

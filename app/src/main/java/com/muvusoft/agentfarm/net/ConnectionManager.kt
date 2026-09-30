@@ -16,7 +16,11 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import kotlinx.serialization.json.JsonObject
 
 /** A frame from a farm, for whoever renders it (pages, notifications). */
@@ -24,20 +28,27 @@ data class FarmFrame(val farm: String, val frame: Frame)
 
 /**
  * Every paired farm's connection, and the one ShellState they all write through ShellReducer.
- * Calls get their id here, on the phone, so a resend after a reconnect is harmless.
+ * Calls get their id here, on the phone, so a resend after a reconnect is harmless. The outbox starts
+ * from `saved` and every change to it goes to `save`.
  */
 class ConnectionManager(
     private val scope: CoroutineScope,
+    saved: List<OutboxItem>,
+    save: (List<OutboxItem>) -> Unit,
     private val clock: () -> Long = System::currentTimeMillis,
     private val connect: (PairedFarm, FarmConnectionEvents) -> FarmConnection = { f, e -> FarmConnection(f, e) },
 ) {
     private val random = SecureRandom()
     private val conns = ConcurrentHashMap<String, FarmConnection>()
-    private val _state = MutableStateFlow(ShellState())
+    private val _state = MutableStateFlow(ShellState(outbox = saved))
     private val _frames = MutableSharedFlow<FarmFrame>(extraBufferCapacity = 256, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
     val state: StateFlow<ShellState> = _state
     val frames: SharedFlow<FarmFrame> = _frames
+
+    init {
+        scope.launch { _state.map { it.outbox }.distinctUntilChanged().drop(1).collect { save(it) } }
+    }
 
     /** Makes the connections match the paired farms: new ones start, forgotten ones stop, re-paired ones restart. */
     @Synchronized
@@ -92,6 +103,7 @@ class ConnectionManager(
 
     /** Sends what is still unsent; after a welcome also what was sent but never answered (the id makes it harmless). */
     private fun flush(farmId: String, resend: Boolean = false) {
+        _state.update { ShellReducer.expire(it, clock()) }
         val conn = conns[farmId] ?: return
         for (item in ShellReducer.pending(_state.value, farmId).filter { resend || it.attempts == 0 }) {
             if (!conn.send(Call(item.id, item.op, item.args))) return

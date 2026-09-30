@@ -49,6 +49,11 @@ object ShellReducer {
     fun enqueue(s: ShellState, item: OutboxItem): ShellState =
         if (s.outbox.any { it.id == item.id }) s else s.copy(outbox = s.outbox + item)
 
+    fun expire(s: ShellState, now: Long): ShellState {
+        val kept = Outbox.fresh(s.outbox, now)
+        return if (kept.size == s.outbox.size) s else s.copy(outbox = kept)
+    }
+
     /** Items to send to a farm, oldest first. */
     fun pending(s: ShellState, farmId: String): List<OutboxItem> =
         s.outbox.filter { it.farm == farmId }.sortedBy { it.createdAt }

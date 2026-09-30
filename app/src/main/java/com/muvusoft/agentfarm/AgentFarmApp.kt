@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.Context
 import com.muvusoft.agentfarm.net.ConnectionManager
 import com.muvusoft.agentfarm.net.FarmStore
+import com.muvusoft.agentfarm.net.OutboxStore
 import com.muvusoft.agentfarm.net.ShellPrefs
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -14,7 +15,10 @@ class AgentFarmApp : Application() {
     val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     val store by lazy { FarmStore(this) }
     val prefs by lazy { ShellPrefs(this) }
-    val manager by lazy { ConnectionManager(scope) }
+    private val outbox by lazy { OutboxStore(this) }
+    val manager by lazy {
+        ConnectionManager(scope, saved = outbox.load(System.currentTimeMillis()), save = { outbox.save(it) })
+    }
 
     companion object {
         fun of(context: Context): AgentFarmApp = context.applicationContext as AgentFarmApp

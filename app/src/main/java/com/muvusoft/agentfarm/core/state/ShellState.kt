@@ -47,6 +47,7 @@ data class FarmStatus(
 )
 
 /** A call written while offline, sent when its farm is reachable; its id makes a resend harmless. */
+@Serializable
 data class OutboxItem(
     val id: String,
     val farm: String,

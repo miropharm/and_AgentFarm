@@ -26,7 +26,7 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class ConnectionE2ETest {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-    private val manager = ConnectionManager(scope)
+    private val manager = ConnectionManager(scope, saved = emptyList(), save = { })
 
     @After
     fun tearDown() {

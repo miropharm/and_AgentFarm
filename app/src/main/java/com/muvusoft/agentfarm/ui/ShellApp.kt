@@ -50,6 +50,9 @@ fun ShellApp(
     /** Text another app shared to Agent Farm; `onShareDone` once it was sent or given up. */
     incomingShare: String?,
     onShareDone: () -> Unit,
+    /** The widget or the tile was tapped: open the focused farm's Now page; `onOpenNowDone` once it is. */
+    openNow: Boolean,
+    onOpenNowDone: () -> Unit,
 ) {
     val context = LocalContext.current
     var lockOnOpen by remember { mutableStateOf(prefs.lockOnOpen) }
@@ -71,6 +74,8 @@ fun ShellApp(
             store = store,
             manager = manager,
             incomingLink = incomingLink,
+            openNow = openNow,
+            onOpenNowDone = onOpenNowDone,
             settings = SettingsUi(
                 lockOnOpen = lockOnOpen,
                 availability = availability,
@@ -96,7 +101,15 @@ private data class SettingsUi(
 )
 
 @Composable
-private fun Shell(versionName: String, store: FarmStore, manager: ConnectionManager, incomingLink: String?, settings: SettingsUi) {
+private fun Shell(
+    versionName: String,
+    store: FarmStore,
+    manager: ConnectionManager,
+    incomingLink: String?,
+    openNow: Boolean,
+    onOpenNowDone: () -> Unit,
+    settings: SettingsUi,
+) {
     var farms by remember { mutableStateOf(store.load()) }
     var ui by remember { mutableStateOf(PairingUi()) }
     val scope = rememberCoroutineScope()
@@ -116,6 +129,13 @@ private fun Shell(versionName: String, store: FarmStore, manager: ConnectionMana
     }
     LaunchedEffect(Unit) {
         while (true) { delay(1_000); now = System.currentTimeMillis() }
+    }
+
+    LaunchedEffect(openNow) {
+        if (!openNow) return@LaunchedEffect
+        val target = shell.focused?.takeIf { f -> farms.any { it.id == f } } ?: farms.firstOrNull()?.id
+        if (target != null) { manager.focus(target); inSettings = false; opened = target }
+        onOpenNowDone()
     }
 
     LaunchedEffect(incomingLink) {

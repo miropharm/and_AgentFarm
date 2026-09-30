@@ -79,6 +79,8 @@ class ConnectionManager(
 
     fun focus(farmId: String) = _state.update { ShellReducer.focus(it, farmId) }
 
+    fun running(farmId: String, count: Int) = _state.update { ShellReducer.running(it, farmId, count) }
+
     /** Where a farm's pages come from right now; null while it is not online. */
     fun pageAccess(farmId: String): PageAccess? = conns[farmId]?.pageAccess()
 

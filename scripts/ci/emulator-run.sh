@@ -94,6 +94,14 @@ adb exec-out screencap -p > "$OUT/notification-shade.png"
 } >> "$OUT/screen-state.txt"
 adb shell cmd statusbar collapse
 
+# The quick settings tile, added and shown with the farm paired by the tests.
+adb shell cmd statusbar add-tile "$PKG/.widget.StatusTile" > /dev/null 2>&1 || echo "::warning::could not add the tile"
+adb shell cmd statusbar expand-settings
+sleep 3
+adb exec-out screencap -p > "$OUT/qs-tile.png"
+echo "== qs-tile" >> "$OUT/screen-state.txt"
+adb shell cmd statusbar collapse
+
 bash scripts/ci/doze-probe.sh "$PKG" "$OUT" "$FH_PORT"
 
 adb shell cmd uimode night yes

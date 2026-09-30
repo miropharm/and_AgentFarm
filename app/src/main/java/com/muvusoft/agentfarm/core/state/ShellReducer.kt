@@ -31,6 +31,8 @@ object ShellReducer {
 
     fun link(s: ShellState, farmId: String, link: Link): ShellState = update(s, farmId) { it.copy(link = link) }
 
+    fun running(s: ShellState, farmId: String, count: Int): ShellState = update(s, farmId) { it.copy(running = count) }
+
     /** What a frame from a farm changes. Frames that concern a page (view.*) change nothing here. */
     fun onFrame(s: ShellState, farmId: String, frame: Frame, address: String, now: Long): ShellState = when (frame) {
         is Welcome -> update(s, farmId) {

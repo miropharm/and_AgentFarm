@@ -49,6 +49,16 @@ class StatusLineTest {
     }
 
     @Test
+    fun runningSessionsAreCountedOnlyOnConnectedFarms() {
+        var s = ShellReducer.link(two(), "farm_a", online)
+        assertEquals("bekleyen yok", StatusLine.of(s, 0).body)
+        s = ShellReducer.running(ShellReducer.running(s, "farm_a", 2), "farm_b", 5)
+        assertEquals("bekleyen yok · 2 çalışıyor", StatusLine.of(s, 0).body)
+        s = ShellReducer.running(s, "farm_a", 0)
+        assertEquals("bekleyen yok · çalışan yok", StatusLine.of(s, 0).body)
+    }
+
+    @Test
     fun aMalformedEventChangesOnlyTheSeq() {
         val s = ShellReducer.onFrame(two(), "farm_a", ev(7, "needs.changed", 0, "wrong" to 1), "a", 0)
         assertEquals(7, s.farm("farm_a")!!.lastSeq)

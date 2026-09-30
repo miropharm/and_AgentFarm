@@ -47,6 +47,8 @@ data class FarmStatus(
     val needs: Long = 0,
     /** When this farm last reported a finished turn (event ts); null = none seen. */
     val lastTurnAt: Long? = null,
+    /** Console sessions running a turn, as console.sessions last said; null = not asked yet. */
+    val running: Int? = null,
 )
 
 /** A call written while offline, sent when its farm is reachable; its id makes a resend harmless. */

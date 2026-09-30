@@ -17,7 +17,13 @@ import com.muvusoft.agentfarm.MainActivity
 import com.muvusoft.agentfarm.R
 import com.muvusoft.agentfarm.core.contract.Codec
 import com.muvusoft.agentfarm.core.contract.EventFrame
+import com.muvusoft.agentfarm.core.contract.AskOpened
+import com.muvusoft.agentfarm.core.contract.SessionEnded
 import com.muvusoft.agentfarm.core.contract.TurnFinished
+import com.muvusoft.agentfarm.core.contract.Welcome
+import com.muvusoft.agentfarm.core.share.Share
+import com.muvusoft.agentfarm.core.state.Link
+import com.muvusoft.agentfarm.widget.StatusSurfaces
 import com.muvusoft.agentfarm.core.speech.Speech
 import com.muvusoft.agentfarm.core.notify.AlertBook
 import com.muvusoft.agentfarm.core.notify.Alerts
@@ -35,6 +41,7 @@ import kotlinx.coroutines.launch
 class LinkService : Service() {
     private var job: Job? = null
     private var alerts: Job? = null
+    private var poll: Job? = null
     private val book = AlertBook()
     private val prefs by lazy { ShellPrefs(this) }
     private val speaker by lazy { Speaker(this) }
@@ -49,10 +56,12 @@ class LinkService : Service() {
         if (alerts == null) {
             alerts = app.scope.launch {
                 app.manager.frames.collect { f ->
+                    if (f.frame is Welcome) refreshRunning(f.farm)
                     val ev = f.frame as? EventFrame ?: return@collect
                     val data = Codec.eventData(ev) ?: return@collect
                     val name = app.manager.state.value.farm(f.farm)?.farm?.name ?: f.farm
                     book.settle(f.farm, data).forEach { AlertPoster.cancel(this@LinkService, it) }
+                    if (data is TurnFinished || data is SessionEnded || data is AskOpened) refreshRunning(f.farm)
                     Alerts.of(name, data)?.let {
                         AlertPoster.post(this@LinkService, f.farm, it)
                         book.posted(f.farm, data, it)
@@ -66,9 +75,20 @@ class LinkService : Service() {
                 app.manager.state.collectLatest { s ->
                     // Re-drawn on every change and once a minute so "son tur … önce" stays true.
                     while (true) {
-                        notify(StatusLine.of(s, System.currentTimeMillis()))
+                        val text = StatusLine.of(s, System.currentTimeMillis())
+                        notify(text)
+                        StatusSurfaces.show(this@LinkService, text)
                         delay(60_000)
                     }
+                }
+            }
+        }
+        // A turn that starts sends no event: the running count is also asked once a minute.
+        if (poll == null) {
+            poll = app.scope.launch {
+                while (true) {
+                    app.manager.state.value.farms.filter { it.link is Link.Online }.forEach { refreshRunning(it.farm.id) }
+                    delay(60_000)
                 }
             }
         }
@@ -80,8 +100,18 @@ class LinkService : Service() {
         job = null
         alerts?.cancel()
         alerts = null
+        poll?.cancel()
+        poll = null
         speaker.shutdown()
         super.onDestroy()
+    }
+
+    private fun refreshRunning(farmId: String) {
+        val app = AgentFarmApp.of(this)
+        app.scope.launch {
+            val r = app.manager.request(farmId, "console.sessions") ?: return@launch
+            if (r.ok) app.manager.running(farmId, Share.targets(r.result).count { it.status == "running" })
+        }
     }
 
     private fun notify(text: StatusLine.Text) =

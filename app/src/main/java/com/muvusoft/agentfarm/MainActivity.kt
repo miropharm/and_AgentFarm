@@ -13,6 +13,7 @@ import com.muvusoft.agentfarm.ui.ShellApp
 class MainActivity : FragmentActivity() {
     private val incomingLink = mutableStateOf<String?>(null)
     private val incomingShare = mutableStateOf<String?>(null)
+    private val openNow = mutableStateOf(false)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -25,6 +26,8 @@ class MainActivity : FragmentActivity() {
                     incomingLink = incomingLink.value,
                     incomingShare = incomingShare.value,
                     onShareDone = { incomingShare.value = null },
+                    openNow = openNow.value,
+                    onOpenNowDone = { openNow.value = false },
                 )
             }
         }
@@ -36,10 +39,17 @@ class MainActivity : FragmentActivity() {
     }
 
     private fun take(intent: Intent?) {
-        if (intent?.action == Intent.ACTION_SEND) {
+        if (intent?.getBooleanExtra(OPEN_NOW, false) == true) {
+            openNow.value = true
+        } else if (intent?.action == Intent.ACTION_SEND) {
             incomingShare.value = Share.text(intent.getStringExtra(Intent.EXTRA_SUBJECT), intent.getStringExtra(Intent.EXTRA_TEXT))
         } else {
             incomingLink.value = intent?.dataString
         }
+    }
+
+    companion object {
+        /** An intent extra: open the focused farm's Now page (the widget and the quick settings tile). */
+        const val OPEN_NOW = "openNow"
     }
 }

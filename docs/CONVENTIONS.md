@@ -23,6 +23,7 @@ delivers on `[deliver]`. Local work is editing plus the node repo gate. Details:
 | Core | `core/` | pure Kotlin: protocol models, state reducers, formatters, verdict functions. No `android.*`, `androidx.*` or other app layer (`test/test_core_purity.js`). Unit-tested on the JVM (`app/src/test`) |
 | Network | `net/` | WebSocket client, discovery, reconnect/replay |
 | UI | `ui/` | Compose screens; `ui/components/` holds each shared component once |
+| Surfaces | `widget/` | home-screen widget and quick settings tile: they draw `core/` texts (the StatusLine), never a second derivation |
 
 - **Size:** target under 300 lines, hard limit 500 (`test/test_file_size.js`). Extract before growing; never append to a file that is already long.
 - **Callbacks are passed by name.** A parameter defaulting to a no-op (`{}`) can be left off and nothing notices (vsc X-267, the wiring gate). Use named arguments or an options object past two or three parameters.

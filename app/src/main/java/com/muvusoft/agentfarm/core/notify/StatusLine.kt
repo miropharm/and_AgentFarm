@@ -21,6 +21,9 @@ object StatusLine {
         }
         val parts = mutableListOf<String>()
         parts += if (needs > 0) "$needs bekleyen" else "bekleyen yok"
+        // Only a connected farm's count is current; an offline one's is last night's news.
+        val known = s.farms.filter { it.link is Link.Online }.mapNotNull { it.running }
+        if (known.isNotEmpty()) parts += if (known.sum() > 0) "${known.sum()} çalışıyor" else "çalışan yok"
         s.farms.mapNotNull { it.lastTurnAt }.maxOrNull()?.let { parts += "son tur ${Time.ago(now - it)} önce" }
         if (s.outbox.isNotEmpty()) parts += "${s.outbox.size} gönderilmemiş"
         return Text(title, parts.joinToString(" · "))

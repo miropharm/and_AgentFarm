@@ -76,6 +76,15 @@ class FarmPageTest {
         return last
     }
 
+    /** What was on screen instead of the page: the wait sentence, or the WebView's address and text. */
+    private fun diagnosis(): String {
+        val wait = rule.onAllNodes(hasTestTag("page-wait"), useUnmergedTree = true).fetchSemanticsNodes()
+            .joinToString { n -> n.config.getOrNull(androidx.compose.ui.semantics.SemanticsProperties.Text)?.joinToString().orEmpty() }
+        val link = AgentFarmApp.of(InstrumentationRegistry.getInstrumentation().targetContext).manager.state.value.farm(farmId)?.link
+        if (webView() == null) return "no WebView; wait=[$wait]; link=$link"
+        return "WebView at ${js("location.href")}; body=[${js("document.body ? document.body.innerText.slice(0,200) : 'no body'")}]; link=$link"
+    }
+
     @Test
     fun aFarmRowOpensItsPageThroughTheShell() {
         rule.waitUntil(20_000) {
@@ -85,7 +94,8 @@ class FarmPageTest {
         }
         rule.onNodeWithTag("farm-$farmId").performClick()
 
-        assertEquals("Sahte sayfa: now", jsUntil("document.getElementById('title') ? document.getElementById('title').textContent : ''") { it.startsWith("Sahte") })
+        val title = jsUntil("document.getElementById('title') ? document.getElementById('title').textContent : ''") { it.startsWith("Sahte") }
+        assertEquals(diagnosis(), "Sahte sayfa: now", title)
         assertEquals("function", js("typeof acquireVsCodeApi"))
         assertEquals("16px", js("getComputedStyle(document.body).marginTop"))
 

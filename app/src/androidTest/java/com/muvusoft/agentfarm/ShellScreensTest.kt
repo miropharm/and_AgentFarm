@@ -5,8 +5,13 @@ import android.net.Uri
 import android.os.PowerManager
 import android.view.KeyEvent
 import androidx.compose.ui.test.assert
+import androidx.compose.ui.test.assertAny
 import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.onChildren
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsNotSelected
+import androidx.compose.ui.test.assertIsSelected
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.isHeading
 import androidx.compose.ui.test.isToggleable
@@ -93,10 +98,17 @@ class ShellScreensTest {
                 .assert(isToggleable())
                 .assert(hasText(ctx.getString(R.string.lock_on_open), substring = true))
                 .assert(hasText(ctx.getString(R.string.lock_on_open_detail), substring = true))
-            // The screen title and its three sections.
-            rule.onAllNodes(isHeading()).assertCountEquals(4)
+            // The screen title and its four sections.
+            rule.onAllNodes(isHeading()).assertCountEquals(5)
+            // Reading aloud is exactly one of three; a choice sticks.
+            rule.onNodeWithTag("speak-off").assertIsSelected()
+            rule.onNodeWithTag("speak-asks").performScrollTo().performClick().assertIsSelected()
+            rule.onNodeWithTag("speak-off").assertIsNotSelected()
+            shot("settings-speech")
+            rule.onNodeWithTag("speak-off").performScrollTo().performClick()
             rule.onNodeWithContentDescription(ctx.getString(R.string.back)).performClick()
-            rule.onNodeWithTag(farm).assert(hasClickAction())
+            // The card carries the tag; the row inside it takes the tap and names it.
+            rule.onNodeWithTag(farm).onChildren().assertAny(hasClickAction())
         }
     }
 

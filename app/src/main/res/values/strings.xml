@@ -30,6 +30,11 @@
     <string name="lock_on_open_detail">Uygulama açılırken ve bir dakikadan uzun arka planda kaldıktan sonra.</string>
     <string name="lock_destructive_asks">Çiftliği unutmak gibi geri alınamayan eylemler her zaman kimlik sorar.</string>
     <string name="lock_destructive_confirms">Geri alınamayan eylemler bu telefonda onay penceresiyle sorulur.</string>
+    <string name="settings_speech">Sesli okuma</string>
+    <string name="speak_off">Kapalı</string>
+    <string name="speak_asks">Sorular ve izinler</string>
+    <string name="speak_asks_and_turns">Sorular, izinler ve tur sonları</string>
+    <string name="speak_detail">Bir ajan soru sorduğunda ya da izin istediğinde telefon bunu Türkçe okur; seçilirse biten turun özetini de. Rahatsız Etmeyin açıkken susar.</string>
     <string name="settings_battery">Pil optimizasyonu</string>
     <string name="settings_device">Bu cihaz</string>
     <string name="device_line">%1$s %2$s · Android %3$s</string>

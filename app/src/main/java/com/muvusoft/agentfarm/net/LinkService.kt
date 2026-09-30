@@ -17,6 +17,8 @@ import com.muvusoft.agentfarm.MainActivity
 import com.muvusoft.agentfarm.R
 import com.muvusoft.agentfarm.core.contract.Codec
 import com.muvusoft.agentfarm.core.contract.EventFrame
+import com.muvusoft.agentfarm.core.contract.TurnFinished
+import com.muvusoft.agentfarm.core.speech.Speech
 import com.muvusoft.agentfarm.core.notify.AlertBook
 import com.muvusoft.agentfarm.core.notify.Alerts
 import com.muvusoft.agentfarm.core.notify.Channel
@@ -34,6 +36,8 @@ class LinkService : Service() {
     private var job: Job? = null
     private var alerts: Job? = null
     private val book = AlertBook()
+    private val prefs by lazy { ShellPrefs(this) }
+    private val speaker by lazy { Speaker(this) }
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -52,6 +56,7 @@ class LinkService : Service() {
                     Alerts.of(name, data)?.let {
                         AlertPoster.post(this@LinkService, f.farm, it)
                         book.posted(f.farm, data, it)
+                        Speech.of(it, prefs.speakMode, (data as? TurnFinished)?.summary)?.let(speaker::say)
                     }
                 }
             }
@@ -75,6 +80,7 @@ class LinkService : Service() {
         job = null
         alerts?.cancel()
         alerts = null
+        speaker.shutdown()
         super.onDestroy()
     }
 

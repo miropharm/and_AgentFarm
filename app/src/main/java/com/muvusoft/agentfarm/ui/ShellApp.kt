@@ -30,6 +30,7 @@ import com.muvusoft.agentfarm.net.DeviceIdentity
 import com.muvusoft.agentfarm.net.FarmStore
 import com.muvusoft.agentfarm.net.PairClient
 import com.muvusoft.agentfarm.core.lock.LockPolicy
+import com.muvusoft.agentfarm.core.speech.SpeakMode
 import com.muvusoft.agentfarm.net.ShellPrefs
 import com.muvusoft.agentfarm.ui.lock.Destructive
 import com.muvusoft.agentfarm.ui.lock.LockGate
@@ -43,6 +44,7 @@ import kotlinx.coroutines.launch
 fun ShellApp(versionName: String, store: FarmStore, prefs: ShellPrefs, manager: ConnectionManager, incomingLink: String?) {
     val context = LocalContext.current
     var lockOnOpen by remember { mutableStateOf(prefs.lockOnOpen) }
+    var speakMode by remember { mutableStateOf(prefs.speakMode) }
     val availability = OwnerCheck.availability(context)
     fun askOwner(title: String, then: (Boolean) -> Unit) = OwnerCheck.ask(context, title, null, then)
     LockGate(
@@ -56,17 +58,29 @@ fun ShellApp(versionName: String, store: FarmStore, prefs: ShellPrefs, manager: 
             store = store,
             manager = manager,
             incomingLink = incomingLink,
-            settings = SettingsUi(lockOnOpen, availability) { wanted ->
-                askOwner(context.getString(if (wanted) R.string.lock_ask_turn_on else R.string.lock_ask_turn_off)) { ok ->
-                    if (ok) { prefs.lockOnOpen = wanted; lockOnOpen = wanted }
-                }
-            },
+            settings = SettingsUi(
+                lockOnOpen = lockOnOpen,
+                availability = availability,
+                onLockToggle = { wanted ->
+                    askOwner(context.getString(if (wanted) R.string.lock_ask_turn_on else R.string.lock_ask_turn_off)) { ok ->
+                        if (ok) { prefs.lockOnOpen = wanted; lockOnOpen = wanted }
+                    }
+                },
+                speakMode = speakMode,
+                onSpeakMode = { prefs.speakMode = it; speakMode = it },
+            ),
         )
     }
 }
 
 /** What the settings screen shows and the one way it changes the lock. */
-private data class SettingsUi(val lockOnOpen: Boolean, val availability: LockPolicy.Availability, val onLockToggle: (Boolean) -> Unit)
+private data class SettingsUi(
+    val lockOnOpen: Boolean,
+    val availability: LockPolicy.Availability,
+    val onLockToggle: (Boolean) -> Unit,
+    val speakMode: SpeakMode,
+    val onSpeakMode: (SpeakMode) -> Unit,
+)
 
 @Composable
 private fun Shell(versionName: String, store: FarmStore, manager: ConnectionManager, incomingLink: String?, settings: SettingsUi) {
@@ -126,6 +140,8 @@ private fun Shell(versionName: String, store: FarmStore, manager: ConnectionMana
             lockOnOpen = settings.lockOnOpen,
             availability = settings.availability,
             onLockToggle = settings.onLockToggle,
+            speakMode = settings.speakMode,
+            onSpeakMode = settings.onSpeakMode,
             onBack = { inSettings = false },
         )
         return

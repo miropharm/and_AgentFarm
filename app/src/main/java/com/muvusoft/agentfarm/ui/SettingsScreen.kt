@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import com.muvusoft.agentfarm.R
 import com.muvusoft.agentfarm.core.buildLabel
 import com.muvusoft.agentfarm.core.lock.LockPolicy
+import com.muvusoft.agentfarm.core.speech.SpeakMode
 
 /** This phone's own settings. `onLockToggle` receives the wanted value; the caller asks the owner before storing it. */
 @Composable
@@ -38,6 +39,8 @@ fun SettingsScreen(
     lockOnOpen: Boolean,
     availability: LockPolicy.Availability,
     onLockToggle: (Boolean) -> Unit,
+    speakMode: SpeakMode,
+    onSpeakMode: (SpeakMode) -> Unit,
     onBack: () -> Unit,
 ) {
     BackHandler(onBack = onBack)
@@ -79,6 +82,8 @@ fun SettingsScreen(
                 Modifier.padding(top = 8.dp),
                 style = MaterialTheme.typography.bodySmall,
             )
+            Section(stringResource(R.string.settings_speech))
+            SpeakChoice(speakMode, onSpeakMode)
             Section(stringResource(R.string.settings_battery))
             BatteryRow()
             Section(stringResource(R.string.settings_device))

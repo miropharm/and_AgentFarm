@@ -94,6 +94,9 @@ class FarmPageTest {
         val end = System.currentTimeMillis() + 60_000
         var last = ""
         while (System.currentTimeMillis() < end) {
+            // The test drives Compose's frame clock: without a sync the page's WebView is never even
+            // composed (CI 36699469608: the page loaded the moment the loop gave up and synced).
+            rule.waitForIdle()
             if (webView() != null) { last = js(script); if (want(last)) return last }
             Thread.sleep(300)
         }

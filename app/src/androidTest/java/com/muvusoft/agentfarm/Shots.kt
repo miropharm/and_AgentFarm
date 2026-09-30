@@ -9,6 +9,9 @@ object Shots {
     fun take(name: String) {
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         instrumentation.waitForIdleSync()
+        // An idle semantics tree is not a drawn frame: the display can still show the previous screen.
+        Thread.sleep(600)
+        instrumentation.waitForIdleSync()
         val bitmap = instrumentation.uiAutomation.takeScreenshot() ?: return
         val dir = File(instrumentation.targetContext.getExternalFilesDir(null), "shots").apply { mkdirs() }
         File(dir, "$name.png").outputStream().use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }

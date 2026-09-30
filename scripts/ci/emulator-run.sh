@@ -94,6 +94,8 @@ adb exec-out screencap -p > "$OUT/notification-shade.png"
 } >> "$OUT/screen-state.txt"
 adb shell cmd statusbar collapse
 
+bash scripts/ci/doze-probe.sh "$PKG" "$OUT" "$FH_PORT"
+
 adb shell cmd uimode night yes
 sleep 2
 shot main-dark 0

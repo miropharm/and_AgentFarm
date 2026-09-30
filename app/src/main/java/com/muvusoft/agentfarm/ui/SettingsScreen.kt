@@ -69,6 +69,8 @@ fun SettingsScreen(
                 Modifier.padding(top = 8.dp),
                 style = MaterialTheme.typography.bodySmall,
             )
+            Section("Pil optimizasyonu")
+            BatteryRow()
             Section("Bu cihaz")
             Text("${Build.MANUFACTURER} ${Build.MODEL} · Android ${Build.VERSION.RELEASE}", style = MaterialTheme.typography.bodyMedium)
             Text(buildLabel(versionName), style = MaterialTheme.typography.bodySmall)

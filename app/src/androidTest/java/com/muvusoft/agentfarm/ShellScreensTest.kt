@@ -2,9 +2,11 @@ package com.muvusoft.agentfarm
 
 import android.content.Intent
 import android.net.Uri
+import android.os.PowerManager
 import android.view.KeyEvent
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
@@ -17,6 +19,7 @@ import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.muvusoft.agentfarm.core.lock.LockPolicy
+import com.muvusoft.agentfarm.core.power.BatteryPolicy
 import com.muvusoft.agentfarm.ui.lock.OwnerCheck
 import org.junit.Rule
 import org.junit.Test
@@ -68,6 +71,8 @@ class ShellScreensTest {
                 rule.onNodeWithTag("lock-switch").assertIsNotEnabled()
                 rule.onNodeWithTag("lock-reason").assertIsDisplayed()
             }
+            val exempt = ctx.getSystemService(PowerManager::class.java).isIgnoringBatteryOptimizations(ctx.packageName)
+            rule.onNodeWithTag("battery-state").assertTextEquals(BatteryPolicy.line(exempt).state)
             shot("settings")
             rule.onNodeWithTag("settings-back").performClick()
             rule.onNodeWithTag(farm).assertIsDisplayed()

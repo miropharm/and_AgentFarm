@@ -141,6 +141,19 @@ class FarmPageTest {
     }
 
     @Test
+    fun aPageLinkCarriesWhatTheNextPageIsToShow() {
+        openFarm()
+        assertEquals(diagnosis(), "Fake page: now", titleUntil("Fake page: now"))
+        // X-456: a transcript opened on the phone is afnav to "session" with the session; view.open carries it.
+        js("acquireVsCodeApi().postMessage({type:'afnav',to:'session',args:{sessionId:'sid-2',ts:5}})")
+        assertEquals(diagnosis(), "Fake page: session", titleUntil("Fake page: session"))
+        val args = jsUntil("document.body.getAttribute('data-args') || ''") { it.contains("sid-2") }
+        assertEquals(diagnosis(), true, args.contains("sid-2"))
+        rule.activityRule.scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }
+        assertEquals(diagnosis(), "Fake page: now", titleUntil("Fake page: now"))
+    }
+
+    @Test
     fun aCopyFromAPageLandsOnThePhonesClipboard() {
         openFarm()
         assertEquals(diagnosis(), "Fake page: now", titleUntil("Fake page: now"))

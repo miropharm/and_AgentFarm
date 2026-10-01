@@ -2,6 +2,11 @@
 
 User-facing changes to the Agent Farm Android app, newest first. Each build's release notes on the phone are read from its own heading here.
 
+## 0.2.3 - A conversation opens on the phone (2026-10-01)
+
+- Tapping a session in Agent Farm's pages (a Sessions row, a task's run, a chain's next leg) opens that conversation right on the phone instead of on the computer. Back returns to the page you came from.
+- Needs Agent Farm 3.777.0 or newer on the computer; an older one answers "not available".
+
 ## 0.2.2 - Read aloud and dictation in your language (2026-10-01)
 
 - Reading aloud and dictation are no longer fixed to Turkish: they follow the phone's language.

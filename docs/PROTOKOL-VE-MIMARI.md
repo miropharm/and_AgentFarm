@@ -143,9 +143,12 @@ Tasarımın gerekçesi: vault projesi `10_Notes/A-PLN - Android Uygulaması Yeni
 - Sayfanın host'a özgü istekleri telefonda karşılanır: kopyalama telefonun panosuna, dış bağlantı
   telefonun tarayıcısına, dosya açma salt okunur görüntüleyiciye gider.
 - **Kabuğun karşıladığı sayfa mesajları** (`core/view/ShellRequest`) çiftliğe hiç gitmez:
-  `afnav` (`to` = sayfa kimliği) aynı kabukta o sayfayı kendi görünümüyle açar, Geri önceki sayfaya
-  döner, ilk sayfada Geri çiftlikten çıkar (`core/view/PageStack`, en çok 20 sayfa); sayfa kimliği
-  olmayan bir hedef hiçbir şey açmaz. `afClipboard` (`token`, `text`) metni telefonun panosuna
+  `afnav` (`to` = sayfa kimliği, isteğe bağlı `args` nesnesi) aynı kabukta o sayfayı kendi görünümüyle açar
+  ve `args`'ı `view.open` ile olduğu gibi çiftliğe iletir — kabuk yalnız taşır, çiftlik denetler (ör. `session`
+  sayfası `sessionId` ya da `file`, `ts`, `roles` alır ve yalnız dizinin bildiği bir transcript'i açar; gerisine
+  `unavailable` der). Nesne olmayan `args` taşınmaz. Aynı sayfa başka `args` ile yığında yeni bir giriştir.
+  Geri önceki sayfaya döner, ilk sayfada Geri çiftlikten çıkar (`core/view/PageStack`, en çok 20 sayfa); sayfa
+  kimliği olmayan bir hedef hiçbir şey açmaz. `afClipboard` (`token`, `text`) metni telefonun panosuna
   koyar ve sayfaya masaüstündeki biçimle `afClipboardDone` (`token`, `ok`, `error?`) döner.
   `afVoice` (`token`) sistemin konuşma tanıyıcısını (`RECOGNIZE_SPEECH`, `tr-TR`) açar ve
   `afVoiceDone` (`token`, `text?`, `error?`) döner — vazgeçilirse `text` yoktur. Sayfa mikrofonu
@@ -153,8 +156,10 @@ Tasarımın gerekçesi: vault projesi `10_Notes/A-PLN - Android Uygulaması Yeni
   Diğer bütün sayfa mesajları `view.msg` olarak gider.
 - Çiftlik tarafında sayfa başına bir kural vardır (`vsc_AgentFarm/src/panels/remotePages.ts`): bir
   mesaj ya yalnız PC'de çalışır (telefondan hiç çalışmaz), ya bakar (`read`), ya cevaplar
-  (`answer`), ya da sayfanın işlem yetkisini ister. Bugün telefonda açılan sayfalar: `needs`,
-  `console`; listede olmayan sayfa `view.close` `unavailable` alır.
+  (`answer`), ya da sayfanın işlem yetkisini ister. Bugün telefonda açılan sayfalar: `now`,
+  `needs`, `console`, `sessions`, `tasks`, `session` (bir oturumun transcript'i; sayfalardaki "transcript'i aç"
+  tıklaması telefonda bu sayfaya `afnav` olur — `vsc_AgentFarm/media/afRemote.js`); listede olmayan sayfa
+  `view.close` `unavailable` alır.
 
 ## 11. Ses — TalkScribe (ZEP)
 

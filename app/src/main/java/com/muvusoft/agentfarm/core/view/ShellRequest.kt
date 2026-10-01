@@ -14,8 +14,12 @@ import kotlinx.serialization.json.put
  * shell answers them itself and they never reach the farm; everything else a page posts does.
  */
 sealed interface ShellRequest {
-    /** Open another of the farm's pages in this shell. */
-    data class Open(val page: String) : ShellRequest
+    /**
+     * Open another of the farm's pages in this shell. [args] go to the farm with the page's
+     * `view.open` as they came (the `session` page is told which transcript to show); the farm
+     * checks them, the shell only carries them. Also an entry of the shell's page stack.
+     */
+    data class Open(val page: String, val args: JsonObject? = null) : ShellRequest
 
     /** Put text on the phone's clipboard; the page waits for `afClipboardDone` with its token. */
     data class Copy(val token: JsonElement, val text: String) : ShellRequest
@@ -31,7 +35,7 @@ sealed interface ShellRequest {
         fun of(message: JsonElement): ShellRequest? {
             val o = message as? JsonObject ?: return null
             return when (o.str("type")) {
-                "afnav" -> o.str("to")?.takeIf(PageRoute::isPage)?.let(::Open) ?: Refused
+                "afnav" -> o.str("to")?.takeIf(PageRoute::isPage)?.let { Open(it, o["args"] as? JsonObject) } ?: Refused
                 "afClipboard" -> Copy(o["token"] ?: JsonNull, o.str("text").orEmpty())
                 "afVoice" -> Voice(o["token"] ?: JsonNull)
                 else -> null

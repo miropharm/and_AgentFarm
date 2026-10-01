@@ -3,6 +3,7 @@ package com.muvusoft.agentfarm.core.view
 import com.muvusoft.agentfarm.core.contract.Codec
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.jsonObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
@@ -13,6 +14,15 @@ class ShellRequestTest {
     @Test
     fun aPageLinkOpensThatPageInTheShell() {
         assertEquals(ShellRequest.Open("needs"), of("""{"type":"afnav","to":"needs"}"""))
+    }
+
+    @Test
+    fun aPageLinkCarriesWhatThePageIsToShow() {
+        val r = of("""{"type":"afnav","to":"session","args":{"sessionId":"sid-2","ts":5}}""")
+        assertEquals(ShellRequest.Open("session", Codec.json.parseToJsonElement("""{"sessionId":"sid-2","ts":5}""").jsonObject), r)
+        // Only an object is carried; anything else opens the page bare and the farm decides.
+        assertEquals(ShellRequest.Open("session"), of("""{"type":"afnav","to":"session","args":"sid-2"}"""))
+        assertEquals(ShellRequest.Open("session"), of("""{"type":"afnav","to":"session","args":[1]}"""))
     }
 
     @Test

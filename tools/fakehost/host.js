@@ -112,7 +112,7 @@ function createHost(opts = {}) {
         if (bad) { return f && f.kind === 'call' && f.id ? conn.send(JSON.stringify({ kind: 'result', id: String(f.id), ok: false, error: bad })) : undefined; }
         if (f.kind === 'call') { return call(conn, f); }
         if (f.kind === 'ping') { return conn.send(JSON.stringify({ kind: 'pong', ts: f.ts })); }
-        if (f.kind === 'view.open') { return conn.send(JSON.stringify({ kind: 'view.post', view: f.view, message: { type: 'state', page: f.page } })); }
+        if (f.kind === 'view.open') { return conn.send(JSON.stringify({ kind: 'view.post', view: f.view, message: { type: 'state', page: f.page, ...(f.args ? { args: f.args } : {}) } })); }
         if (f.kind === 'view.msg') { return conn.send(JSON.stringify({ kind: 'view.post', view: f.view, message: { type: 'echo', message: f.message } })); }
     }
 

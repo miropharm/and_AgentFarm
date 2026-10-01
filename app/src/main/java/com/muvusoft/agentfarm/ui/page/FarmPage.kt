@@ -46,12 +46,14 @@ import java.util.UUID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
 
 /** One of the farm's own pages, carried by a WebView. While the farm is not online the wait is shown instead. */
 @Composable
 fun FarmPage(farmId: String, page: String, manager: ConnectionManager, onBack: () -> Unit) {
-    // A page's own links open the next page here; Back walks back through them, then leaves the farm.
-    var stack by remember(page) { mutableStateOf(listOf(page)) }
+    // A page's own links open the next page here, with what it asked to be shown; Back walks back
+    // through them, then leaves the farm.
+    var stack by remember(page) { mutableStateOf(listOf(ShellRequest.Open(page))) }
     BackHandler { PageStack.back(stack)?.let { stack = it } ?: onBack() }
     val current = stack.last()
     // A dead renderer bumps the generation: the old WebView is dropped and a new one opens a new view.
@@ -63,7 +65,7 @@ fun FarmPage(farmId: String, page: String, manager: ConnectionManager, onBack: (
         if (link is Link.Online) {
             key(generation, current) {
                 PageView(
-                    farmId = farmId, page = current, viewId = viewId, manager = manager,
+                    farmId = farmId, page = current.page, args = current.args, viewId = viewId, manager = manager,
                     onRendererGone = { generation++ },
                     onOpen = { stack = PageStack.open(stack, it) },
                 )
@@ -82,10 +84,11 @@ fun FarmPage(farmId: String, page: String, manager: ConnectionManager, onBack: (
 private fun PageView(
     farmId: String,
     page: String,
+    args: JsonObject?,
     viewId: String,
     manager: ConnectionManager,
     onRendererGone: () -> Unit,
-    onOpen: (String) -> Unit,
+    onOpen: (ShellRequest.Open) -> Unit,
 ) {
     val clipboard = LocalContext.current.getSystemService(ClipboardManager::class.java)
     val clipboardRefused = stringResource(R.string.clipboard_refused)
@@ -102,7 +105,7 @@ private fun PageView(
     val dictation = rememberDictation(deliver)
 
     LaunchedEffect(viewId) {
-        manager.send(farmId, ViewOpen(viewId, page))
+        manager.send(farmId, ViewOpen(viewId, page, args))
         manager.frames.collect { f ->
             val post = f.frame as? ViewPost ?: return@collect
             if (f.farm != farmId || post.view != viewId) return@collect
@@ -140,7 +143,7 @@ private fun PageView(
                         // The bridge calls on its own thread; the WebView and Compose state live on the main one.
                         when (val r = ShellRequest.of(msg)) {
                             null -> manager.send(farmId, ViewMsg(viewId, msg))
-                            is ShellRequest.Open -> main.post { onOpen(r.page) }
+                            is ShellRequest.Open -> main.post { onOpen(r) }
                             is ShellRequest.Copy -> main.post {
                                 val ok = runCatching { checkNotNull(clipboard).setPrimaryClip(ClipData.newPlainText("Agent Farm", r.text)) }.isSuccess
                                 deliver(ShellRequest.copyDone(r.token, ok, if (ok) null else clipboardRefused).toString())

@@ -17,8 +17,10 @@ function html(page, view) {
         '<meta name="viewport" content="width=device-width,initial-scale=1">' +
         '<link rel="stylesheet" href="/res/common.css"><script src="/res/afRemote.js"></script></head>' +
         `<body data-page="${safe(page)}" data-view="${safe(view)}"><h1 id="title">Fake page: ${safe(page)}</h1>` +
-        // Records what the host sent, the way a real page's message listener would receive it.
+        // Records what the host sent, the way a real page's message listener would receive it,
+        // and the arguments the page was opened with (the host echoes view.open's args in its state).
         '<script>window.afSeen=[];window.addEventListener("message",function(e){afSeen.push(e.data&&e.data.type);' +
+        'if(e.data&&e.data.args){document.body.setAttribute("data-args",JSON.stringify(e.data.args));}' +
         'document.body.setAttribute("data-seen",afSeen.join(","));});</script></body></html>';
 }
 

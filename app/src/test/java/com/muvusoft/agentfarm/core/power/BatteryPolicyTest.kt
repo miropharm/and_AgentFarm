@@ -12,7 +12,7 @@ class BatteryPolicyTest {
 
     @Test
     fun theOptimizedStateTellsWhatToPick() {
-        assertTrue(BatteryPolicy.line(false).detail.contains("Optimize etme"))
+        assertTrue(BatteryPolicy.line(false).detail.contains("Don't optimize"))
     }
 
     @Test

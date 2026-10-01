@@ -106,6 +106,16 @@ class ShellScreensTest {
             rule.onNodeWithTag("speak-off").assertIsNotSelected()
             shot("settings-speech")
             rule.onNodeWithTag("speak-off").performScrollTo().performClick()
+            // The voice language mirrors what "Phone language" resolves to; a choice sticks and shows its own name.
+            rule.onNodeWithTag("voice-language-value", useUnmergedTree = true)
+                .assert(hasText(ctx.getString(R.string.voice_language_phone_value, ""), substring = true))
+            rule.onNodeWithTag("voice-language").performScrollTo().performClick()
+            rule.onNodeWithTag("voice-lang-phone").assertIsSelected()
+            shot("settings-voice-language")
+            rule.onNodeWithTag("voice-lang-en-GB").performClick()
+            rule.onNodeWithTag("voice-language-value", useUnmergedTree = true).assert(hasText("United Kingdom", substring = true))
+            rule.onNodeWithTag("voice-language").performClick()
+            rule.onNodeWithTag("voice-lang-phone").performScrollTo().performClick()
             rule.onNodeWithContentDescription(ctx.getString(R.string.back)).performClick()
             // The card carries the tag; the row inside it takes the tap and names it.
             rule.onNodeWithTag(farm).onChildren().assertAny(hasClickAction())

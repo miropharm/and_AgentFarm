@@ -9,14 +9,16 @@ import com.muvusoft.agentfarm.core.speech.Utterance
 import java.util.Locale
 
 /**
- * Reads utterances aloud with the phone's own text-to-speech engine, in Turkish. The engine starts on
- * the first utterance (nothing is loaded for a user who never turns reading on); what arrives while it
- * starts waits. Speech goes out as a notification sound, so Do Not Disturb silences it like the rest.
+ * Reads utterances aloud with the phone's own text-to-speech engine, in the voice language in effect
+ * (`language`, asked before every utterance so a change in Settings applies to the next one). The engine
+ * starts on the first utterance (nothing is loaded for a user who never turns reading on); what arrives
+ * while it starts waits. Speech goes out as a notification sound, so Do Not Disturb silences it like the rest.
  */
-class Speaker(private val context: Context) {
+class Speaker(private val context: Context, private val language: () -> Locale) {
     private var tts: TextToSpeech? = null
     private var ready = false
     private var usable = true
+    private var applied: Locale? = null
     private val waiting = mutableListOf<Utterance>()
     private val log = SpokenLog()
 
@@ -30,7 +32,7 @@ class Speaker(private val context: Context) {
             start()
             return
         }
-        speak(u)
+        if (apply()) speak(u)
     }
 
     @Synchronized
@@ -38,6 +40,7 @@ class Speaker(private val context: Context) {
         tts?.shutdown()
         tts = null
         ready = false
+        applied = null
         waiting.clear()
     }
 
@@ -49,11 +52,8 @@ class Speaker(private val context: Context) {
 
     private fun started(status: Int) {
         val engine = tts ?: return
-        // setLanguage answers LANG_AVAILABLE (0) or better when the voice can say Turkish; negative when not.
-        val lang = if (status == TextToSpeech.SUCCESS) engine.setLanguage(TURKISH) else TextToSpeech.ERROR
-        if (lang < TextToSpeech.LANG_AVAILABLE) {
-            // A voice that cannot say Turkish would mangle every word: stay silent, say why in the log.
-            Log.w(TAG, "text-to-speech unusable (status=$status, language=$lang)")
+        if (status != TextToSpeech.SUCCESS) {
+            Log.w(TAG, "text-to-speech engine unusable (status=$status)")
             usable = false
             waiting.clear()
             return
@@ -65,7 +65,27 @@ class Speaker(private val context: Context) {
                 .build(),
         )
         ready = true
-        waiting.toList().also { waiting.clear() }.forEach(::speak)
+        val queued = waiting.toList().also { waiting.clear() }
+        if (apply()) queued.forEach(::speak)
+    }
+
+    /**
+     * Points the voice at the language in effect. False when this phone has no voice for it: a voice that
+     * cannot say the language would mangle every word, so nothing is read (Settings says why on screen).
+     */
+    private fun apply(): Boolean {
+        val want = language()
+        if (want == applied) return true
+        val engine = tts ?: return false
+        // setLanguage answers LANG_AVAILABLE (0) or better when the voice can say the language; negative when not.
+        val r = engine.setLanguage(want)
+        if (r < TextToSpeech.LANG_AVAILABLE) {
+            Log.w(TAG, "no voice for ${want.toLanguageTag()} (language=$r)")
+            applied = null
+            return false
+        }
+        applied = want
+        return true
     }
 
     private fun speak(u: Utterance) {
@@ -75,6 +95,5 @@ class Speaker(private val context: Context) {
 
     private companion object {
         const val TAG = "AFSpeak"
-        val TURKISH: Locale = Locale.forLanguageTag("tr-TR")
     }
 }

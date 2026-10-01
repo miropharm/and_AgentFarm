@@ -57,9 +57,6 @@ sealed interface ShellRequest {
         /** What the recogniser heard: its first non-blank result, or null (a cancel). */
         fun heard(results: List<String>?): String? = results?.map { it.trim() }?.firstOrNull { it.isNotEmpty() }
 
-        /** The language dictation asks the recogniser for. */
-        const val VOICE_LANGUAGE = "tr-TR"
-
         private fun JsonObject.str(key: String): String? = (this[key] as? JsonPrimitive)?.takeIf { it.isString }?.contentOrNull
     }
 }

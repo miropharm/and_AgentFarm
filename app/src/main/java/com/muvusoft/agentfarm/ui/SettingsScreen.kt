@@ -41,6 +41,8 @@ fun SettingsScreen(
     onLockToggle: (Boolean) -> Unit,
     speakMode: SpeakMode,
     onSpeakMode: (SpeakMode) -> Unit,
+    voiceLanguage: String,
+    onVoiceLanguage: (String) -> Unit,
     onBack: () -> Unit,
 ) {
     BackHandler(onBack = onBack)
@@ -84,6 +86,7 @@ fun SettingsScreen(
             )
             Section(stringResource(R.string.settings_speech))
             SpeakChoice(speakMode, onSpeakMode)
+            VoiceLanguageRow(chosen = voiceLanguage, onChoose = onVoiceLanguage)
             Section(stringResource(R.string.settings_battery))
             BatteryRow()
             Section(stringResource(R.string.settings_device))

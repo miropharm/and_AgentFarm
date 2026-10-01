@@ -25,6 +25,7 @@ import com.muvusoft.agentfarm.core.share.Share
 import com.muvusoft.agentfarm.core.state.Link
 import com.muvusoft.agentfarm.widget.StatusSurfaces
 import com.muvusoft.agentfarm.core.speech.Speech
+import com.muvusoft.agentfarm.core.speech.VoiceLanguage
 import com.muvusoft.agentfarm.core.notify.AlertBook
 import com.muvusoft.agentfarm.core.notify.Alerts
 import com.muvusoft.agentfarm.core.notify.Channel
@@ -44,7 +45,7 @@ class LinkService : Service() {
     private var poll: Job? = null
     private val book = AlertBook()
     private val prefs by lazy { ShellPrefs(this) }
-    private val speaker by lazy { Speaker(this) }
+    private val speaker by lazy { Speaker(this) { VoiceLanguage.locale(prefs.voiceLanguage, phoneLocale()) } }
 
     override fun onBind(intent: Intent?): IBinder? = null
 

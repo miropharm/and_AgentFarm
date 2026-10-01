@@ -57,6 +57,7 @@ fun ShellApp(
     val context = LocalContext.current
     var lockOnOpen by remember { mutableStateOf(prefs.lockOnOpen) }
     var speakMode by remember { mutableStateOf(prefs.speakMode) }
+    var voiceLanguage by remember { mutableStateOf(prefs.voiceLanguage) }
     val availability = OwnerCheck.availability(context)
     fun askOwner(title: String, then: (Boolean) -> Unit) = OwnerCheck.ask(context, title, null, then)
     LockGate(
@@ -86,6 +87,8 @@ fun ShellApp(
                 },
                 speakMode = speakMode,
                 onSpeakMode = { prefs.speakMode = it; speakMode = it },
+                voiceLanguage = voiceLanguage,
+                onVoiceLanguage = { prefs.voiceLanguage = it; voiceLanguage = it },
             ),
         )
     }
@@ -98,6 +101,8 @@ private data class SettingsUi(
     val onLockToggle: (Boolean) -> Unit,
     val speakMode: SpeakMode,
     val onSpeakMode: (SpeakMode) -> Unit,
+    val voiceLanguage: String,
+    val onVoiceLanguage: (String) -> Unit,
 )
 
 @Composable
@@ -175,6 +180,8 @@ private fun Shell(
             onLockToggle = settings.onLockToggle,
             speakMode = settings.speakMode,
             onSpeakMode = settings.onSpeakMode,
+            voiceLanguage = settings.voiceLanguage,
+            onVoiceLanguage = settings.onVoiceLanguage,
             onBack = { inSettings = false },
         )
         return

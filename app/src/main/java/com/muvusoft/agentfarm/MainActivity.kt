@@ -9,6 +9,7 @@ import androidx.activity.compose.setContent
 import androidx.compose.runtime.mutableStateOf
 import com.muvusoft.agentfarm.core.share.Share
 import com.muvusoft.agentfarm.core.view.ShellRequest
+import com.muvusoft.agentfarm.ui.page.dictationLanguage
 import com.muvusoft.agentfarm.ui.page.speechIntent
 import com.muvusoft.agentfarm.ui.AppTheme
 import com.muvusoft.agentfarm.ui.ShellApp
@@ -51,7 +52,7 @@ class MainActivity : FragmentActivity() {
     private fun take(intent: Intent?) {
         if (intent?.getBooleanExtra(OPEN_VOICE, false) == true) {
             intent.removeExtra(OPEN_VOICE)
-            runCatching { dictate.launch(speechIntent(getString(R.string.voice_prompt))) }
+            runCatching { dictate.launch(speechIntent(getString(R.string.voice_prompt), dictationLanguage(AgentFarmApp.of(this).prefs))) }
         } else if (intent?.getBooleanExtra(OPEN_NOW, false) == true) {
             openNow.value = true
         } else if (intent?.action == Intent.ACTION_SEND) {

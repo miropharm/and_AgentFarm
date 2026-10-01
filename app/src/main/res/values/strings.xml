@@ -34,7 +34,11 @@
     <string name="speak_off">Off</string>
     <string name="speak_asks">Questions and permissions</string>
     <string name="speak_asks_and_turns">Questions, permissions and finished turns</string>
-    <string name="speak_detail">When an agent asks a question or a permission, the phone reads it aloud in a Turkish voice; if chosen, a finished turn\'s summary too. Silent while Do Not Disturb is on.</string>
+    <string name="speak_detail">When an agent asks a question or a permission, the phone reads it aloud in the voice language below; if chosen, a finished turn\'s summary too. Dictation listens in the same language. Silent while Do Not Disturb is on.</string>
+    <string name="voice_language">Voice language</string>
+    <string name="voice_language_phone_value">Phone language → %1$s</string>
+    <string name="voice_language_change">change the voice language</string>
+    <string name="voice_missing">This phone has no %1$s voice yet: add one in the phone\'s text-to-speech settings. Until then nothing is read aloud.</string>
     <string name="settings_battery">Battery optimization</string>
     <string name="settings_device">This device</string>
     <string name="device_line">%1$s %2$s · Android %3$s</string>

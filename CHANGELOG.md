@@ -2,6 +2,12 @@
 
 User-facing changes to the Agent Farm Android app, newest first. Each build's release notes on the phone are read from its own heading here.
 
+## 0.2.2 - Read aloud and dictation in your language (2026-10-01)
+
+- Reading aloud and dictation are no longer fixed to Turkish: they follow the phone's language.
+- Settings > Read aloud > Voice language picks another one; "Phone language" always says which language it is right now.
+- If the phone has no voice for that language, Settings says so and how to add one.
+
 ## 0.2.1 - The app speaks Agent Farm's language: English (2026-10-01)
 
 - Every word the app shows is now English, like Agent Farm itself: screens, settings, notifications and their buttons, the link status line, pairing messages, the widget and the quick settings tile.

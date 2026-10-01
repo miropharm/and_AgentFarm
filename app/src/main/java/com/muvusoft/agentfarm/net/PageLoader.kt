@@ -24,7 +24,7 @@ object PageLoader {
                 PageBytes(res.code, mime, type?.charset()?.name(), res.body?.bytes() ?: ByteArray(0))
             }
         } catch (e: IOException) {
-            PageBytes(502, "text/plain", "utf-8", "Çiftliğe ulaşılamadı: ${e.message}".toByteArray())
+            PageBytes(502, "text/plain", "utf-8", "Could not reach the farm: ${e.message}".toByteArray())
         }
     }
 }

@@ -43,19 +43,19 @@ object Share {
 
     /** A session's state in the row's words. An unknown status is shown as itself. */
     fun statusWord(t: ShareTarget): String = when {
-        t.asking -> "seni bekliyor"
-        t.status == "running" -> "çalışıyor"
-        t.status == "idle" -> "boşta"
+        t.asking -> "waiting for you"
+        t.status == "running" -> "running"
+        t.status == "idle" -> "idle"
         else -> t.status
     }
 
     /** What a finished send says: the host's own sentence when it gave one. */
     fun outcome(ok: Boolean, result: JsonElement?, error: String?): String {
-        if (!ok) return "Gönderilemedi: ${error ?: "çiftlik yanıt vermedi"}"
+        if (!ok) return "Not sent: ${error ?: "the farm did not answer"}"
         val o = result as? JsonObject
         val said = SENTENCE_KEYS.firstNotNullOfOrNull { o?.str(it) }
         val held = (o?.get("held") as? JsonPrimitive)?.booleanOrNull == true
-        return said ?: if (held) "Sıraya alındı; tur bitince söylenecek." else "Gönderildi."
+        return said ?: if (held) "Queued; it is said when the turn ends." else "Sent."
     }
 
     fun preview(text: String): String = if (text.length <= PREVIEW_CHARS) text else text.take(PREVIEW_CHARS).trimEnd() + "…"

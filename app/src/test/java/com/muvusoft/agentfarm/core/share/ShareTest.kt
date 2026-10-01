@@ -31,9 +31,9 @@ class ShareTest {
         )
         val t = Share.targets(rows)
         assertEquals(listOf("d", "b", "a"), t.map { it.id })
-        assertEquals("seni bekliyor", Share.statusWord(t[0]))
-        assertEquals("çalışıyor", Share.statusWord(t[1]))
-        assertEquals("boşta", Share.statusWord(t[2]))
+        assertEquals("waiting for you", Share.statusWord(t[0]))
+        assertEquals("running", Share.statusWord(t[1]))
+        assertEquals("idle", Share.statusWord(t[2]))
         assertEquals(emptyList<ShareTarget>(), Share.targets(json("""{"error":"x"}""")))
         assertEquals(emptyList<ShareTarget>(), Share.targets(null))
     }
@@ -46,10 +46,10 @@ class ShareTest {
     @Test
     fun theOutcomeIsTheHostsOwnSentenceWhenItGaveOne() {
         assertEquals("Said into the running turn.", Share.outcome(true, json("""{"sentence":"Said into the running turn."}"""), null))
-        assertEquals("Sıraya alındı; tur bitince söylenecek.", Share.outcome(true, json("""{"held":true}"""), null))
-        assertEquals("Gönderildi.", Share.outcome(true, json("""{"sent":true}"""), null))
-        assertEquals("Gönderilemedi: scope: console.send needs manage", Share.outcome(false, null, "scope: console.send needs manage"))
-        assertEquals("Gönderilemedi: çiftlik yanıt vermedi", Share.outcome(false, null, null))
+        assertEquals("Queued; it is said when the turn ends.", Share.outcome(true, json("""{"held":true}"""), null))
+        assertEquals("Sent.", Share.outcome(true, json("""{"sent":true}"""), null))
+        assertEquals("Not sent: scope: console.send needs manage", Share.outcome(false, null, "scope: console.send needs manage"))
+        assertEquals("Not sent: the farm did not answer", Share.outcome(false, null, null))
     }
 
     @Test

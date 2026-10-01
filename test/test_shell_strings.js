@@ -60,4 +60,17 @@ for (const [name, value] of defined) {
     t.ok(!/(^|[^\\])'/.test(value), `strings.xml "${name}": an apostrophe must be escaped as \\'`);
 }
 
+// The app speaks Agent Farm's own language, English: a Turkish letter in anything it shows is a
+// translation that never happened. The voice and dictation language is the user's, not a shown word.
+for (const [name, value] of defined) {
+    t.ok(!TURKISH.test(value), `strings.xml "${name}" is English, like Agent Farm: ${value}`);
+}
+const literals = src => [...stripComments(src).matchAll(/"((?:[^"\\\n]|\\.)*)"/g)].map(m => m[1]);
+t.ok(literals('val a = "Bağlı"; // "yorum"').length === 1 && TURKISH.test(literals('x("Bağlı")')[0]), 'the literal reader finds a Turkish literal and skips comments');
+for (const f of walk('app/src/main/java', ['.kt'])) {
+    for (const s of literals(read(f))) {
+        t.ok(!TURKISH.test(s), `${f}: shown words must be English, like Agent Farm: "${s}"`);
+    }
+}
+
 t.done();

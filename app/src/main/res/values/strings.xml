@@ -3,81 +3,81 @@
     <string name="app_name">Agent Farm</string>
 
     <!-- Common -->
-    <string name="back">Geri</string>
-    <string name="cancel">Vazgeç</string>
-    <string name="clear">Temizle</string>
+    <string name="back">Back</string>
+    <string name="cancel">Cancel</string>
+    <string name="clear">Clear</string>
 
     <!-- Farms and pairing -->
-    <string name="open_settings">Ayarlar</string>
-    <string name="farms">Çiftlikler</string>
-    <string name="farms_empty">Henüz eşlenmiş çiftlik yok.</string>
-    <string name="pair_new">Yeni eşleşme</string>
-    <string name="pair_hint">Agent Farm\'daki eşleşme QR\'ını kamerayla okutun ya da bağlantıyı yapıştırın.</string>
-    <string name="pair_link">Eşleşme bağlantısı</string>
-    <string name="pair_go">Eşleş</string>
-    <string name="pair_busy">Eşleşiyor…</string>
-    <string name="paired_with">%1$s ile eşlendi.</string>
-    <string name="farm_open">Çiftliği aç</string>
-    <string name="farm_link_detail">Bağlantı ayrıntısı</string>
-    <string name="forget">Unut</string>
-    <string name="forget_title">%1$s unutulsun mu?</string>
-    <string name="forget_detail">Bu telefonun bu çiftlikteki anahtarı silinir; yeniden bağlanmak için yeni bir QR gerekir.</string>
+    <string name="open_settings">Settings</string>
+    <string name="farms">Farms</string>
+    <string name="farms_empty">No farm is paired yet.</string>
+    <string name="pair_new">Pair a farm</string>
+    <string name="pair_hint">Scan the pairing QR code shown in Agent Farm, or paste its link.</string>
+    <string name="pair_link">Pairing link</string>
+    <string name="pair_go">Pair</string>
+    <string name="pair_busy">Pairing…</string>
+    <string name="paired_with">Paired with %1$s.</string>
+    <string name="farm_open">Open farm</string>
+    <string name="farm_link_detail">Link details</string>
+    <string name="forget">Forget</string>
+    <string name="forget_title">Forget %1$s?</string>
+    <string name="forget_detail">This phone\'s key for this farm is deleted; connecting again needs a new QR code.</string>
 
     <!-- Settings -->
-    <string name="settings_title">Ayarlar</string>
-    <string name="settings_lock">Uygulama kilidi</string>
-    <string name="lock_on_open">Açılışta kimlik sor</string>
-    <string name="lock_on_open_detail">Uygulama açılırken ve bir dakikadan uzun arka planda kaldıktan sonra.</string>
-    <string name="lock_destructive_asks">Çiftliği unutmak gibi geri alınamayan eylemler her zaman kimlik sorar.</string>
-    <string name="lock_destructive_confirms">Geri alınamayan eylemler bu telefonda onay penceresiyle sorulur.</string>
-    <string name="settings_speech">Sesli okuma</string>
-    <string name="speak_off">Kapalı</string>
-    <string name="speak_asks">Sorular ve izinler</string>
-    <string name="speak_asks_and_turns">Sorular, izinler ve tur sonları</string>
-    <string name="speak_detail">Bir ajan soru sorduğunda ya da izin istediğinde telefon bunu Türkçe okur; seçilirse biten turun özetini de. Rahatsız Etmeyin açıkken susar.</string>
-    <string name="settings_battery">Pil optimizasyonu</string>
-    <string name="settings_device">Bu cihaz</string>
+    <string name="settings_title">Settings</string>
+    <string name="settings_lock">App lock</string>
+    <string name="lock_on_open">Verify it\'s you on open</string>
+    <string name="lock_on_open_detail">When the app opens, and after it has been in the background for more than a minute.</string>
+    <string name="lock_destructive_asks">Actions that cannot be undone, like forgetting a farm, always verify it\'s you.</string>
+    <string name="lock_destructive_confirms">Actions that cannot be undone are confirmed with a dialog on this phone.</string>
+    <string name="settings_speech">Read aloud</string>
+    <string name="speak_off">Off</string>
+    <string name="speak_asks">Questions and permissions</string>
+    <string name="speak_asks_and_turns">Questions, permissions and finished turns</string>
+    <string name="speak_detail">When an agent asks a question or a permission, the phone reads it aloud in a Turkish voice; if chosen, a finished turn\'s summary too. Silent while Do Not Disturb is on.</string>
+    <string name="settings_battery">Battery optimization</string>
+    <string name="settings_device">This device</string>
     <string name="device_line">%1$s %2$s · Android %3$s</string>
 
     <!-- The lock -->
-    <string name="lock_ask_open">Agent Farm\'ı aç</string>
-    <string name="lock_ask_turn_on">Açılış kilidini aç</string>
-    <string name="lock_ask_turn_off">Açılış kilidini kapat</string>
-    <string name="locked_title">Agent Farm kilitli</string>
-    <string name="locked_detail">Açmak için kimliğinizi doğrulayın.</string>
-    <string name="unlock">Aç</string>
+    <string name="lock_ask_open">Open Agent Farm</string>
+    <string name="lock_ask_turn_on">Turn on the app lock</string>
+    <string name="lock_ask_turn_off">Turn off the app lock</string>
+    <string name="locked_title">Agent Farm is locked</string>
+    <string name="locked_detail">Verify it\'s you to open it.</string>
+    <string name="unlock">Unlock</string>
 
     <!-- Sharing into a session -->
-    <string name="share_title">Oturuma gönder</string>
-    <string name="share_whole">Metnin tamamı</string>
-    <string name="share_farm">Çiftlik</string>
-    <string name="share_session">Oturum</string>
-    <string name="share_loading">Oturumlar okunuyor…</string>
-    <string name="share_no_farm">Bağlı çiftlik yok; paylaşılan metin bir çiftlik bağlanınca gönderilebilir.</string>
-    <string name="share_no_session">Bu çiftlikte açık bir Console oturumu yok.</string>
-    <string name="share_send">Gönder</string>
-    <string name="close">Kapat</string>
+    <string name="share_title">Send to a session</string>
+    <string name="share_whole">Whole text</string>
+    <string name="share_farm">Farm</string>
+    <string name="share_session">Session</string>
+    <string name="share_loading">Reading sessions…</string>
+    <string name="share_no_farm">No farm is connected; the shared text can be sent once one connects.</string>
+    <string name="share_no_session">This farm has no open Console session.</string>
+    <string name="share_send">Send</string>
+    <string name="close">Close</string>
 
     <!-- Widget and quick settings tile -->
-    <string name="widget_description">Bağlı çiftlikler, seni bekleyenler ve çalışan oturumlar; dokununca Şimdi sayfası.</string>
+    <string name="widget_description">Connected farms, what waits for you and running sessions; tap for the Now page.</string>
     <string name="tile_label">Agent Farm</string>
-    <string name="widget_mic">Sesle bir oturuma söyle</string>
+    <string name="widget_mic">Say it to a session</string>
 
     <!-- Farm pages -->
-    <string name="farm_unpaired">Bu çiftlik artık eşli değil.</string>
-    <string name="clipboard_refused">Pano bunu kabul etmedi.</string>
-    <string name="voice_prompt">Konuşun…</string>
-    <string name="voice_unavailable">Bu telefonda konuşma tanıma yok.</string>
-    <string name="page_blocked">Bu adres kabuktan açılmaz.</string>
-    <string name="page_offline">Çiftlik şu an bağlı değil.</string>
+    <string name="farm_unpaired">This farm is no longer paired.</string>
+    <string name="clipboard_refused">The clipboard did not accept it.</string>
+    <string name="voice_prompt">Speak…</string>
+    <string name="voice_unavailable">This phone has no speech recognition.</string>
+    <string name="page_blocked">This address does not open in the app.</string>
+    <string name="page_offline">The farm is not connected right now.</string>
 
     <!-- Notification channels (system settings show these) -->
-    <string name="channel_ask">Soru ve izin</string>
-    <string name="channel_ask_detail">Bir ajan cevap ya da izin bekliyor</string>
-    <string name="channel_notice">Duyurular</string>
-    <string name="channel_notice_detail">Ajanların duyuruları ve kota uyarıları</string>
-    <string name="channel_turn">Tur bitti</string>
-    <string name="channel_turn_detail">Bir ajanın turu bitti</string>
-    <string name="channel_link">Bağlantı</string>
-    <string name="channel_link_detail">Çiftliklere bağlantının sürekli durum satırı</string>
+    <string name="channel_ask">Questions and permissions</string>
+    <string name="channel_ask_detail">An agent waits for an answer or a permission</string>
+    <string name="channel_notice">Notices</string>
+    <string name="channel_notice_detail">Agents\' notices and quota warnings</string>
+    <string name="channel_turn">Turn finished</string>
+    <string name="channel_turn_detail">An agent\'s turn finished</string>
+    <string name="channel_link">Link</string>
+    <string name="channel_link_detail">The steady status line of the link to your farms</string>
 </resources>

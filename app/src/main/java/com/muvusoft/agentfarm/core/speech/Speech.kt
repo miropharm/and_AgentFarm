@@ -39,10 +39,10 @@ object Speech {
         return Utterance(alert.tag, cut(text), interrupt = alert.channel == Channel.ASK)
     }
 
-    /** Text as a voice should read it: no markup, a link is "bağlantı", runs of space are one. */
+    /** Text as a voice should read it: no markup, a link is "link", runs of space are one. */
     fun spoken(text: String): String = text
-        .replace(Regex("```[\\s\\S]*?```"), " kod bloğu ")
-        .replace(Regex("https?://\\S+"), "bağlantı")
+        .replace(Regex("```[\\s\\S]*?```"), " code block ")
+        .replace(Regex("https?://\\S+"), "link")
         .replace(Regex("[`*_#>|]+"), " ")
         .replace(Regex("\\s+"), " ")
         .replace(Regex(" ([,.;:!?])"), "$1")

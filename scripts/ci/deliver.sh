@@ -35,7 +35,7 @@ echo "Delivering to group alias: $ALIAS"
 # Release notes: the newest CHANGELOG.md entry (the user-facing text), then which build and commit this is.
 NOTES=$(awk '/^## /{n++; if (n == 2) exit} n == 1' CHANGELOG.md)
 SUBJECT=$(printf '%s\n' "${COMMIT_MESSAGE:-}" | head -1)
-RELEASE_NOTES=$(printf '%s\n\nDerleme b%s - %s\n' "$NOTES" "${GITHUB_RUN_NUMBER:-?}" "$SUBJECT")
+RELEASE_NOTES=$(printf '%s\n\nBuild b%s - %s\n' "$NOTES" "${GITHUB_RUN_NUMBER:-?}" "$SUBJECT")
 
 npx --yes firebase-tools@latest appdistribution:distribute "$APK" \
   --app "$FIREBASE_APP_ID" --groups "$ALIAS" --release-notes "$RELEASE_NOTES"

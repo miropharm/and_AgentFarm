@@ -51,7 +51,7 @@ object PairClient {
                     val parsed = try {
                         Codec.json.decodeFromString(PairResponse.serializer(), text)
                     } catch (_: SerializationException) {
-                        return PairingVerdict.Result.Failed(PairingProblem.Refused(res.code, "yanıt okunamadı"))
+                        return PairingVerdict.Result.Failed(PairingProblem.Refused(res.code, "the answer could not be read"))
                     }
                     return PairingVerdict.accept(info, parsed, alias)
                 }

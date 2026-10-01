@@ -35,25 +35,25 @@ object Alerts {
     /** The notification an event deserves, or null for events that only update state. */
     fun of(farmName: String, e: FarmEventData): Alert? = when (e) {
         is AskOpened -> Alert(
-            Channel.ASK, "ask:${e.askId}", "${e.agent} soruyor · $farmName", e.question,
+            Channel.ASK, "ask:${e.askId}", "${e.agent} is asking · $farmName", e.question,
             if (e.options.size in 1..MAX_BUTTONS) {
                 e.options.map { AlertAction(it.label, "console.answer", answer(e.session, e.question, it.label)) }
             } else {
-                listOf(AlertAction("Yanıtla", "console.answer", buildJsonObject { put("id", e.session) }, replyArg = "response"))
+                listOf(AlertAction("Reply", "console.answer", buildJsonObject { put("id", e.session) }, replyArg = "response"))
             },
         )
         is PermissionOpened -> Alert(
-            Channel.ASK, "perm:${e.permId}", "${e.agent} izin istiyor: ${e.tool} · $farmName", e.summary,
+            Channel.ASK, "perm:${e.permId}", "${e.agent} asks permission: ${e.tool} · $farmName", e.summary,
             listOf(
-                AlertAction("Onayla", "needs.act", act(e.key, "permission-allow"), unlock = true),
-                AlertAction("Reddet", "needs.act", act(e.key, "permission-deny")),
+                AlertAction("Allow", "needs.act", act(e.key, "permission-allow"), unlock = true),
+                AlertAction("Deny", "needs.act", act(e.key, "permission-deny")),
             ),
         )
-        is TurnFinished -> Alert(Channel.TURN, "turn:${e.session}", "${e.agent}: tur bitti · $farmName", e.title, emptyList())
+        is TurnFinished -> Alert(Channel.TURN, "turn:${e.session}", "${e.agent}: turn finished · $farmName", e.title, emptyList())
         is NoticePosted -> Alert(Channel.NOTICE, "notice:${e.id}", "${e.agent} · $farmName", e.title, emptyList())
         is QuotaWarn -> Alert(
-            Channel.NOTICE, "quota:${e.engine}:${e.window}", "Kota uyarısı · $farmName",
-            "${e.engine} ${e.window} penceresi %${e.percent.toInt()} dolu", emptyList(),
+            Channel.NOTICE, "quota:${e.engine}:${e.window}", "Quota warning · $farmName",
+            "${e.engine} ${e.window} window is ${e.percent.toInt()}% full", emptyList(),
         )
         else -> null
     }

@@ -31,7 +31,7 @@ class ShareTest {
         ActivityScenario.launch<MainActivity>(pair).use {
             rule.onNodeWithTag("pair-go").performClick()
             rule.waitUntil(15_000) {
-                rule.onAllNodes(hasTestTag("pair-message") and hasText("eşlendi", substring = true)).fetchSemanticsNodes().isNotEmpty()
+                rule.onAllNodes(hasTestTag("pair-message") and hasText("Paired with", substring = true)).fetchSemanticsNodes().isNotEmpty()
             }
         }
         val words = "Şu yazıya bak: https://ornek.test/yazi"

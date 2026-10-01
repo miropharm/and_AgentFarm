@@ -50,7 +50,7 @@ class ShellScreensTest {
         val scenario = ActivityScenario.launch<MainActivity>(intent)
         rule.onNodeWithTag("pair-go").performClick()
         rule.waitUntil(15_000) {
-            rule.onAllNodes(hasTestTag("pair-message") and hasText("ile eşlendi", substring = true)).fetchSemanticsNodes().isNotEmpty()
+            rule.onAllNodes(hasTestTag("pair-message") and hasText("Paired with", substring = true)).fetchSemanticsNodes().isNotEmpty()
         }
         return scenario
     }
@@ -65,7 +65,7 @@ class ShellScreensTest {
         pairedApp().use {
             rule.onNodeWithTag(farm).performTouchInput { longClick() }
             rule.onNodeWithTag("aftip").assertIsDisplayed()
-            rule.onNode(hasText("Adresler:", substring = true)).assertIsDisplayed()
+            rule.onNode(hasText("Addresses:", substring = true)).assertIsDisplayed()
             shot("farm-link-sheet")
             InstrumentationRegistry.getInstrumentation().sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
             rule.waitUntil(5_000) { rule.onAllNodes(hasTestTag("aftip")).fetchSemanticsNodes().isEmpty() }

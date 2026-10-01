@@ -5,10 +5,10 @@ object Time {
     fun ago(ms: Long): String {
         val s = ms.coerceAtLeast(0) / 1000
         return when {
-            s < 60 -> "$s sn"
-            s < 3600 -> "${s / 60} dk"
-            s < 86_400 -> "${s / 3600} sa"
-            else -> "${s / 86_400} gün"
+            s < 60 -> "$s s"
+            s < 3600 -> "${s / 60} min"
+            s < 86_400 -> "${s / 3600} h"
+            else -> "${s / 86_400} d"
         }
     }
 }

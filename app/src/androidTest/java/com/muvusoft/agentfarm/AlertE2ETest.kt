@@ -72,7 +72,7 @@ class AlertE2ETest {
         val n = waitFor("perm:p_e2e")
         assertNotNull("no notification for the permission", n)
         val (allow, deny) = n!!.notification.actions.toList()
-        assertEquals("Onayla", allow.title.toString())
+        assertEquals("Allow", allow.title.toString())
         if (android.os.Build.VERSION.SDK_INT >= 31) {
             assertTrue(allow.isAuthenticationRequired)
             assertTrue(!deny.isAuthenticationRequired)

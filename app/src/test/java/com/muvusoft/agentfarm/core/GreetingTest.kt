@@ -6,6 +6,6 @@ import org.junit.Test
 class GreetingTest {
     @Test
     fun buildLabelShowsVersion() {
-        assertEquals("Sürüm 0.1.0-b7", buildLabel("0.1.0-b7"))
+        assertEquals("Version 0.1.0-b7", buildLabel("0.1.0-b7"))
     }
 }

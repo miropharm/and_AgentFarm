@@ -9,16 +9,19 @@ import com.muvusoft.agentfarm.core.state.PairedFarm
 
 /** Why a pairing did not happen; the screen prints `message`, never re-derives it. */
 sealed class PairingProblem(val message: String) {
-    object NotALink : PairingProblem("Bu bir Agent Farm eşleşme bağlantısı değil.")
+    object NotALink : PairingProblem("This is not an Agent Farm pairing link.")
     data class NewerContract(val v: Long) :
-        PairingProblem("Bu çiftlik daha yeni bir sözleşme konuşuyor (v$v); uygulamayı güncelleyin.")
-    object CodeUsed : PairingProblem("Eşleşme kodu kullanılmış ya da süresi dolmuş; Agent Farm'da yeni kod alın.")
-    object WrongFarm : PairingProblem("Yanıt veren çiftlik, bağlantıdaki çiftlik değil; eşleşme yapılmadı.")
-    object CertificateMismatch : PairingProblem("Sunucu sertifikası bağlantıdaki parmak iziyle uyuşmuyor; eşleşme yapılmadı.")
+        PairingProblem("This farm speaks a newer contract (v$v); update the app.")
+    object CodeUsed : PairingProblem("The pairing code was used or has expired; get a new code in Agent Farm.")
+    object WrongFarm : PairingProblem("The farm that answered is not the farm in the link; nothing was paired.")
+    object CertificateMismatch : PairingProblem("The server certificate does not match the fingerprint in the link; nothing was paired.")
     data class Unreachable(val tried: List<String>) :
-        PairingProblem("Çiftliğe ulaşılamadı. Denenen adresler: ${tried.joinToString(", ")}")
+        PairingProblem(
+            "Could not reach the farm. Addresses tried: ${tried.joinToString(", ")}. " +
+                "Is the phone on the same Wi-Fi? On the computer, Toolbox > Services > Agent Farm app says what stops it.",
+        )
     data class Refused(val status: Int, val detail: String?) :
-        PairingProblem("Çiftlik eşleşmeyi reddetti ($status)" + (detail?.let { ": $it" } ?: "."))
+        PairingProblem("The farm refused the pairing ($status)" + (detail?.let { ": $it" } ?: "."))
 }
 
 sealed interface PairingStep {

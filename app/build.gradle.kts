@@ -6,7 +6,7 @@ plugins {
 }
 
 // Release version: bumped with a CHANGELOG.md entry of the same number (test/test_changelog.js).
-val appVersion = "0.2.0"
+val appVersion = "0.2.1"
 
 // CI run number becomes the build number, so every delivered APK is identifiable on the phone.
 val buildNumber = (System.getenv("GITHUB_RUN_NUMBER") ?: "1").toInt()

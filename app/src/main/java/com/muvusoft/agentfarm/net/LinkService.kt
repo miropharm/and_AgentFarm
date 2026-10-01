@@ -73,7 +73,7 @@ class LinkService : Service() {
         if (job == null) {
             job = app.scope.launch {
                 app.manager.state.collectLatest { s ->
-                    // Re-drawn on every change and once a minute so "son tur … önce" stays true.
+                    // Re-drawn on every change and once a minute so "last turn … ago" stays true.
                     while (true) {
                         val text = StatusLine.of(s, System.currentTimeMillis())
                         notify(text)

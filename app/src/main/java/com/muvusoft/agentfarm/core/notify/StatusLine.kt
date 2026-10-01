@@ -14,18 +14,18 @@ object StatusLine {
         val needs = s.farms.sumOf { it.needs }
         val refused = s.farms.count { it.link is Link.Refused }
         val title = when {
-            total == 0 -> "Eşli çiftlik yok"
-            online == total -> if (total == 1) "Bağlı · ${s.farms[0].farm.name}" else "$total çiftlik bağlı"
-            online == 0 -> if (refused > 0) "Bağlantı reddedildi" else "Bağlı değil · yeniden deneniyor"
-            else -> "$online/$total çiftlik bağlı"
+            total == 0 -> "No paired farm"
+            online == total -> if (total == 1) "Connected · ${s.farms[0].farm.name}" else "$total farms connected"
+            online == 0 -> if (refused > 0) "Link refused" else "Not connected · retrying"
+            else -> "$online/$total farms connected"
         }
         val parts = mutableListOf<String>()
-        parts += if (needs > 0) "$needs bekleyen" else "bekleyen yok"
+        parts += if (needs > 0) "$needs waiting" else "nothing waiting"
         // Only a connected farm's count is current; an offline one's is last night's news.
         val known = s.farms.filter { it.link is Link.Online }.mapNotNull { it.running }
-        if (known.isNotEmpty()) parts += if (known.sum() > 0) "${known.sum()} çalışıyor" else "çalışan yok"
-        s.farms.mapNotNull { it.lastTurnAt }.maxOrNull()?.let { parts += "son tur ${Time.ago(now - it)} önce" }
-        if (s.outbox.isNotEmpty()) parts += "${s.outbox.size} gönderilmemiş"
+        if (known.isNotEmpty()) parts += if (known.sum() > 0) "${known.sum()} running" else "nothing running"
+        s.farms.mapNotNull { it.lastTurnAt }.maxOrNull()?.let { parts += "last turn ${Time.ago(now - it)} ago" }
+        if (s.outbox.isNotEmpty()) parts += "${s.outbox.size} unsent"
         return Text(title, parts.joinToString(" · "))
     }
 }

@@ -116,7 +116,7 @@ class FarmPageTest {
     private fun openFarm() {
         rule.waitUntil(20_000) {
             // The row is clickable, so its texts are merged into it; the link line is found in the unmerged tree.
-            rule.onAllNodes(hasTestTag("link-$farmId") and hasText("Bağlı", substring = true), useUnmergedTree = true)
+            rule.onAllNodes(hasTestTag("link-$farmId") and hasText("Connected", substring = true), useUnmergedTree = true)
                 .fetchSemanticsNodes().isNotEmpty()
         }
         rule.onNodeWithTag("farm-$farmId").performClick()
@@ -128,22 +128,22 @@ class FarmPageTest {
     @Test
     fun aPageLinkOpensTheNextPageInTheShellAndBackReturns() {
         openFarm()
-        assertEquals(diagnosis(), "Sahte sayfa: now", titleUntil("Sahte sayfa: now"))
+        assertEquals(diagnosis(), "Fake page: now", titleUntil("Fake page: now"))
         // X-443: afnav is the shell's, not the farm's; the next page opens here, in a view of its own.
         js("acquireVsCodeApi().postMessage({type:'afnav',to:'needs'})")
-        assertEquals(diagnosis(), "Sahte sayfa: needs", titleUntil("Sahte sayfa: needs"))
+        assertEquals(diagnosis(), "Fake page: needs", titleUntil("Fake page: needs"))
         rule.activityRule.scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }
-        assertEquals(diagnosis(), "Sahte sayfa: now", titleUntil("Sahte sayfa: now"))
+        assertEquals(diagnosis(), "Fake page: now", titleUntil("Fake page: now"))
         // A link to something that is not a page opens nothing.
         js("acquireVsCodeApi().postMessage({type:'afnav',to:'../x'})")
         Thread.sleep(500)
-        assertEquals("Sahte sayfa: now", titleUntil("Sahte sayfa: now"))
+        assertEquals("Fake page: now", titleUntil("Fake page: now"))
     }
 
     @Test
     fun aCopyFromAPageLandsOnThePhonesClipboard() {
         openFarm()
-        assertEquals(diagnosis(), "Sahte sayfa: now", titleUntil("Sahte sayfa: now"))
+        assertEquals(diagnosis(), "Fake page: now", titleUntil("Fake page: now"))
         js("acquireVsCodeApi().postMessage({type:'afClipboard',token:'t1',text:'kopya metni'})")
         assertEquals(true, jsUntil("document.body.getAttribute('data-seen') || ''") { it.contains("afClipboardDone") }.contains("afClipboardDone"))
         var clip = ""
@@ -157,8 +157,8 @@ class FarmPageTest {
     fun aFarmRowOpensItsPageThroughTheShell() {
         openFarm()
 
-        val title = jsUntil("document.getElementById('title') ? document.getElementById('title').textContent : ''") { it.startsWith("Sahte") }
-        assertEquals(diagnosis(), "Sahte sayfa: now", title)
+        val title = jsUntil("document.getElementById('title') ? document.getElementById('title').textContent : ''") { it.startsWith("Fake") }
+        assertEquals(diagnosis(), "Fake page: now", title)
         assertEquals("function", js("typeof acquireVsCodeApi"))
         assertEquals("16px", js("getComputedStyle(document.body).marginTop"))
 

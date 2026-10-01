@@ -25,8 +25,8 @@ object LockPolicy {
     /** Why the owner check is not offered, in the user's words; null when it is. */
     fun reason(availability: Availability): String? = when (availability) {
         Availability.READY -> null
-        Availability.NOT_ENROLLED -> "Telefonda ekran kilidi ya da parmak izi tanımlı değil."
-        Availability.NO_HARDWARE -> "Bu telefon kimlik doğrulaması sunmuyor."
-        Availability.UNAVAILABLE -> "Kimlik doğrulaması şu an kullanılamıyor."
+        Availability.NOT_ENROLLED -> "This phone has no screen lock or fingerprint set up."
+        Availability.NO_HARDWARE -> "This phone offers no way to verify its owner."
+        Availability.UNAVAILABLE -> "Owner verification is not available right now."
     }
 }

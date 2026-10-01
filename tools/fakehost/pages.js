@@ -16,7 +16,7 @@ function html(page, view) {
     return '<!doctype html><html><head><meta charset="utf-8">' +
         '<meta name="viewport" content="width=device-width,initial-scale=1">' +
         '<link rel="stylesheet" href="/res/common.css"><script src="/res/afRemote.js"></script></head>' +
-        `<body data-page="${safe(page)}" data-view="${safe(view)}"><h1 id="title">Sahte sayfa: ${safe(page)}</h1>` +
+        `<body data-page="${safe(page)}" data-view="${safe(view)}"><h1 id="title">Fake page: ${safe(page)}</h1>` +
         // Records what the host sent, the way a real page's message listener would receive it.
         '<script>window.afSeen=[];window.addEventListener("message",function(e){afSeen.push(e.data&&e.data.type);' +
         'document.body.setAttribute("data-seen",afSeen.join(","));});</script></body></html>';

@@ -59,7 +59,8 @@ The rest of the house rules, as they apply here:
 - **A text filter box has ✕ inside it**, Back clears or dismisses, and a live filter keeps focus and caret across recomposition.
 - **Time:** every clock through one `core/` helper — short in a row, full with UTC and offset in the sheet. A missing timestamp prints nothing.
 - **Copy:** one copy path; the ✓ appears only after the write happened.
-- **The shell's words live in `res/values/strings.xml`** (Turkish, the default locale): a screen's text, a TalkBack label, a dialog, a notification channel name through `R.string`, never a Kotlin literal; `core/` verdict sentences stay in `core/` (pure, JVM-tested). `test/test_shell_strings.js` holds it, both ways (every name exists, every string is used).
+- **The app speaks Agent Farm's language: English.** It is Agent Farm's companion, and Agent Farm's UI is English, so every word the app shows — screens, TalkBack labels, notifications, `core/` verdict sentences — is English; there is no Turkish translation. The voice that reads aloud and the dictation recogniser use the user's spoken language (Turkish); that is speech, not shown words. `test/test_shell_strings.js` fails on a Turkish letter in `strings.xml` or in any `app/src/main` literal.
+- **The shell's words live in `res/values/strings.xml`** (the default locale): a screen's text, a TalkBack label, a dialog, a notification channel name through `R.string`, never a Kotlin literal; `core/` verdict sentences stay in `core/` (pure, JVM-tested). `test/test_shell_strings.js` holds it, both ways (every name exists, every string is used).
 - **TalkBack reads what the eye groups:** a label + detail + switch row is ONE `toggleable` node (`Role.Switch`), a screen title and section titles are `heading()`, a row with a long press names both gestures (`onClickLabel` / `onLongClickLabel`), an icon-only button has a label. The system font scale is honoured (no fixed text heights; the CI shoots `main-font200` at 200%).
 - **A backlog code never reaches the user** (`test/test_no_dev_codes.js`). Codes live in comments, commit bodies and backlog records.
 - **Making things:** one form per object and every route opens it; the refusal is shown in the form; saving a whole form can remove a field and never removes one it never showed.
@@ -71,7 +72,7 @@ The rest of the house rules, as they apply here:
 - **A visual change is not done until its screenshots were looked at** (emulator job artifacts; SOP section 4). String and unit tests pass on layouts nobody drew.
 - **Shoot the scene, not the montage:** one capture per state, at its own size.
 - **Draw the arity the user actually gets:** empty · one · many · too-many are different layouts; add the smallest first.
-- **Light and dark, portrait and landscape**, with Turkish text and a real distribution of states in fixtures.
+- **Light and dark, portrait and landscape**, with the app's English words, the user's own (Turkish) data and a real distribution of states in fixtures.
 - **A scene that needs a press presses it** in the UI test; two scenes whose captures are identical are one scene with two labels.
 - **When the question is a number, measure it** from the UI tree (bounds from `uiautomator dump` / Compose semantics): clipped text, a name squeezed to zero width, siblings overlapping.
 - **Prove the capture:** `screen-state.txt` records the rotation and night mode actually in effect for each shot.
@@ -92,7 +93,7 @@ The rest of the house rules, as they apply here:
 - **Commit title:** `v#.# - <version>: <lowercase summary>` for a release (`[deliver]`), otherwise `v#.# - <lowercase summary> (not released)`. `#.#` is the repo's global commit counter: the last `v#.#` in `git log` + 1; unformatted commits also consume a number. The counter starts at `v1.13`.
 - **Commit body:** what changed, file by file; `Verification:` with the local gate figures (`N files / M passed / 0 failed`) and the CI run that proves the rest; `Limit:` for anything not covered; the attribution line. Work is not "done" until that CI run is green and its screenshots were looked at.
 - **One job, one commit**, and only your own paths: parallel sessions share the working tree, so `git status` before staging.
-- **Version:** `appVersion` in `app/build.gradle.kts` is the release number; `versionName` = `<appVersion>-b<CI run>`, `versionCode` = the CI run. A release bumps `appVersion` and adds `## <version> - <title> (<YYYY-MM-DD>)` to `CHANGELOG.md` — user-facing, in Turkish — and the phone's release notes are read from that entry (`scripts/ci/deliver.sh`). `test/test_changelog.js` holds the two together.
+- **Version:** `appVersion` in `app/build.gradle.kts` is the release number; `versionName` = `<appVersion>-b<CI run>`, `versionCode` = the CI run. A release bumps `appVersion` and adds `## <version> - <title> (<YYYY-MM-DD>)` to `CHANGELOG.md` — user-facing, in English like the app — and the phone's release notes are read from that entry (`scripts/ci/deliver.sh`). `test/test_changelog.js` holds the two together.
 - **Docs travel with the change:** protocol → `docs/PROTOKOL-VE-MIMARI.md`; scenarios and results → `docs/test-plan.md`; conventions → this file and its human copy.
 
 ## 7. Encoding and the shell

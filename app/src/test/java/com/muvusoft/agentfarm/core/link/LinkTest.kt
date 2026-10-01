@@ -53,32 +53,32 @@ class LinkTest {
     @Test
     fun everyWaitSaysKindReasonAndSince() {
         val t = LinkText.of(Link.Connecting("10.0.0.2:8743", 3, 0), 65_000)
-        assertTrue(t.short.contains("deneme 3"))
-        assertTrue(t.long.contains("1 dk"))
+        assertTrue(t.short.contains("attempt 3"))
+        assertTrue(t.long.contains("1 min"))
         val refused = LinkText.of(Link.Refused("revoked", null, 0), 0)
-        assertTrue(refused.short.startsWith("Reddedildi"))
-        assertTrue(refused.long.contains("yeniden eşleyin"))
-        assertFalse(LinkText.of(Link.Online("a:1", "manage", emptyMap(), 0), 0).short.contains("Reddedildi"))
+        assertTrue(refused.short.startsWith("Refused"))
+        assertTrue(refused.long.contains("Pair again"))
+        assertFalse(LinkText.of(Link.Online("a:1", "manage", emptyMap(), 0), 0).short.contains("Refused"))
     }
 
     @Test
     fun aVersionRefusalNamesTheSideToUpdate() {
         val newer = com.muvusoft.agentfarm.core.contract.CONTRACT_VERSION + 1
         val app = LinkText.of(Link.Refused("contract", null, 0, minContract = newer), 0)
-        assertTrue(app.short.contains("uygulama eski"))
-        assertTrue(app.long.contains("Telefondaki uygulamayı güncelleyin") && app.long.contains("$newer"))
+        assertTrue(app.short.contains("app is out of date"))
+        assertTrue(app.long.contains("Update the app on the phone") && app.long.contains("$newer"))
         val farm = LinkText.of(Link.Refused("contract", null, 0, minContract = 0), 0)
-        assertTrue(farm.long.contains("Agent Farm'ı güncelleyin"))
+        assertTrue(farm.long.contains("Update Agent Farm"))
         val unknown = LinkText.of(Link.Refused("contract", null, 0), 0)
-        assertTrue(unknown.long.contains("Uygulamayı ya da Agent Farm'ı"))
+        assertTrue(unknown.long.contains("Update the app or Agent Farm"))
     }
 
     @Test
     fun elapsedTimeIsShort() {
-        assertEquals("0 sn", Time.ago(-5))
-        assertEquals("59 sn", Time.ago(59_999))
-        assertEquals("2 sa", Time.ago(7_200_000))
-        assertEquals("3 gün", Time.ago(3 * 86_400_000L))
+        assertEquals("0 s", Time.ago(-5))
+        assertEquals("59 s", Time.ago(59_999))
+        assertEquals("2 h", Time.ago(7_200_000))
+        assertEquals("3 d", Time.ago(3 * 86_400_000L))
     }
 
     @Test
@@ -86,7 +86,7 @@ class LinkTest {
         val link = Link.Offline("unreachable", 0)
         val lines = LinkText.sheet(link, listOf("10.0.0.2:7443", "pc.local:7443"), 60_000)
         assertEquals(LinkText.of(link, 60_000).long, lines.first())
-        assertEquals("Adresler: 10.0.0.2:7443, pc.local:7443", lines[1])
+        assertEquals("Addresses: 10.0.0.2:7443, pc.local:7443", lines[1])
         assertEquals(1, LinkText.sheet(link, emptyList(), 60_000).size)
     }
 }

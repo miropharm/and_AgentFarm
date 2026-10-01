@@ -12,58 +12,58 @@ object LinkText {
     data class Text(val short: String, val long: String)
 
     fun of(link: Link, now: Long): Text = when (link) {
-        is Link.Online -> Text("Bağlı · ${link.address}", "Bağlı: ${link.address}, yetki ${link.scope}, ${ago(now - link.since)} önce.")
+        is Link.Online -> Text("Connected · ${link.address}", "Connected: ${link.address}, scope ${link.scope}, ${ago(now - link.since)} ago.")
         is Link.Connecting -> Text(
-            if (link.attempt <= 1) "Bağlanıyor · ${link.address}" else "Yeniden bağlanıyor · deneme ${link.attempt}",
-            "Bağlanıyor: ${link.address}, deneme ${link.attempt}, ${ago(now - link.since)} önce başladı. Çiftliğe ulaşınca kendiliğinden bağlanır.",
+            if (link.attempt <= 1) "Connecting · ${link.address}" else "Reconnecting · attempt ${link.attempt}",
+            "Connecting: ${link.address}, attempt ${link.attempt}, started ${ago(now - link.since)} ago. It connects by itself once the farm is reachable.",
         )
         is Link.Offline -> Text(
-            "Bağlı değil · ${offline(link.reason)}",
-            "Bağlı değil: ${offline(link.reason)}, ${ago(now - link.since)}. Çiftliğe ulaşılınca kendiliğinden bağlanır.",
+            "Not connected · ${offline(link.reason)}",
+            "Not connected: ${offline(link.reason)}, for ${ago(now - link.since)}. It connects by itself once the farm is reachable.",
         )
         is Link.Refused -> Text(
-            "Reddedildi · ${refused(link.reason, link.minContract)}",
-            "Çiftlik bağlantıyı reddetti: ${refused(link.reason, link.minContract)}" + (link.detail?.let { " ($it)" } ?: "") +
+            "Refused · ${refused(link.reason, link.minContract)}",
+            "The farm refused the link: ${refused(link.reason, link.minContract)}" + (link.detail?.let { " ($it)" } ?: "") +
                 ". " + clears(link.reason, link.minContract),
         )
     }
 
     /** The link detail sheet: the long form first, then where the phone looks for the farm. */
     fun sheet(link: Link, addresses: List<String>, now: Long): List<String> =
-        listOf(of(link, now).long) + (if (addresses.isEmpty()) emptyList() else listOf("Adresler: " + addresses.joinToString(", ")))
+        listOf(of(link, now).long) + (if (addresses.isEmpty()) emptyList() else listOf("Addresses: " + addresses.joinToString(", ")))
 
     /** Which side is behind: the farm needs a newer contract than this app speaks, or the other way round. */
     private fun appIsBehind(minContract: Long?): Boolean? = minContract?.let { it > CONTRACT_VERSION }
 
     fun refused(reason: String, minContract: Long? = null): String = when (reason) {
         "contract" -> when (appIsBehind(minContract)) {
-            true -> "bu uygulama eski"
-            false -> "Agent Farm eski"
-            null -> "sürümler uyuşmuyor"
+            true -> "this app is out of date"
+            false -> "Agent Farm is out of date"
+            null -> "the versions do not match"
         }
-        "revoked" -> "bu cihazın izni kaldırılmış"
-        "unknown-device" -> "çiftlik bu cihazı tanımıyor"
-        "bad-signature" -> "cihaz imzası doğrulanamadı"
-        "not-allowed" -> "izin verilmedi"
-        "busy" -> "çiftlik meşgul"
+        "revoked" -> "this device's access was revoked"
+        "unknown-device" -> "the farm does not know this device"
+        "bad-signature" -> "the device signature could not be verified"
+        "not-allowed" -> "not allowed"
+        "busy" -> "the farm is busy"
         else -> reason
     }
 
     private fun clears(reason: String, minContract: Long?): String = when (reason) {
         "contract" -> when (appIsBehind(minContract)) {
-            true -> "Telefondaki uygulamayı güncelleyin: çiftlik sözleşme $minContract istiyor, bu uygulama $CONTRACT_VERSION konuşuyor."
-            false -> "Agent Farm'ı güncelleyin: bu uygulama sözleşme $CONTRACT_VERSION konuşuyor, çiftlik daha eskisini."
-            null -> "Uygulamayı ya da Agent Farm'ı güncelleyin."
+            true -> "Update the app on the phone: the farm needs contract $minContract, this app speaks $CONTRACT_VERSION."
+            false -> "Update Agent Farm: this app speaks contract $CONTRACT_VERSION, the farm an older one."
+            null -> "Update the app or Agent Farm."
         }
-        "busy", "not-allowed" -> "Biraz sonra yeniden denenecek."
-        else -> "Agent Farm'da yeni QR ile yeniden eşleyin."
+        "busy", "not-allowed" -> "It tries again shortly."
+        else -> "Pair again with a new QR code from Agent Farm."
     }
 
     private fun offline(reason: String): String = when (reason) {
-        "paired" -> "henüz bağlanılmadı"
-        "unreachable" -> "adreslere ulaşılamadı"
-        "closed" -> "bağlantı kapandı"
-        "stopped" -> "durduruldu"
+        "paired" -> "not connected yet"
+        "unreachable" -> "its addresses could not be reached"
+        "closed" -> "the link closed"
+        "stopped" -> "stopped"
         else -> reason
     }
 }

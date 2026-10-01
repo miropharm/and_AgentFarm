@@ -23,7 +23,7 @@ const OPS = {
 
 function createHost(opts = {}) {
     const c = opts.contract || K.load();
-    const farm = opts.farm || { id: 'farm_fake', name: 'Sahte Çiftlik' };
+    const farm = opts.farm || { id: 'farm_fake', name: 'Fake Farm' };
     const keep = opts.keep || 100;
     const h = { c, farm, codes: new Set([opts.code || 'FAKE-CODE']), devices: new Map(), events: [], seq: 0, results: new Map(), calls: [], conns: new Set(), sessions: new Map() };
 

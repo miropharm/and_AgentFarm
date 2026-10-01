@@ -19,7 +19,7 @@ class SpeechTest {
     fun aQuestionIsReadInEveryModeButOffAndCutsInFront() {
         assertNull(Speech.of(ask, SpeakMode.OFF))
         val u = Speech.of(ask, SpeakMode.ASKS)!!
-        assertEquals("developer soruyor, Ev. Testleri şimdi çalıştırayım mı?", u.text)
+        assertEquals("developer is asking, Ev. Testleri şimdi çalıştırayım mı?", u.text)
         assertEquals("ask:q1", u.id)
         assertTrue(u.interrupt)
         assertEquals(u, Speech.of(ask, SpeakMode.ASKS_AND_TURNS))
@@ -29,9 +29,9 @@ class SpeechTest {
     fun aTurnSummaryIsReadOnlyWhenAskedForAndWaitsItsTurn() {
         assertNull(Speech.of(turn, SpeakMode.ASKS))
         val u = Speech.of(turn, SpeakMode.ASKS_AND_TURNS)!!
-        assertEquals("developer: tur bitti, Ev. Paket yeşil, commit atıldı", u.text)
+        assertEquals("developer: turn finished, Ev. Paket yeşil, commit atıldı", u.text)
         assertFalse(u.interrupt)
-        assertEquals("developer: tur bitti, Ev. Tüm testler geçti, bağlantı açıldı",
+        assertEquals("developer: turn finished, Ev. Tüm testler geçti, link açıldı",
             Speech.of(turn, SpeakMode.ASKS_AND_TURNS, summary = "Tüm testler **geçti**, https://ci/run açıldı")!!.text)
     }
 
@@ -43,7 +43,7 @@ class SpeechTest {
 
     @Test
     fun markupAndLinksAreNotSpelledOut() {
-        assertEquals("Bak: bağlantı ve node test/run-all.js kod bloğu tamam",
+        assertEquals("Bak: link ve node test/run-all.js code block tamam",
             Speech.spoken("Bak: https://x.y/z?a=1 ve `node test/run-all.js` ```\nrm -rf\n``` **tamam**"))
     }
 

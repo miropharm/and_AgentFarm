@@ -24,19 +24,19 @@ class StatusLineTest {
 
     @Test
     fun noFarmSaysSo() {
-        assertEquals("Eşli çiftlik yok", StatusLine.of(ShellState(), 0).title)
+        assertEquals("No paired farm", StatusLine.of(ShellState(), 0).title)
     }
 
     @Test
     fun oneOnlineFarmIsNamed() {
         val s = ShellReducer.link(ShellReducer.pair(ShellState(), home, 0), "farm_a", online)
-        assertEquals(StatusLine.Text("Bağlı · Masaüstü", "bekleyen yok"), StatusLine.of(s, 0))
+        assertEquals(StatusLine.Text("Connected · Masaüstü", "nothing waiting"), StatusLine.of(s, 0))
     }
 
     @Test
     fun partlyConnectedCountsBoth() {
         val s = ShellReducer.link(two(), "farm_a", online)
-        assertEquals("1/2 çiftlik bağlı", StatusLine.of(s, 0).title)
+        assertEquals("1/2 farms connected", StatusLine.of(s, 0).title)
     }
 
     @Test
@@ -45,17 +45,17 @@ class StatusLineTest {
         s = ShellReducer.onFrame(s, "farm_a", ev(1, "needs.changed", 1_000, "count" to 2), "a", 0)
         s = ShellReducer.onFrame(s, "farm_b", ev(1, "needs.changed", 1_000, "count" to 1), "b", 0)
         s = ShellReducer.onFrame(s, "farm_b", ev(2, "turn.finished", 10_000, "session" to "x", "agent" to "dev", "title" to "t", "summary" to "s"), "b", 0)
-        assertEquals(StatusLine.Text("2 çiftlik bağlı", "3 bekleyen · son tur 45 sn önce"), StatusLine.of(s, 55_000))
+        assertEquals(StatusLine.Text("2 farms connected", "3 waiting · last turn 45 s ago"), StatusLine.of(s, 55_000))
     }
 
     @Test
     fun runningSessionsAreCountedOnlyOnConnectedFarms() {
         var s = ShellReducer.link(two(), "farm_a", online)
-        assertEquals("bekleyen yok", StatusLine.of(s, 0).body)
+        assertEquals("nothing waiting", StatusLine.of(s, 0).body)
         s = ShellReducer.running(ShellReducer.running(s, "farm_a", 2), "farm_b", 5)
-        assertEquals("bekleyen yok · 2 çalışıyor", StatusLine.of(s, 0).body)
+        assertEquals("nothing waiting · 2 running", StatusLine.of(s, 0).body)
         s = ShellReducer.running(s, "farm_a", 0)
-        assertEquals("bekleyen yok · çalışan yok", StatusLine.of(s, 0).body)
+        assertEquals("nothing waiting · nothing running", StatusLine.of(s, 0).body)
     }
 
     @Test
@@ -68,6 +68,6 @@ class StatusLineTest {
     @Test
     fun aRefusalIsNotCalledRetrying() {
         val s = ShellReducer.link(ShellReducer.pair(ShellState(), home, 0), "farm_a", Link.Refused("revoked", null, 0))
-        assertEquals("Bağlantı reddedildi", StatusLine.of(s, 0).title)
+        assertEquals("Link refused", StatusLine.of(s, 0).title)
     }
 }

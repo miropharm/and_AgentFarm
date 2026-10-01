@@ -36,7 +36,7 @@ class PairingScreenTest {
         open(link).use {
             rule.onNodeWithTag("pair-go").performClick()
             rule.waitUntil(15_000) {
-                rule.onAllNodes(hasTestTag("pair-message") and hasText("ile eşlendi", substring = true))
+                rule.onAllNodes(hasTestTag("pair-message") and hasText("Paired with", substring = true))
                     .fetchSemanticsNodes().isNotEmpty()
             }
             rule.onNode(hasTestTag("farm-farm_fake")).assertIsDisplayed()
@@ -48,7 +48,7 @@ class PairingScreenTest {
         open(null).use {
             rule.onNodeWithTag("pair-link").performTextReplacement("https://example.com/pair")
             rule.onNodeWithTag("pair-go").performClick()
-            rule.onNode(hasTestTag("pair-message") and hasText("eşleşme bağlantısı değil", substring = true)).assertIsDisplayed()
+            rule.onNode(hasTestTag("pair-message") and hasText("not an Agent Farm pairing link", substring = true)).assertIsDisplayed()
         }
     }
 }

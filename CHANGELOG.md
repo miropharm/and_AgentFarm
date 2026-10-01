@@ -1,21 +1,27 @@
-# Değişiklik Günlüğü
+# Changelog
 
-Agent Farm Android uygulamasının kullanıcıya dönük değişiklikleri. En yeni sürüm en üstte. Telefona gelen her sürümün notu, buradaki kendi başlığının altından okunur.
+User-facing changes to the Agent Farm Android app, newest first. Each build's release notes on the phone are read from its own heading here.
 
-## 0.2.0 - Telefondan Agent Farm: eşleştirme, sayfalar, sorular, dikte (2026-10-01)
+## 0.2.1 - The app speaks Agent Farm's language: English (2026-10-01)
 
-- Bilgisayardaki Agent Farm ile eşleşme: Agent Farm'daki QR kodu okutulur, bağlantı şifreli ve yalnızca o bilgisayara kilitlidir. Bağlantı kopunca kendiliğinden yeniden kurulur; o arada gönderdikleriniz bekletilip sonra iletilir.
-- Agent Farm'ın kendi sayfaları telefonda açılır (Şimdi sayfası, oturumlar, ayarlar); sayfadaki bağlantılar bir sonraki sayfayı açar, geri tuşu geri gider.
-- Ajan bir soru sorduğunda ya da izin istediğinde bildirim gelir; kilit ekranındaki düğmelerle cevaplanır. Soru bilgisayarda cevaplanırsa telefondaki bildirim kendiliğinden kalkar.
-- Sesli okuma: sorular, izin istekleri ve (isterseniz) biten bir turun özeti Türkçe sesli okunur. Ayarlar > Sesli okuma (varsayılan kapalı).
-- Sayfalardaki yazı kutularına mikrofon geldi: konuşun, telefon Türkçe yazıya çevirsin.
-- Başka bir uygulamadan bir yazıyı "Paylaş" ile çalışan bir oturuma gönderebilirsiniz.
-- Ana ekran widget'ı ve hızlı ayarlar kutucuğu: bağlı mı, bekleyen ne var, ne çalışıyor; dokununca Şimdi sayfası açılır. Widget'taki mikrofonla konuşup sözlerin gideceği oturumu seçersiniz.
-- Türkçe metinler, TalkBack desteği ve en büyük yazı boyutunda düzgün görünüm.
-- Uygulamayı kilitleyebilirsiniz; kilitlenince sayfaların telefonda tuttuğu veriler silinir. Pil iyileştirmesi ayarı için Ayarlar'da bir satır var.
+- Every word the app shows is now English, like Agent Farm itself: screens, settings, notifications and their buttons, the link status line, pairing messages, the widget and the quick settings tile.
+- Reading aloud and dictation still use Turkish, the language you speak to your agents.
+- When pairing cannot reach the farm, the message says where to look on the computer: Toolbox > Services > Agent Farm app.
 
-## 0.1.0 - İlk deneme sürümü (2026-09-30)
+## 0.2.0 - Agent Farm on the phone: pairing, pages, questions, dictation (2026-10-01)
 
-- Uygulamanın ilk deneme sürümü: açılışta "Merhaba, Agent Farm" yazısını ve sürüm numarasını gösterir. Asıl özellikler (oturumları izleme, ajana yazma, bildirimler) sonraki sürümlerde gelecek.
-- Telefonun koyu tema ayarına uyar.
-- Yeni sürümler, telefonda kurulu olanın üzerine güncelleme olarak kurulur; eskisini silmek gerekmez.
+- Pair with Agent Farm on your computer: scan the QR code shown in Agent Farm; the link is encrypted and locked to that computer. When the link drops it reconnects by itself, and what you sent meanwhile is held and delivered.
+- Agent Farm's own pages open on the phone (the Now page, sessions, settings); a link on a page opens the next page, Back goes back.
+- When an agent asks a question or a permission, a notification arrives and its lock-screen buttons answer it. A question answered on the computer leaves the phone by itself.
+- Read aloud: questions, permission requests and (if you choose) a finished turn's summary are read aloud. Settings > Read aloud (off by default).
+- Text boxes on the pages get a microphone: speak, and the phone writes it.
+- Share text from any app into a running session.
+- A home-screen widget and a quick settings tile: connected or not, what waits, what runs; a tap opens the Now page. The widget's microphone lets you speak and pick the session the words go to.
+- TalkBack support and a clean layout at the largest font size.
+- An optional app lock; locking deletes the data the pages keep on the phone. Settings has a battery optimization row.
+
+## 0.1.0 - First test build (2026-09-30)
+
+- The app's first test build: it shows "Hello, Agent Farm" and its version on launch. The real features (watching sessions, writing to agents, notifications) come in later builds.
+- Follows the phone's dark theme.
+- New builds install over the one on the phone as an update; there is no need to remove the old one.

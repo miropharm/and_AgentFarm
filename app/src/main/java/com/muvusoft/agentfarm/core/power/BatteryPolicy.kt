@@ -9,15 +9,15 @@ object BatteryPolicy {
 
     fun line(exempt: Boolean): Line = if (exempt) {
         Line(
-            state = "Kısıtlanmıyor",
-            detail = "Ekran kapalıyken de bağlantı ve uyarılar gecikmeden gelir.",
-            action = "Ayarı aç",
+            state = "Not restricted",
+            detail = "The link and its alerts arrive without delay, even with the screen off.",
+            action = "Open setting",
         )
     } else {
         Line(
-            state = "Optimize ediliyor",
-            detail = "Telefon uzun süre boştayken uyarılar gecikebilir. Listede Agent Farm'ı bulup \"Optimize etme\"yi seçin.",
-            action = "Ayarı aç",
+            state = "Optimized",
+            detail = "Alerts may be late while the phone sits idle for a long time. Find Agent Farm in the list and choose \"Don't optimize\".",
+            action = "Open setting",
         )
     }
 }

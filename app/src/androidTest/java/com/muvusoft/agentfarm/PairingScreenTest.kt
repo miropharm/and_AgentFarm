@@ -3,6 +3,7 @@ package com.muvusoft.agentfarm
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
@@ -40,6 +41,14 @@ class PairingScreenTest {
                     .fetchSemanticsNodes().isNotEmpty()
             }
             rule.onNode(hasTestTag("farm-farm_fake")).assertIsDisplayed()
+        }
+    }
+
+    /** Pressing it opens Google's own scanner screen, which a test cannot drive; the door itself is checked. */
+    @Test
+    fun theScanButtonIsThePairingScreensFirstDoor() {
+        open(null).use {
+            rule.onNode(hasTestTag("pair-scan") and hasText("Scan QR code")).assertIsDisplayed().assertIsEnabled()
         }
     }
 

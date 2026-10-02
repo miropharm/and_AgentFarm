@@ -195,6 +195,13 @@ private fun Shell(
         ui = ui,
         onLinkChange = { ui = ui.copy(link = it, message = null, failed = false) },
         onPair = pair,
+        onScan = {
+            QrScan.start(
+                context,
+                onText = { ui = PairingUi(link = it); pair() },
+                onFail = { ui = ui.copy(message = it, failed = true) },
+            )
+        },
         onForget = { farm ->
             confirm(
                 Destructive(

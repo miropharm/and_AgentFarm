@@ -2,6 +2,12 @@
 
 User-facing changes to the Agent Farm Android app, newest first. Each build's release notes on the phone are read from its own heading here.
 
+## 0.2.4 - Scan the pairing QR code inside the app (2026-10-02)
+
+- The pairing screen has a Scan QR code button: it opens a scanner inside the app, reads the code Agent Farm shows and pairs at once. Not every camera app opens a pairing link, so this is the one way that always works.
+- The app asks for no camera permission: the scanner screen is Google's own.
+- A phone without Google Play services says so and points to the other way: copy the pairing link in Agent Farm (Toolbox > Services > Agent Farm app) and paste it.
+
 ## 0.2.3 - A conversation opens on the phone (2026-10-01)
 
 - Tapping a session in Agent Farm's pages (a Sessions row, a task's run, a chain's next leg) opens that conversation right on the phone instead of on the computer. Back returns to the page you came from.

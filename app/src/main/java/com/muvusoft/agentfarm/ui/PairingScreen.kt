@@ -13,6 +13,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -62,6 +63,8 @@ fun PairingScreen(
     ui: PairingUi,
     onLinkChange: (String) -> Unit,
     onPair: () -> Unit,
+    /** Opens the in-app QR scanner; a scanned link is paired at once. */
+    onScan: () -> Unit,
     onForget: (PairedFarm) -> Unit,
     onOpen: (PairedFarm) -> Unit,
     onSettings: () -> Unit,
@@ -80,6 +83,11 @@ fun PairingScreen(
             Spacer(Modifier.height(16.dp))
             Text(stringResource(R.string.pair_new), Modifier.semantics { heading() }, style = MaterialTheme.typography.titleMedium)
             Text(stringResource(R.string.pair_hint), style = MaterialTheme.typography.bodySmall)
+            FilledTonalButton(
+                onClick = onScan,
+                enabled = !ui.busy,
+                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp).testTag("pair-scan"),
+            ) { Text(stringResource(R.string.scan_qr)) }
             OutlinedTextField(
                 value = ui.link,
                 onValueChange = onLinkChange,

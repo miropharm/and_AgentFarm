@@ -6,7 +6,7 @@ plugins {
 }
 
 // Release version: bumped with a CHANGELOG.md entry of the same number (test/test_changelog.js).
-val appVersion = "0.2.3"
+val appVersion = "0.2.4"
 
 // CI run number becomes the build number, so every delivered APK is identifiable on the phone.
 val buildNumber = (System.getenv("GITHUB_RUN_NUMBER") ?: "1").toInt()
@@ -67,6 +67,8 @@ dependencies {
     implementation("androidx.biometric:biometric:1.1.0")
     implementation("androidx.fragment:fragment-ktx:1.8.5")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.7")
+    // The pairing QR is read by Google's code scanner: its own camera screen, no camera permission here.
+    implementation("com.google.android.gms:play-services-code-scanner:16.1.0")
 
     testImplementation("junit:junit:4.13.2")
 

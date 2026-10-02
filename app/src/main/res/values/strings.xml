@@ -16,6 +16,9 @@
     <string name="pair_link">Pairing link</string>
     <string name="pair_go">Pair</string>
     <string name="pair_busy">Pairing…</string>
+    <string name="scan_qr">Scan QR code</string>
+    <string name="scan_unavailable">This phone cannot scan here. In Agent Farm, copy the pairing link and paste it below.</string>
+    <string name="scan_empty">That code carries no pairing link. Scan the QR code Agent Farm shows.</string>
     <string name="paired_with">Paired with %1$s.</string>
     <string name="farm_open">Open farm</string>
     <string name="farm_link_detail">Link details</string>

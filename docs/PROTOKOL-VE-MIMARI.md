@@ -157,9 +157,12 @@ Tasarımın gerekçesi: vault projesi `10_Notes/A-PLN - Android Uygulaması Yeni
 - Çiftlik tarafında sayfa başına bir kural vardır (`vsc_AgentFarm/src/panels/remotePages.ts`): bir
   mesaj ya yalnız PC'de çalışır (telefondan hiç çalışmaz), ya bakar (`read`), ya cevaplar
   (`answer`), ya da sayfanın işlem yetkisini ister. Bugün telefonda açılan sayfalar: `now`,
-  `needs`, `console`, `sessions`, `tasks`, `session` (bir oturumun transcript'i; sayfalardaki "transcript'i aç"
-  tıklaması telefonda bu sayfaya `afnav` olur — `vsc_AgentFarm/media/afRemote.js`); listede olmayan sayfa
-  `view.close` `unavailable` alır.
+  `needs`, `console`, `sessions`, `tasks`, `notices`, `dashboard`, `chains` (röle zincirleri; `args.chain`
+  o zincirde açar), `session` (bir oturumun transcript'i; sayfalardaki "transcript'i aç" tıklaması telefonda
+  bu sayfaya `afnav` olur — `vsc_AgentFarm/media/afRemote.js`); listede olmayan sayfa `view.close`
+  `unavailable` alır. Masaüstünün `afnav` `chains:<id>` biçimi (sayfa kimliğinde `:` olmaz) telefonda
+  `afRemote.js` tarafından `to: 'chains'`, `args: { chain: <id> }` olarak gönderilir. Bir sayfanın PC'de
+  açacağı seçim menüsü ya da onay sorusu telefonda o sayfanın kendi `afAsk` penceresiyle sorulur (X-447).
 
 ## 11. Ses — TalkScribe (ZEP)
 

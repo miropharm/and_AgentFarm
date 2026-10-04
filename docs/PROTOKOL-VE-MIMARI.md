@@ -168,7 +168,8 @@ Tasarımın gerekçesi: vault projesi `10_Notes/A-PLN - Android Uygulaması Yeni
   mesaj ya yalnız PC'de çalışır (telefondan hiç çalışmaz), ya bakar (`read`), ya cevaplar
   (`answer`), ya da sayfanın işlem yetkisini ister. Bugün telefonda açılan sayfalar: `now`,
   `needs`, `console`, `sessions`, `tasks`, `notices`, `dashboard`, `missions`, `queue`, `turns` (çiftliğin her
-  turu; telefonda her tur bir kart), `chains` (röle zincirleri; `args.chain` o zincirde açar), `session` (bir oturumun transcript'i; sayfalardaki "transcript'i aç" tıklaması telefonda
+  turu; telefonda her tur bir kart), `projects` (projeler; telefonda tek sütun, liste açık projenin
+  üstünde; zaman çizelgesindeki bir oturum bağlantısı telefonda oturum sayfasını açar), `chains` (röle zincirleri; `args.chain` o zincirde açar), `session` (bir oturumun transcript'i; sayfalardaki "transcript'i aç" tıklaması telefonda
   bu sayfaya `afnav` olur — `vsc_AgentFarm/media/afRemote.js`); listede olmayan sayfa `view.close`
   `unavailable` alır. Masaüstünün `afnav` `chains:<id>` biçimi (sayfa kimliğinde `:` olmaz) telefonda
   `afRemote.js` tarafından `to: 'chains'`, `args: { chain: <id> }` olarak gönderilir. Bir sayfanın PC'de

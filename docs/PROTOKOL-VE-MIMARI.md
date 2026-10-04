@@ -86,7 +86,7 @@ Tasarımın gerekçesi: vault projesi `10_Notes/A-PLN - Android Uygulaması Yeni
 | `hello` | telefon | Cihaz kimliği + imza; kaçırılan olaylar için `resumeAfter` |
 | `welcome` | Agent Farm | Bağlantı kabul: yetki, özellik cevapları, son olay numarası |
 | `refuse` | Agent Farm | Bağlantı reddi, nedeniyle; sürüm uyuşmazlığında gereken sürüm |
-| `event` | Agent Farm | Numaralı olay (`seq`, `type`, `ts`, `data`) |
+| `event` | Agent Farm | Numaralı olay (`seq`, `type`, `ts`, `data`); `user` kimin kaydı olduğunu söyler, alanı olmayan olay sahibinindir |
 | `gap` | Agent Farm | İstenen olayların bir kısmı artık tutulmuyor: `from`–`to` arası kayıp |
 | `call` | telefon | Bir köprü op'u çağırır: `id`, `op`, `args` |
 | `result` | Agent Farm | Çağrının cevabı; aynı `id` tekrar gelirse saklı cevap + `duplicate` |
@@ -102,6 +102,7 @@ Tasarımın gerekçesi: vault projesi `10_Notes/A-PLN - Android Uygulaması Yeni
 |---|---|
 | `needs.changed` | Bekleyenler sayısı değişti (en üstteki kalemle) |
 | `ask.opened` | Bir oturum soru sordu (seçenekleriyle) |
+| `ask.answersSoon` | Bekleyen bir soru, kimse cevaplamazsa `dueAt` anında kendiliğinden cevaplanacak (`minutes` kala) |
 | `permission.opened` | Bir oturum araç izni istiyor |
 | `turn.finished` | Bir tur bitti (başlık + özet) |
 | `notice.posted` | Notices'e yeni kayıt düştü |
@@ -123,6 +124,9 @@ Tasarımın gerekçesi: vault projesi `10_Notes/A-PLN - Android Uygulaması Yeni
 - **Olay numaraları yalnız artar.** `resumeAfter` sonrası olaylar verilir; tutulmayanlar için önce bir `gap`.
 - Sürüm uyuşmazlığı: `refuse` nedeni `contract`, gereken sürümle (`minContract`).
 - **Gizli değerler hiçbir çerçevede gezmez**; yalnız var olup olmadıkları.
+- **`spoken { text, lang }`** (`ask.opened`, `ask.answersSoon`, `permission.opened`, `turn.finished`,
+  `notice.posted`): Agent Farm'ın kendi okuyucusunun o olay için söyleyeceği metin, sese göre temizlenmiş, ve
+  dilinin BCP-47 ana etiketi. İsteğe bağlıdır; yoksa telefon kendi okumasına döner.
 
 ## 9. Yetki ve özellikler
 
@@ -140,6 +144,12 @@ Tasarımın gerekçesi: vault projesi `10_Notes/A-PLN - Android Uygulaması Yeni
 - **Yerel "yeni oturum"** (paylaşım, ses, widget) Telegram `/new` ile aynı kararı kullanır ve son ayarları
   devralır (`seedLastLaunch`). Köprüdeki `sessions.start` devralmadığı için kullanılmaz.
 - Uzaktan açılan sayfalar yeni bir oturum kapısı değildir; masaüstündeki kapıların kendisidir.
+- **Kabuğun `console.send`'i Telegram'la aynı uzaktan kapıdan geçer** (bugünkü bütçe, geri alınamayan komut,
+  meşgulse kuyruk; tek defter, tek tavan): durdurulursa cevap `ok:true` + `{ sent:false, confirm:<kapı>, note }`.
+  Telefon `note`'u gösterir, sahibin kilidiyle onay alır ve aynı metni `confirm:<kapı>` ile **yeni** bir `call`
+  olarak yollar (aynı `id` saklı cevabı geri getirirdi). Kapı adlarını çiftlik verir ve denetler, telefon yalnız
+  geri yollar; onay kısa bir süre (`CONFIRM_TTL_MS`) ve yalnız soran cihaz, aynı oturum ve aynı metin için
+  geçerlidir; her evet öncekilere eklenir, yani iki kapıya takılan mesaj iki kez sorulur ve gider.
 - Sayfanın host'a özgü istekleri telefonda karşılanır: kopyalama telefonun panosuna, dış bağlantı
   telefonun tarayıcısına, dosya açma salt okunur görüntüleyiciye gider.
 - **Kabuğun karşıladığı sayfa mesajları** (`core/view/ShellRequest`) çiftliğe hiç gitmez:

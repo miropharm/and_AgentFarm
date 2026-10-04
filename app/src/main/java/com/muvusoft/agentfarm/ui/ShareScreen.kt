@@ -44,13 +44,20 @@ import com.muvusoft.agentfarm.core.state.Link
 import com.muvusoft.agentfarm.net.ConnectionManager
 import com.muvusoft.agentfarm.net.request
 import com.muvusoft.agentfarm.ui.components.AFTip
+import com.muvusoft.agentfarm.ui.lock.Destructive
+import com.muvusoft.agentfarm.ui.lock.rememberDestructiveConfirm
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 
+/** A send the farm stopped at a gate: the yes goes back to the same farm and session, never to a new pick. */
+private data class Asked(val farm: String, val target: String, val gate: String)
+
 /**
  * A text shared from another app, said into a running Console session with `console.send`. Only an
  * online farm is offered; the sessions come from `console.sessions`, one waiting on you first.
+ * The farm's remote gate (today's budget, a command that cannot be undone) may stop it: the farm's
+ * sentence is shown and "Send anyway" asks the owner before the same text goes again with the yes.
  */
 @Composable
 fun ShareScreen(text: String, manager: ConnectionManager, onDone: () -> Unit) {
@@ -63,8 +70,36 @@ fun ShareScreen(text: String, manager: ConnectionManager, onDone: () -> Unit) {
     var targets by remember { mutableStateOf<List<ShareTarget>?>(null) }
     var target by remember { mutableStateOf<String?>(null) }
     var outcome by remember { mutableStateOf<String?>(null) }
+    var asked by remember { mutableStateOf<Asked?>(null) }
     var busy by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
+    val confirm = rememberDestructiveConfirm()
+    val confirmTitle = stringResource(R.string.share_confirm_title)
+    val confirmVerb = stringResource(R.string.share_confirm)
+
+    // Each send is a new call; a yes is the same text again with the gate the farm named.
+    fun send(farm: String, to: String, gate: String?) {
+        busy = true
+        scope.launch {
+            val args = buildJsonObject {
+                put("id", JsonPrimitive(to))
+                put("text", JsonPrimitive(text))
+                if (gate != null) put("confirm", JsonPrimitive(gate))
+            }
+            val r = manager.request(farm, "console.send", args)
+            outcome = Share.outcome(r?.ok == true, r?.result, r?.error)
+            asked = Share.asks(r?.ok == true, r?.result)?.let { Asked(farm, to, it) }
+            busy = false
+        }
+    }
+
+    // A different pick starts over: a yes given for one session is never spent on another.
+    fun startOver() {
+        if (asked != null) {
+            asked = null
+            outcome = null
+        }
+    }
 
     LaunchedEffect(farmId) {
         targets = null
@@ -83,7 +118,7 @@ fun ShareScreen(text: String, manager: ConnectionManager, onDone: () -> Unit) {
             }
             if (online.size > 1) {
                 Section(stringResource(R.string.share_farm))
-                Choices(online.map { it.id to it.name }, farmId, "share-farm") { picked = it }
+                Choices(online.map { it.id to it.name }, farmId, "share-farm") { picked = it; startOver() }
             }
             val list = targets
             if (farmId != null) {
@@ -91,31 +126,35 @@ fun ShareScreen(text: String, manager: ConnectionManager, onDone: () -> Unit) {
                 when {
                     list == null -> Text(stringResource(R.string.share_loading))
                     list.isEmpty() -> Text(stringResource(R.string.share_no_session), Modifier.testTag("share-no-session"))
-                    else -> Choices(list.map { it.id to "${it.agent} · ${Share.statusWord(it)}" }, target, "share-to") { target = it }
+                    else -> Choices(list.map { it.id to "${it.agent} · ${Share.statusWord(it)}" }, target, "share-to") { target = it; startOver() }
                 }
             }
             outcome?.let { Text(it, Modifier.padding(top = 12.dp).testTag("share-outcome"), color = MaterialTheme.colorScheme.primary) }
             Row(Modifier.fillMaxWidth().padding(top = 16.dp), horizontalArrangement = Arrangement.End) {
                 TextButton(onClick = onDone, modifier = Modifier.testTag("share-close")) {
-                    Text(stringResource(if (outcome == null) R.string.cancel else R.string.close))
+                    Text(stringResource(if (outcome == null || asked != null) R.string.cancel else R.string.close))
                 }
                 val f = farmId
                 val t = target
+                val a = asked
                 Button(
                     onClick = {
-                        if (f != null && t != null) {
-                            busy = true
-                            scope.launch {
-                                val args = buildJsonObject { put("id", JsonPrimitive(t)); put("text", JsonPrimitive(text)) }
-                                val r = manager.request(f, "console.send", args)
-                                outcome = Share.outcome(r?.ok == true, r?.result, r?.error)
-                                busy = false
-                            }
+                        when {
+                            a != null -> confirm(
+                                Destructive(
+                                    title = confirmTitle,
+                                    detail = outcome.orEmpty(),
+                                    verb = confirmVerb,
+                                    run = { send(a.farm, a.target, a.gate) },
+                                ),
+                            )
+                            f != null && t != null -> send(f, t, null)
+                            else -> Unit
                         }
                     },
-                    enabled = f != null && t != null && !busy && outcome == null,
+                    enabled = !busy && (a != null || (f != null && t != null && outcome == null)),
                     modifier = Modifier.padding(start = 8.dp).testTag("share-send"),
-                ) { Text(stringResource(R.string.share_send)) }
+                ) { Text(stringResource(if (a != null) R.string.share_confirm else R.string.share_send)) }
             }
         }
     }

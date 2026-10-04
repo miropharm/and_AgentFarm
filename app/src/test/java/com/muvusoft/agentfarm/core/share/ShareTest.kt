@@ -53,6 +53,23 @@ class ShareTest {
     }
 
     @Test
+    fun aSendTheFarmStoppedAtAGateNamesTheGateToConfirm() {
+        val stopped = json("""{"sent":false,"confirm":"risk","note":"⚠️ This asks for rm -rf on developer, which cannot be undone.\nRun it?"}""")
+        assertEquals("risk", Share.asks(true, stopped))
+        assertEquals("budget", Share.asks(true, json("""{"sent":false,"confirm":"budget","note":"x"}""")))
+        // The farm's own sentence is what the screen shows while it waits.
+        assertEquals("⚠️ This asks for rm -rf on developer, which cannot be undone.\nRun it?", Share.outcome(true, stopped, null))
+        // A gate the app has never heard of is still echoed back: the farm judges it.
+        assertEquals("cost", Share.asks(true, json("""{"sent":false,"confirm":"cost"}""")))
+        assertNull(Share.asks(true, json("""{"note":"→ developer"}""")))
+        assertNull(Share.asks(true, json("""{"sent":true}""")))
+        assertNull(Share.asks(true, json("""{"confirm":"risk"}""")))
+        assertNull(Share.asks(true, json("""{"sent":false,"confirm":" "}""")))
+        assertNull(Share.asks(false, stopped))
+        assertNull(Share.asks(true, null))
+    }
+
+    @Test
     fun aLongPreviewIsCut() {
         val long = "a".repeat(Share.PREVIEW_CHARS + 50)
         assertEquals(Share.PREVIEW_CHARS + 1, Share.preview(long).length)

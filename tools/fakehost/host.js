@@ -12,7 +12,10 @@ const pages = require('./pages');
 const OPS = {
     'farm.ping': () => ({ pong: true }),
     'console.answer': () => ({ answered: true }),
-    'console.send': () => ({ sent: true }),
+    // The farm's remote gate (vsc core/remoteSay.ts): a command that cannot be undone waits for the yes, in the farm's words.
+    'console.send': a => /\brm\s+-[a-zA-Z]*[rf]/.test(String(a.text || '')) && a.confirm !== 'risk'
+        ? { sent: false, confirm: 'risk', note: '⚠️ This asks for rm -rf on developer, which cannot be undone.\nRun it?\nNot sent yet — confirm it, or send it from the PC.' }
+        : { note: '→ developer' },
     'console.sessions': () => [
         { id: 'c_dev', agent: 'developer', status: 'running', steerable: true, asking: null },
         { id: 'c_psy', agent: 'psikolog', status: 'idle', steerable: true, asking: null },

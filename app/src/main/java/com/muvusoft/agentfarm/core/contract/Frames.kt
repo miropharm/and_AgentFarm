@@ -48,7 +48,14 @@ data class Refuse(val reason: String, val detail: String? = null, val minContrac
 
 @Serializable
 @SerialName("event")
-data class EventFrame(val seq: Long, val type: String, val ts: Long, val data: JsonObject) : Frame()
+data class EventFrame(
+    val seq: Long,
+    val type: String,
+    val ts: Long,
+    val data: JsonObject,
+    /** Whose record the event is; absent on events from before the field, which read as the owner's. */
+    val user: String? = null,
+) : Frame()
 
 @Serializable
 @SerialName("gap")

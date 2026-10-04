@@ -2,6 +2,12 @@
 
 User-facing changes to the Agent Farm Android app, newest first. Each build's release notes on the phone are read from its own heading here.
 
+## 0.2.5 - A shared text meets Agent Farm's remote check, and you can answer it (2026-10-05)
+
+- A text shared into a session now passes the same check as a Telegram message: over today's remote budget, or carrying a command that cannot be undone (like rm -rf or git reset --hard), it is not sent at once, and the screen shows Agent Farm's own reason.
+- Send anyway asks for your fingerprint or screen lock, then sends the same text with your yes. A message stopped by both checks is asked about twice, then goes.
+- Picking another session or farm after the question starts over, so a yes is never spent on a different session.
+
 ## 0.2.4 - Scan the pairing QR code inside the app (2026-10-02)
 
 - The pairing screen has a Scan QR code button: it opens a scanner inside the app, reads the code Agent Farm shows and pairs at once. Not every camera app opens a pairing link, so this is the one way that always works.

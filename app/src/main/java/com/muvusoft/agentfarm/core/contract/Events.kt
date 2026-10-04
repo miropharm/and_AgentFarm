@@ -12,6 +12,10 @@ sealed interface FarmEventData
 @Serializable
 data class AskOption(val label: String)
 
+/** What the farm's own reader says for an event: text cleaned for a voice, lang its BCP-47 primary tag. */
+@Serializable
+data class Spoken(val text: String, val lang: String)
+
 @Serializable
 data class NeedsChanged(val count: Long, val top: JsonObject? = null) : FarmEventData
 
@@ -22,6 +26,18 @@ data class AskOpened(
     val askId: String,
     val question: String,
     val options: List<AskOption>,
+    val spoken: Spoken? = null,
+) : FarmEventData
+
+/** A question that answers itself at `dueAt` unless somebody answers it first. */
+@Serializable
+data class AskAnswersSoon(
+    val session: String,
+    val agent: String,
+    val askId: String,
+    val dueAt: Long,
+    val minutes: Long,
+    val spoken: Spoken? = null,
 ) : FarmEventData
 
 @Serializable
@@ -33,13 +49,20 @@ data class PermissionOpened(
     val summary: String,
     /** The Needs You row key: answered with needs.act { key, action }; never built on the phone. */
     val key: String,
+    val spoken: Spoken? = null,
 ) : FarmEventData
 
 @Serializable
-data class TurnFinished(val session: String, val agent: String, val title: String, val summary: String) : FarmEventData
+data class TurnFinished(
+    val session: String,
+    val agent: String,
+    val title: String,
+    val summary: String,
+    val spoken: Spoken? = null,
+) : FarmEventData
 
 @Serializable
-data class NoticePosted(val id: String, val title: String, val level: Long, val agent: String) : FarmEventData
+data class NoticePosted(val id: String, val title: String, val level: Long, val agent: String, val spoken: Spoken? = null) : FarmEventData
 
 @Serializable
 data class QuotaWarn(val engine: String, val percent: Double, val window: String) : FarmEventData
@@ -58,6 +81,7 @@ data class PermissionClosed(val session: String, val permId: String) : FarmEvent
 val EVENT_TYPES: Map<String, KSerializer<out FarmEventData>> = mapOf(
     "needs.changed" to NeedsChanged.serializer(),
     "ask.opened" to AskOpened.serializer(),
+    "ask.answersSoon" to AskAnswersSoon.serializer(),
     "permission.opened" to PermissionOpened.serializer(),
     "turn.finished" to TurnFinished.serializer(),
     "notice.posted" to NoticePosted.serializer(),

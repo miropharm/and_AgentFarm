@@ -58,6 +58,17 @@ object Share {
         return said ?: if (held) "Queued; it is said when the turn ends." else "Sent."
     }
 
+    /**
+     * The gate the farm stopped a send at (`sent:false` + `confirm`), answered by sending the same text
+     * again with `confirm` set to it. The farm names its gates and checks the answer; the phone only
+     * echoes the name back, so a gate added on the farm needs no new app. Null when nothing waits.
+     */
+    fun asks(ok: Boolean, result: JsonElement?): String? {
+        val o = (result as? JsonObject)?.takeIf { ok } ?: return null
+        val stopped = (o["sent"] as? JsonPrimitive)?.booleanOrNull == false
+        return o.str("confirm")?.takeIf { stopped && it.isNotBlank() }
+    }
+
     fun preview(text: String): String = if (text.length <= PREVIEW_CHARS) text else text.take(PREVIEW_CHARS).trimEnd() + "…"
 
     private val GONE = setOf("ended", "closed", "exited", "stopped")

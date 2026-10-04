@@ -63,6 +63,8 @@
     <string name="share_no_farm">No farm is connected; the shared text can be sent once one connects.</string>
     <string name="share_no_session">This farm has no open Console session.</string>
     <string name="share_send">Send</string>
+    <string name="share_confirm">Send anyway</string>
+    <string name="share_confirm_title">Send past the farm\'s check?</string>
     <string name="close">Close</string>
 
     <!-- Widget and quick settings tile -->

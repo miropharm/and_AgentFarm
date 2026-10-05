@@ -200,7 +200,9 @@ ve Telegram belirteci PC'de kalır), `living` (Canlılık; bakmak da denetim kay
 düzenle" PC'de kalır), `studio` (Stüdyo; bakmak da her iş de manage ister — köprüdeki `studio.*` op'ları gibi;
 resimler ve klipler `/res/~/` yoluyla gelir; ↻ telefonda çalışır ve sonucu telefonda söyler, sahne durumu
 telefonda sorulur; dosyayı PC'de açmak, yeni tarif, dosya kaydetme, ayar ve dışa aktarma PC'de kalır),
-`chains` (röle zincirleri; `args.chain` o zincirde açar), `session` (bir oturumun transcript'i; sayfalardaki "transcript'i aç" tıklaması telefonda
+`evals` (Değerlendirmeler; bakmak da vaka eklemek, silmek ve seti çalıştırmak da manage ister — köprüdeki
+`evals.runs` / `.add` / `.delete` gibi; seti çalıştırmanın onayı telefonda sorulur, ilerleme ve sonuç
+telefonda yazılır; A/B denemesi, dosya seçici ve rehber PC'de kalır), `chains` (röle zincirleri; `args.chain` o zincirde açar), `session` (bir oturumun transcript'i; sayfalardaki "transcript'i aç" tıklaması telefonda
   bu sayfaya `afnav` olur — `vsc_AgentFarm/media/afRemote.js`); listede olmayan sayfa `view.close`
   `unavailable` alır. Masaüstünün `afnav` `chains:<id>` biçimi (sayfa kimliğinde `:` olmaz) telefonda
   `afRemote.js` tarafından `to: 'chains'`, `args: { chain: <id> }` olarak gönderilir. Bir sayfanın PC'de

@@ -218,7 +218,11 @@ taşır — bakmak read, görev işleri manage; Görevler'de PC'ye kalan her şe
 planı ve paylaşılan dosyalar da gelir, köprüdeki `memory.index.plan` / `memory.duplicates` gibi; yeni bellek, kopya,
 MEMORY.md onarımı, filoya soru ve tek kaynaktan eşitleme telefondan yapılır, eşitlemenin üzerine yazma sorusu telefonda
 sorulur; grafik telefonda gerçek boyutunda kalıp yana kayar; dosyayı açmak, damıtma, iki kopyayı karşılaştırma ve
-birleştirme taslağı PC'de kalır), `chains` (röle zincirleri; `args.chain` o zincirde açar), `session` (bir oturumun transcript'i; sayfalardaki "transcript'i aç" tıklaması telefonda
+birleştirme taslağı PC'de kalır), `selection` (iş akışının seçim adımı; `args.id` o açık seçimi, yoksa ilk sorulanı
+açar, hiç açık seçim yoksa "kullanılamıyor"; bakmak da tutmak/iptal de manage ister — köprüdeki `workflows.select`
+gibi; aday görseller görünüme özel `/res/~/` adresleriyle gelir; telefondan gelen seçim adımın kuralından geçer, ret
+nedeni telefonda yazılır; görünümden çıkmak iptal etmez; başka kapıdan cevaplanınca sayfa `answered` alır ve düğmeleri
+kapatır), `chains` (röle zincirleri; `args.chain` o zincirde açar), `session` (bir oturumun transcript'i; sayfalardaki "transcript'i aç" tıklaması telefonda
   bu sayfaya `afnav` olur — `vsc_AgentFarm/media/afRemote.js`); listede olmayan sayfa `view.close`
   `unavailable` alır. Masaüstünün `afnav` `chains:<id>` biçimi (sayfa kimliğinde `:` olmaz) telefonda
   `afRemote.js` tarafından `to: 'chains'`, `args: { chain: <id> }` olarak gönderilir. Bir sayfanın PC'de

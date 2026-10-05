@@ -209,7 +209,10 @@ kart içinde yana kayar, satır adları yerinde kalır; dosyayı PC'de açmak ve
 `airtable` (Airtable Motoru; bakmak da her iş de manage ister — açılış canlı örnekleri yoklar, köprüdeki
 `airtable.instances` gibi; varsayılanlar, klasör çıkarma, MCP kaydı ve kaldırma, araç yoklaması ve başlatma
 telefondan yapılır, kaldırma sorusu telefonda sorulur; klasör ekleme (PC'nin seçicisi), motorun web paneli,
-klasör ve yapılandırma dosyası PC'de kalır), `chains` (röle zincirleri; `args.chain` o zincirde açar), `session` (bir oturumun transcript'i; sayfalardaki "transcript'i aç" tıklaması telefonda
+klasör ve yapılandırma dosyası PC'de kalır), `analytics` (Görev Analitiği; bakmak manage ister — köprüdeki
+`schedules.forecast` gibi, telefonda kendine ait işi yok; hesap başına harcama telefona hiç gönderilmez —
+Hesaplar'ın verisi, telefonda admin; görev geçmişi, tam tahmin, Görevler'e dönüş ve Markdown dışa aktarma PC'de
+kalır), `chains` (röle zincirleri; `args.chain` o zincirde açar), `session` (bir oturumun transcript'i; sayfalardaki "transcript'i aç" tıklaması telefonda
   bu sayfaya `afnav` olur — `vsc_AgentFarm/media/afRemote.js`); listede olmayan sayfa `view.close`
   `unavailable` alır. Masaüstünün `afnav` `chains:<id>` biçimi (sayfa kimliğinde `:` olmaz) telefonda
   `afRemote.js` tarafından `to: 'chains'`, `args: { chain: <id> }` olarak gönderilir. Bir sayfanın PC'de

@@ -176,7 +176,10 @@ Tasarımın gerekçesi: vault projesi `10_Notes/A-PLN - Android Uygulaması Yeni
   telefonda çizildikleri boyutta kalır ve kutularında yana kayar, bir şerit, işaret ya da "transcript'i aç" telefonda
   oturum sayfasını açar; terminal, oturumu bitirme ve zorla kapatma PC'de kalır), `engines` ve `accounts`
   (motorlar, sağlayıcı rotaları, hesaplar ve kotaları; ikisi de `admin` ister — hesap, sağlayıcı, motor ve kural
-  op'ları bakmak için bile admin ister; manage cihaz `unavailable` alır), `chains` (röle zincirleri; `args.chain` o zincirde açar), `session` (bir oturumun transcript'i; sayfalardaki "transcript'i aç" tıklaması telefonda
+  op'ları bakmak için bile admin ister; manage cihaz `unavailable` alır), `a2anotes` ve `a2atasks` (ajanlar
+arası notlar ve görevler; okuma yetkisi açar, değiştirmek manage ister; `args.focusId` tek bir notu/görevi açar,
+bir notun görevi ile bir görevin notu telefonda öbür panoyu açar), `portfolio` (Ajanlar; telefonda ajan başına
+bir kart, oturum başlatma, proje atama, klasör ve yeni ajan PC'de kalır), `chains` (röle zincirleri; `args.chain` o zincirde açar), `session` (bir oturumun transcript'i; sayfalardaki "transcript'i aç" tıklaması telefonda
   bu sayfaya `afnav` olur — `vsc_AgentFarm/media/afRemote.js`); listede olmayan sayfa `view.close`
   `unavailable` alır. Masaüstünün `afnav` `chains:<id>` biçimi (sayfa kimliğinde `:` olmaz) telefonda
   `afRemote.js` tarafından `to: 'chains'`, `args: { chain: <id> }` olarak gönderilir. Bir sayfanın PC'de

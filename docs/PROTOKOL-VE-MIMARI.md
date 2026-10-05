@@ -186,7 +186,10 @@ görünümü değiştirir, bir bağlantı telefona kopyalanır), `wiki` (wiki i�
 bir kart, değiştirmek manage ister, kategori adlandırma soruları telefonda sorulur), `toolbox` (Araç Kutusu;
 `admin` ister — MCP tanımları ve Telegram, web, telefon uygulaması yapılandırması bakmak için bile admin;
 araçlar kart, onaylar telefonda; erişim modu telefonda yalnız gösterilir, Telegram belirteci, güvenlik duvarı,
-PC panosu, dosya ve klasör PC'de kalır), `chains` (röle zincirleri; `args.chain` o zincirde açar), `session` (bir oturumun transcript'i; sayfalardaki "transcript'i aç" tıklaması telefonda
+PC panosu, dosya ve klasör PC'de kalır), `sound` (Ses; okuma yetkisi açar, her anahtar, ton, ses ve deneme
+manage ister ve PC'de çalar; olaylar, oturumlar ve ajanlar kart; yeni ses için dosya seçici, ses klasörü ve kanal
+ayarı PC'de kalır — Konsol'un ve canlı zaman çizelgesinin ses panelleri de bu ikisini telefondan reddeder),
+`chains` (röle zincirleri; `args.chain` o zincirde açar), `session` (bir oturumun transcript'i; sayfalardaki "transcript'i aç" tıklaması telefonda
   bu sayfaya `afnav` olur — `vsc_AgentFarm/media/afRemote.js`); listede olmayan sayfa `view.close`
   `unavailable` alır. Masaüstünün `afnav` `chains:<id>` biçimi (sayfa kimliğinde `:` olmaz) telefonda
   `afRemote.js` tarafından `to: 'chains'`, `args: { chain: <id> }` olarak gönderilir. Bir sayfanın PC'de

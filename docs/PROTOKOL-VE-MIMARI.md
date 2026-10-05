@@ -189,7 +189,11 @@ araçlar kart, onaylar telefonda; erişim modu telefonda yalnız gösterilir, Te
 PC panosu, dosya ve klasör PC'de kalır), `sound` (Ses; okuma yetkisi açar, her anahtar, ton, ses ve deneme
 manage ister ve PC'de çalar; olaylar, oturumlar ve ajanlar kart; yeni ses için dosya seçici, ses klasörü ve kanal
 ayarı PC'de kalır — Konsol'un ve canlı zaman çizelgesinin ses panelleri de bu ikisini telefondan reddeder),
-`chains` (röle zincirleri; `args.chain` o zincirde açar), `session` (bir oturumun transcript'i; sayfalardaki "transcript'i aç" tıklaması telefonda
+`settings` (Ayarlar; `admin` ister — ayarlar ad alanı bakmak için bile admin; bir satır, sıfırlaması, ayar
+seti, Akış ve İçerik kartı ve ajan seçimleri telefondan yazar; telefonun kendi `agentFarm.remote.listen` ve
+`.port` ayarı telefonda yalnız gösterilir ve her yazma yolunda atlanır; Claude Code'un ham settings.json'ı
+telefona gönderilmez; dosya/klasör seçiciler, editör, terminal, anahtar kasası, bağlantılar, dışa/içe aktarma
+ve Telegram belirteci PC'de kalır), `chains` (röle zincirleri; `args.chain` o zincirde açar), `session` (bir oturumun transcript'i; sayfalardaki "transcript'i aç" tıklaması telefonda
   bu sayfaya `afnav` olur — `vsc_AgentFarm/media/afRemote.js`); listede olmayan sayfa `view.close`
   `unavailable` alır. Masaüstünün `afnav` `chains:<id>` biçimi (sayfa kimliğinde `:` olmaz) telefonda
   `afRemote.js` tarafından `to: 'chains'`, `args: { chain: <id> }` olarak gönderilir. Bir sayfanın PC'de

@@ -213,7 +213,12 @@ klasör ve yapılandırma dosyası PC'de kalır), `analytics` (Görev Analitiği
 `schedules.forecast` gibi, telefonda kendine ait işi yok; hesap başına harcama telefona hiç gönderilmez —
 Hesaplar'ın verisi, telefonda admin; görev geçmişi, tam tahmin, Görevler'e dönüş ve Markdown dışa aktarma PC'de
 kalır), `board` (pano; PC'deki gibi Görevler sayfasının Çalışma sekmesinde açılır ve Görevler'in kuralını aynen
-taşır — bakmak read, görev işleri manage; Görevler'de PC'ye kalan her şey burada da PC'de kalır), `chains` (röle zincirleri; `args.chain` o zincirde açar), `session` (bir oturumun transcript'i; sayfalardaki "transcript'i aç" tıklaması telefonda
+taşır — bakmak read, görev işleri manage; Görevler'de PC'ye kalan her şey burada da PC'de kalır), `memgraph`
+(Bellek Grafiği; `args.agentId` o ajanın belleğinde açar; bakmak da her iş de manage ister — açılışta dizin onarım
+planı ve paylaşılan dosyalar da gelir, köprüdeki `memory.index.plan` / `memory.duplicates` gibi; yeni bellek, kopya,
+MEMORY.md onarımı, filoya soru ve tek kaynaktan eşitleme telefondan yapılır, eşitlemenin üzerine yazma sorusu telefonda
+sorulur; grafik telefonda gerçek boyutunda kalıp yana kayar; dosyayı açmak, damıtma, iki kopyayı karşılaştırma ve
+birleştirme taslağı PC'de kalır), `chains` (röle zincirleri; `args.chain` o zincirde açar), `session` (bir oturumun transcript'i; sayfalardaki "transcript'i aç" tıklaması telefonda
   bu sayfaya `afnav` olur — `vsc_AgentFarm/media/afRemote.js`); listede olmayan sayfa `view.close`
   `unavailable` alır. Masaüstünün `afnav` `chains:<id>` biçimi (sayfa kimliğinde `:` olmaz) telefonda
   `afRemote.js` tarafından `to: 'chains'`, `args: { chain: <id> }` olarak gönderilir. Bir sayfanın PC'de

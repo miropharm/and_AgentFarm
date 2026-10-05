@@ -179,7 +179,11 @@ Tasarımın gerekçesi: vault projesi `10_Notes/A-PLN - Android Uygulaması Yeni
   op'ları bakmak için bile admin ister; manage cihaz `unavailable` alır), `a2anotes` ve `a2atasks` (ajanlar
 arası notlar ve görevler; okuma yetkisi açar, değiştirmek manage ister; `args.focusId` tek bir notu/görevi açar,
 bir notun görevi ile bir görevin notu telefonda öbür panoyu açar), `portfolio` (Ajanlar; telefonda ajan başına
-bir kart, oturum başlatma, proje atama, klasör ve yeni ajan PC'de kalır), `chains` (röle zincirleri; `args.chain` o zincirde açar), `session` (bir oturumun transcript'i; sayfalardaki "transcript'i aç" tıklaması telefonda
+bir kart, oturum başlatma, proje atama, klasör ve yeni ajan PC'de kalır), `guide` (yardım; `args.doc`
+yalnız yardım belgesi anahtarı — `guide` ya da `examples`, ham dosya `unavailable` alır — `args.anchor` bir
+başlık; sayfalardaki `openGuide` tıklaması telefonda bu sayfaya `afnav` olur; telefonda dil seçimi yalnız o
+görünümü değiştirir, bir bağlantı telefona kopyalanır), `wiki` (wiki işaretleri; telefonda işaret başına
+bir kart, değiştirmek manage ister, kategori adlandırma soruları telefonda sorulur), `chains` (röle zincirleri; `args.chain` o zincirde açar), `session` (bir oturumun transcript'i; sayfalardaki "transcript'i aç" tıklaması telefonda
   bu sayfaya `afnav` olur — `vsc_AgentFarm/media/afRemote.js`); listede olmayan sayfa `view.close`
   `unavailable` alır. Masaüstünün `afnav` `chains:<id>` biçimi (sayfa kimliğinde `:` olmaz) telefonda
   `afRemote.js` tarafından `to: 'chains'`, `args: { chain: <id> }` olarak gönderilir. Bir sayfanın PC'de

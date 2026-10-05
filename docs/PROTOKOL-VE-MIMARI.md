@@ -73,7 +73,9 @@ Tasarımın gerekçesi: vault projesi `10_Notes/A-PLN - Android Uygulaması Yeni
    `refuse` nedenleri: `unknown-device`, `revoked`, `bad-signature`, `contract`, `not-allowed`, `busy`.
 4. `welcome` gelmeden başka hiçbir çerçeve kabul edilmez.
 5. **Sayfalar ve kaynaklar:** `GET /view/<sayfa>?view=<id>` sayfanın HTML'ini (`acquireVsCodeApi` yerine
-   `afRemote.js`), `GET /res/<yol>` sayfanın yüklediği dosyaları verir; ikisi de
+   `afRemote.js`), `GET /res/<yol>` sayfanın yüklediği dosyaları verir; `GET /res/~/<görünüm>/<belirteç>`
+   sayfanın kendi seçtiği bir dosyayı (Stüdyo'nun resmi, klibi) yalnız o görünümü açan cihaza, görünüm açıkken
+   verir — belirteç görünüme özel ve tahmin edilemez, boyut sınırını aşan dosya `413` alır; üçü de
    `Authorization: AF <welcome.session>` ister. `session` yalnız o cihazın soketi açıkken geçerlidir,
    telefon onu diske yazmaz. WebView ağa kendisi çıkmaz: bu istekleri `shouldInterceptRequest` yakalar
    ve yerel kod sabitlenmiş sertifikalı istemciyle getirir.
@@ -195,7 +197,10 @@ seti, Akış ve İçerik kartı ve ajan seçimleri telefondan yazar; telefonun k
 telefona gönderilmez; dosya/klasör seçiciler, editör, terminal, anahtar kasası, bağlantılar, dışa/içe aktarma
 ve Telegram belirteci PC'de kalır), `living` (Canlılık; bakmak da denetim kaydetmek de manage ister — köprüdeki
 `living.*` op'ları gibi; bir sinyalin oku telefonda o sayfayı `afnav` ile açar; dosya seçici ve "JSON olarak
-düzenle" PC'de kalır), `chains` (röle zincirleri; `args.chain` o zincirde açar), `session` (bir oturumun transcript'i; sayfalardaki "transcript'i aç" tıklaması telefonda
+düzenle" PC'de kalır), `studio` (Stüdyo; bakmak da her iş de manage ister — köprüdeki `studio.*` op'ları gibi;
+resimler ve klipler `/res/~/` yoluyla gelir; ↻ telefonda çalışır ve sonucu telefonda söyler, sahne durumu
+telefonda sorulur; dosyayı PC'de açmak, yeni tarif, dosya kaydetme, ayar ve dışa aktarma PC'de kalır),
+`chains` (röle zincirleri; `args.chain` o zincirde açar), `session` (bir oturumun transcript'i; sayfalardaki "transcript'i aç" tıklaması telefonda
   bu sayfaya `afnav` olur — `vsc_AgentFarm/media/afRemote.js`); listede olmayan sayfa `view.close`
   `unavailable` alır. Masaüstünün `afnav` `chains:<id>` biçimi (sayfa kimliğinde `:` olmaz) telefonda
   `afRemote.js` tarafından `to: 'chains'`, `args: { chain: <id> }` olarak gönderilir. Bir sayfanın PC'de

@@ -193,7 +193,9 @@ ayarı PC'de kalır — Konsol'un ve canlı zaman çizelgesinin ses panelleri de
 seti, Akış ve İçerik kartı ve ajan seçimleri telefondan yazar; telefonun kendi `agentFarm.remote.listen` ve
 `.port` ayarı telefonda yalnız gösterilir ve her yazma yolunda atlanır; Claude Code'un ham settings.json'ı
 telefona gönderilmez; dosya/klasör seçiciler, editör, terminal, anahtar kasası, bağlantılar, dışa/içe aktarma
-ve Telegram belirteci PC'de kalır), `chains` (röle zincirleri; `args.chain` o zincirde açar), `session` (bir oturumun transcript'i; sayfalardaki "transcript'i aç" tıklaması telefonda
+ve Telegram belirteci PC'de kalır), `living` (Canlılık; bakmak da denetim kaydetmek de manage ister — köprüdeki
+`living.*` op'ları gibi; bir sinyalin oku telefonda o sayfayı `afnav` ile açar; dosya seçici ve "JSON olarak
+düzenle" PC'de kalır), `chains` (röle zincirleri; `args.chain` o zincirde açar), `session` (bir oturumun transcript'i; sayfalardaki "transcript'i aç" tıklaması telefonda
   bu sayfaya `afnav` olur — `vsc_AgentFarm/media/afRemote.js`); listede olmayan sayfa `view.close`
   `unavailable` alır. Masaüstünün `afnav` `chains:<id>` biçimi (sayfa kimliğinde `:` olmaz) telefonda
   `afRemote.js` tarafından `to: 'chains'`, `args: { chain: <id> }` olarak gönderilir. Bir sayfanın PC'de

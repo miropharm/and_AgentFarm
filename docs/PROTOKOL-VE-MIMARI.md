@@ -172,7 +172,9 @@ Tasarımın gerekçesi: vault projesi `10_Notes/A-PLN - Android Uygulaması Yeni
   üstünde; zaman çizelgesindeki bir oturum bağlantısı telefonda oturum sayfasını açar), `agent` (bir ajanın
   sayfası; `args.agentId` hangi ajan olduğunu söyler, çiftliğin tanımadığı ajan `unavailable` alır; sayfalardaki
   `openAgent` tıklaması telefonda bu sayfaya `afnav` olur), `search` (bütün transcript'lerde arama; okuma
-  yetkisi yeter, bir sonuca dokunmak telefonda oturum sayfasını açar), `chains` (röle zincirleri; `args.chain` o zincirde açar), `session` (bir oturumun transcript'i; sayfalardaki "transcript'i aç" tıklaması telefonda
+  yetkisi yeter, bir sonuca dokunmak telefonda oturum sayfasını açar), `timeline` (canlı zaman çizelgesi; şeritler
+  telefonda çizildikleri boyutta kalır ve kutularında yana kayar, bir şerit, işaret ya da "transcript'i aç" telefonda
+  oturum sayfasını açar; terminal, oturumu bitirme ve zorla kapatma PC'de kalır), `chains` (röle zincirleri; `args.chain` o zincirde açar), `session` (bir oturumun transcript'i; sayfalardaki "transcript'i aç" tıklaması telefonda
   bu sayfaya `afnav` olur — `vsc_AgentFarm/media/afRemote.js`); listede olmayan sayfa `view.close`
   `unavailable` alır. Masaüstünün `afnav` `chains:<id>` biçimi (sayfa kimliğinde `:` olmaz) telefonda
   `afRemote.js` tarafından `to: 'chains'`, `args: { chain: <id> }` olarak gönderilir. Bir sayfanın PC'de

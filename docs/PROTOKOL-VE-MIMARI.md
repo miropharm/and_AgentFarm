@@ -183,7 +183,10 @@ bir kart, oturum başlatma, proje atama, klasör ve yeni ajan PC'de kalır), `gu
 yalnız yardım belgesi anahtarı — `guide` ya da `examples`, ham dosya `unavailable` alır — `args.anchor` bir
 başlık; sayfalardaki `openGuide` tıklaması telefonda bu sayfaya `afnav` olur; telefonda dil seçimi yalnız o
 görünümü değiştirir, bir bağlantı telefona kopyalanır), `wiki` (wiki işaretleri; telefonda işaret başına
-bir kart, değiştirmek manage ister, kategori adlandırma soruları telefonda sorulur), `chains` (röle zincirleri; `args.chain` o zincirde açar), `session` (bir oturumun transcript'i; sayfalardaki "transcript'i aç" tıklaması telefonda
+bir kart, değiştirmek manage ister, kategori adlandırma soruları telefonda sorulur), `toolbox` (Araç Kutusu;
+`admin` ister — MCP tanımları ve Telegram, web, telefon uygulaması yapılandırması bakmak için bile admin;
+araçlar kart, onaylar telefonda; erişim modu telefonda yalnız gösterilir, Telegram belirteci, güvenlik duvarı,
+PC panosu, dosya ve klasör PC'de kalır), `chains` (röle zincirleri; `args.chain` o zincirde açar), `session` (bir oturumun transcript'i; sayfalardaki "transcript'i aç" tıklaması telefonda
   bu sayfaya `afnav` olur — `vsc_AgentFarm/media/afRemote.js`); listede olmayan sayfa `view.close`
   `unavailable` alır. Masaüstünün `afnav` `chains:<id>` biçimi (sayfa kimliğinde `:` olmaz) telefonda
   `afRemote.js` tarafından `to: 'chains'`, `args: { chain: <id> }` olarak gönderilir. Bir sayfanın PC'de

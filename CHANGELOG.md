@@ -2,6 +2,14 @@
 
 User-facing changes to the Agent Farm Android app, newest first. Each build's release notes on the phone are read from its own heading here.
 
+## 0.2.6 - The speaker buttons on Agent Farm's pages read aloud on the phone (2026-10-07)
+
+- On a page opened on the phone (a conversation, the Console, Notices, Needs You, Now, the wiki), the speaker button now reads with the phone's own voice instead of making the computer speak in another room.
+- The text is read the way Agent Farm reads it on the computer: code, links and lists said in words, in the text's own language when the phone has a voice for it, otherwise in your voice language.
+- While it reads, the button shows a stop square, and a small player sits above the tab bar: previous paragraph, pause, next paragraph, stop and the speed.
+- A phone call or another player pauses the reading; the play button goes on from that paragraph. Leaving the page ends it, and a question from an agent cuts in.
+- Needs Agent Farm 3.876.0 or newer on the computer; with an older one the pages work as before.
+
 ## 0.2.5 - A shared text meets Agent Farm's remote check, and you can answer it (2026-10-05)
 
 - A text shared into a session now passes the same check as a Telegram message: over today's remote budget, or carrying a command that cannot be undone (like rm -rf or git reset --hard), it is not sent at once, and the screen shows Agent Farm's own reason.

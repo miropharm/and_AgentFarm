@@ -1,11 +1,17 @@
 package com.muvusoft.agentfarm.core.view
 
+import com.muvusoft.agentfarm.core.speech.PageReading
+import com.muvusoft.agentfarm.core.speech.ReadingAsk
+import com.muvusoft.agentfarm.core.speech.ReadingControl
+import kotlin.math.roundToInt
+import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.doubleOrNull
 import kotlinx.serialization.json.put
 
 /**
@@ -27,6 +33,15 @@ sealed interface ShellRequest {
     /** Dictate into the page's focused text box; the page waits for `afVoiceDone` with its token. */
     data class Voice(val token: JsonElement) : ShellRequest
 
+    /**
+     * Read the page's text aloud with the phone's own voice (S-5): paragraphs the farm prepared, cutting
+     * whatever this phone reads; the page hears `afSpeakState` with the ask's token after every change.
+     */
+    data class Speak(val ask: ReadingAsk) : ShellRequest
+
+    /** Steer the page's reading: stop, pause, resume, toggle, next, prev, or a new rate. */
+    data class SpeakControl(val control: ReadingControl) : ShellRequest
+
     /** A shell request the shell refuses (a malformed page id): it goes nowhere. */
     data object Refused : ShellRequest
 
@@ -38,6 +53,15 @@ sealed interface ShellRequest {
                 "afnav" -> o.str("to")?.takeIf(PageRoute::isPage)?.let { Open(it, o["args"] as? JsonObject) } ?: Refused
                 "afClipboard" -> Copy(o["token"] ?: JsonNull, o.str("text").orEmpty())
                 "afVoice" -> Voice(o["token"] ?: JsonNull)
+                "afSpeak" -> Speak(
+                    ReadingAsk(
+                        token = o["token"] ?: JsonNull,
+                        paragraphs = (o["paragraphs"] as? JsonArray).orEmpty().mapNotNull { (it as? JsonPrimitive)?.takeIf { p -> p.isString }?.contentOrNull },
+                        lang = o.str("lang").orEmpty(),
+                        rate = o.num("rate") ?: 0,
+                    ),
+                )
+                "afSpeakControl" -> o.str("action")?.takeIf { it in PageReading.ACTIONS }?.let { SpeakControl(ReadingControl(it, o.num("rate"))) } ?: Refused
                 else -> null
             }
         }
@@ -62,5 +86,7 @@ sealed interface ShellRequest {
         fun heard(results: List<String>?): String? = results?.map { it.trim() }?.firstOrNull { it.isNotEmpty() }
 
         private fun JsonObject.str(key: String): String? = (this[key] as? JsonPrimitive)?.takeIf { it.isString }?.contentOrNull
+
+        private fun JsonObject.num(key: String): Int? = (this[key] as? JsonPrimitive)?.takeIf { !it.isString }?.doubleOrNull?.takeIf { it.isFinite() }?.roundToInt()
     }
 }

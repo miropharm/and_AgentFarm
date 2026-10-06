@@ -30,6 +30,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import com.muvusoft.agentfarm.AgentFarmApp
 import com.muvusoft.agentfarm.R
 import com.muvusoft.agentfarm.core.contract.Codec
 import com.muvusoft.agentfarm.core.contract.ViewClose
@@ -91,6 +92,7 @@ private fun PageView(
     onOpen: (ShellRequest.Open) -> Unit,
 ) {
     val clipboard = LocalContext.current.getSystemService(ClipboardManager::class.java)
+    val speaker = AgentFarmApp.of(LocalContext.current).speaker
     val clipboardRefused = stringResource(R.string.clipboard_refused)
     val main = remember { Handler(Looper.getMainLooper()) }
     var web by remember { mutableStateOf<WebView?>(null) }
@@ -115,7 +117,11 @@ private fun PageView(
         }
     }
     DisposableEffect(viewId) {
-        onDispose { manager.send(farmId, ViewClose(viewId)) }
+        // A page's reading is that page's: leaving it ends the reading.
+        onDispose {
+            speaker.stopReading(viewId)
+            manager.send(farmId, ViewClose(viewId))
+        }
     }
 
     AndroidView(
@@ -149,6 +155,8 @@ private fun PageView(
                                 deliver(ShellRequest.copyDone(r.token, ok, if (ok) null else clipboardRefused).toString())
                             }
                             is ShellRequest.Voice -> main.post { dictation.start(r.token) }
+                            is ShellRequest.Speak -> speaker.read(viewId, r.ask) { state -> main.post { deliver(state.toString()) } }
+                            is ShellRequest.SpeakControl -> speaker.control(viewId, r.control)
                             ShellRequest.Refused -> Unit
                         }
                     },

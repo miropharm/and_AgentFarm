@@ -1,6 +1,8 @@
 package com.muvusoft.agentfarm.core.view
 
 import com.muvusoft.agentfarm.core.contract.Codec
+import com.muvusoft.agentfarm.core.speech.ReadingAsk
+import com.muvusoft.agentfarm.core.speech.ReadingControl
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonObject
@@ -84,5 +86,22 @@ class ShellRequestTest {
             """{"type":"afVoiceDone","token":7,"error":"yok"}""",
             ShellRequest.voiceDone(JsonPrimitive(7), emptyList(), "yok").toString(),
         )
+    }
+
+    @Test
+    fun aPageReadingStaysOnThePhoneWithItsParagraphs() {
+        val r = of("""{"type":"afSpeak","token":"r1","paragraphs":["Bir.",7,"İki."],"lang":"tr","rate":2.6}""")
+        assertEquals(ShellRequest.Speak(ReadingAsk(JsonPrimitive("r1"), listOf("Bir.", "İki."), "tr", 3)), r)
+        assertEquals(ShellRequest.Speak(ReadingAsk(JsonNull, emptyList(), "", 0)), of("""{"type":"afSpeak"}"""))
+    }
+
+    @Test
+    fun aReadingControlIsOneOfItsActionsOrRefused() {
+        assertEquals(ShellRequest.SpeakControl(ReadingControl("stop")), of("""{"type":"afSpeakControl","action":"stop"}"""))
+        assertEquals(ShellRequest.SpeakControl(ReadingControl("rate", -4)), of("""{"type":"afSpeakControl","action":"rate","rate":-4}"""))
+        assertEquals(ShellRequest.SpeakControl(ReadingControl("rate", null)), of("""{"type":"afSpeakControl","action":"rate","rate":"fast"}"""))
+        listOf("""{"type":"afSpeakControl","action":"rewind"}""", """{"type":"afSpeakControl"}""").forEach {
+            assertEquals(it, ShellRequest.Refused, of(it))
+        }
     }
 }

@@ -165,10 +165,22 @@ Tasarımın gerekçesi: vault projesi `10_Notes/A-PLN - Android Uygulaması Yeni
   `afVoice` (`token`) sistemin konuşma tanıyıcısını (`RECOGNIZE_SPEECH`, `tr-TR`) açar ve
   `afVoiceDone` (`token`, `text?`, `error?`) döner — vazgeçilirse `text` yoktur. Sayfa mikrofonu
   yalnız `afShell.voice()` doğru dönerse çizer (telefonda bir tanıyıcı var demektir).
+  `afSpeak` (`token`, `paragraphs[]`, `lang`, `rate`) sayfanın metnini telefonun kendi sesiyle okur
+  (`core/speech/PageReading`, `net/Speaker`). Paragrafları çiftlik hazırlar: sayfada 🔊'e basılınca
+  `media/afPhoneRead.js` `readFor` ile ister, çiftlik `readText` ile PC'nin okuyacağı biçimde döner (aynı
+  temizleme, araya giren sözcükler, metnin kendi dili) ve PC hiç konuşmaz. Ses: metnin dili için telefonda ses
+  varsa o, yoksa kullanıcının ses dili; ikisi de yoksa okuma nedenini söyleyerek biter. Uyarılarla aynı motor:
+  yeni okuma eskisini keser, araya giren bir soru uyarısı okumayı bitirir; okuma medya sesi olarak çıkar, ses
+  odağını tutar, arama gelince duraklar; sayfadan çıkılınca biter. `afSpeakControl` (`action`: stop · pause ·
+  resume · toggle · next · prev · rate, `rate?`) okumayı yönetir. Her değişiklikte sayfaya `afSpeakState`
+  (`token`, `state`: reading · paused · idle, `paragraph`, `count`, `rate`, `error?`) döner; sayfa bunu
+  kendi okuma durumu yapar (🔊 / ■ / ▶ ve sekme çubuğunun üstündeki küçük oynatıcı). Sayfa 🔊'ü yalnız
+  `afShell.speaks()` doğru dönerse çizer.
   Diğer bütün sayfa mesajları `view.msg` olarak gider.
 - Çiftlik tarafında sayfa başına bir kural vardır (`vsc_AgentFarm/src/panels/remotePages.ts`): bir
   mesaj ya yalnız PC'de çalışır (telefondan hiç çalışmaz), ya bakar (`read`), ya cevaplar
-  (`answer`), ya da sayfanın işlem yetkisini ister. Bugün telefonda açılan sayfalar: `now`,
+  (`answer`), ya da sayfanın işlem yetkisini ister. Sesli okuma (`readAloud`, `readControl`) hiçbir sayfada
+  telefondan çalışmaz (telefon PC'yi konuşturmaz); `readFor` her sayfada bakıştır. Bugün telefonda açılan sayfalar: `now`,
   `needs`, `console`, `sessions`, `tasks`, `notices`, `dashboard`, `missions`, `queue`, `turns` (çiftliğin her
   turu; telefonda her tur bir kart), `projects` (projeler; telefonda tek sütun, liste açık projenin
   üstünde; zaman çizelgesindeki bir oturum bağlantısı telefonda oturum sayfasını açar), `agent` (bir ajanın

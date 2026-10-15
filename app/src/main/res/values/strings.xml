@@ -71,6 +71,15 @@
     <string name="widget_description">Connected farms, what waits for you and running sessions; tap for the Now page.</string>
     <string name="tile_label">Agent Farm</string>
     <string name="widget_mic">Say it to a session</string>
+    <string name="widget_stop">Stop a running turn</string>
+
+    <!-- Stopping a running turn -->
+    <string name="stop_title">Stop a running turn</string>
+    <string name="stop_no_farm">No farm is connected; nothing can be stopped from here now.</string>
+    <string name="stop_none">Nothing is running on this farm.</string>
+    <string name="stop_go">Stop</string>
+    <string name="stop_confirm_title">Stop %1$s\'s turn?</string>
+    <string name="stop_confirm_detail">The turn ends where it is; the session and its context stay, and the next message carries on.</string>
 
     <!-- Farm pages -->
     <string name="farm_unpaired">This farm is no longer paired.</string>

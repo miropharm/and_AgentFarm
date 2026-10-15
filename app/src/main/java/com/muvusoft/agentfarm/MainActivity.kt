@@ -19,6 +19,7 @@ class MainActivity : FragmentActivity() {
     private val incomingLink = mutableStateOf<String?>(null)
     private val incomingShare = mutableStateOf<String?>(null)
     private val openNow = mutableStateOf(false)
+    private val openStop = mutableStateOf(false)
 
     // The widget's microphone: what the recogniser heard goes to the share screen, which says it into a session.
     private val dictate = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { r ->
@@ -39,6 +40,8 @@ class MainActivity : FragmentActivity() {
                     onShareDone = { incomingShare.value = null },
                     openNow = openNow.value,
                     onOpenNowDone = { openNow.value = false },
+                    openStop = openStop.value,
+                    onStopDone = { openStop.value = false },
                 )
             }
         }
@@ -55,6 +58,9 @@ class MainActivity : FragmentActivity() {
             runCatching { dictate.launch(speechIntent(getString(R.string.voice_prompt), dictationLanguage(AgentFarmApp.of(this).prefs))) }
         } else if (intent?.getBooleanExtra(OPEN_NOW, false) == true) {
             openNow.value = true
+        } else if (intent?.getBooleanExtra(OPEN_STOP, false) == true) {
+            intent.removeExtra(OPEN_STOP)
+            openStop.value = true
         } else if (intent?.action == Intent.ACTION_SEND) {
             incomingShare.value = Share.text(intent.getStringExtra(Intent.EXTRA_SUBJECT), intent.getStringExtra(Intent.EXTRA_TEXT))
         } else {
@@ -68,5 +74,8 @@ class MainActivity : FragmentActivity() {
 
         /** An intent extra: dictate, then offer the words to a session (the widget's microphone). */
         const val OPEN_VOICE = "openVoice"
+
+        /** An intent extra: offer the running turns to stop (the widget's stop). */
+        const val OPEN_STOP = "openStop"
     }
 }

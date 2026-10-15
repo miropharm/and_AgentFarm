@@ -46,4 +46,14 @@
         android:gravity="center"
         android:text="🎤"
         android:textSize="22sp" />
+
+    <TextView
+        android:id="@+id/widget_stop"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:contentDescription="@string/widget_stop"
+        android:gravity="center"
+        android:text="⏹"
+        android:textColor="#FFFFFFFF"
+        android:textSize="22sp" />
 </LinearLayout>

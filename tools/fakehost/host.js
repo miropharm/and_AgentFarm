@@ -22,6 +22,7 @@ const OPS = {
         { id: 'c_old', agent: 'yazar', status: 'ended', steerable: false, asking: null },
     ],
     'needs.act': () => ({ done: true }),
+    'console.interrupt': a => ({ id: a.id, interrupted: true, engine: 'claude', how: 'interrupted over the control channel — the process stays' }),
 };
 
 function createHost(opts = {}) {

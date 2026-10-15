@@ -53,6 +53,9 @@ fun ShellApp(
     /** The widget or the tile was tapped: open the focused farm's Now page; `onOpenNowDone` once it is. */
     openNow: Boolean,
     onOpenNowDone: () -> Unit,
+    /** The widget's stop was tapped: offer the running turns; `onStopDone` once the screen is left. */
+    openStop: Boolean,
+    onStopDone: () -> Unit,
 ) {
     val context = LocalContext.current
     var lockOnOpen by remember { mutableStateOf(prefs.lockOnOpen) }
@@ -68,6 +71,10 @@ fun ShellApp(
     ) {
         if (incomingShare != null) {
             ShareScreen(text = incomingShare, manager = manager, onDone = onShareDone)
+            return@LockGate
+        }
+        if (openStop) {
+            StopScreen(manager = manager, onDone = onStopDone)
             return@LockGate
         }
         Shell(

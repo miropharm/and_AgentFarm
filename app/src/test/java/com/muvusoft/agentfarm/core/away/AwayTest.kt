@@ -35,7 +35,7 @@ class AwayTest {
             listOf(
                 "VS Code was last seen 30 min ago.",
                 "The numbers below are from 12 min ago; nothing behind them moves until VS Code opens.",
-                "2 waiting for you · 4 unread notices · 1 running tasks",
+                "2 waiting for you · 4 unread notices · 1 running task",
             ),
             AwayVerdict.lines(a, now),
         )

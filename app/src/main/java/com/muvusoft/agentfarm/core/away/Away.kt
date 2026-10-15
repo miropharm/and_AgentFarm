@@ -73,13 +73,15 @@ object AwayVerdict {
             out += "The numbers below are from ${Time.ago(now - a.snapshotAt)} ago; nothing behind them moves until VS Code opens."
             val counts = listOfNotNull(
                 a.needs?.let { "$it waiting for you" },
-                a.unreadNotices?.let { "$it unread notices" },
-                a.runningTasks?.let { "$it running tasks" },
+                a.unreadNotices?.let { count(it, "unread notice") },
+                a.runningTasks?.let { count(it, "running task") },
             )
             if (counts.isNotEmpty()) out += counts.joinToString(" · ")
         }
         return out
     }
+
+    private fun count(n: Long, thing: String): String = "$n $thing" + if (n == 1L) "" else "s"
 
     fun row(n: AwayNeed): String = if (n.agent.isBlank()) n.title else "${n.agent} · ${n.title}"
 

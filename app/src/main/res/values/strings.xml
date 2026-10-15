@@ -62,6 +62,10 @@
     <string name="share_loading">Reading sessions…</string>
     <string name="share_no_farm">No farm is connected; the shared text can be sent once one connects.</string>
     <string name="share_no_session">This farm has no open Console session.</string>
+    <string name="share_new">New session</string>
+    <string name="share_image">Shared picture</string>
+    <string name="share_image_online">A picture goes only to a farm that answers now, and none does.</string>
+    <string name="share_image_big">This picture is too large: the farm takes pictures up to %1$d MB.</string>
     <string name="share_send">Send</string>
     <string name="share_confirm">Send anyway</string>
     <string name="share_confirm_title">Send past the farm\'s check?</string>

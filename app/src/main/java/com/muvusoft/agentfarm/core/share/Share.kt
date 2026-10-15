@@ -6,6 +6,7 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.booleanOrNull
+import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.contentOrNull
 
 /** A Console session a shared text can be said into (one row of `console.sessions`). */
@@ -14,6 +15,43 @@ data class ShareTarget(val id: String, val agent: String, val status: String, va
 object Share {
     /** Past this the preview stops; the whole text is in its sheet and is what gets sent. */
     const val PREVIEW_CHARS = 280
+
+    /** The farm's own limit for one picture on a message (console.send attach). */
+    const val IMAGE_MAX_BYTES = 5L * 1024 * 1024
+
+    private const val NEW = "new:"
+
+    /** A share can open a new session with an agent instead of going into a running one. */
+    fun newTarget(agent: String): String = NEW + agent
+
+    fun newAgent(target: String?): String? = target?.takeIf { it.startsWith(NEW) }?.removePrefix(NEW)
+
+    /** The agents a new session can be opened with, from `console.new` called bare. */
+    fun agents(result: JsonElement?): List<String> =
+        ((result as? JsonObject)?.get("agents") as? JsonArray).orEmpty().mapNotNull { (it as? JsonPrimitive)?.contentOrNull?.takeIf(String::isNotBlank) }
+
+    /**
+     * The call a share makes: the words into a session (console.send), or a new session with an agent and the
+     * words as its first message (console.new). A share queued offline makes the same call, with no picture.
+     */
+    fun call(to: String, text: String, attach: String?, gate: String?): Pair<String, JsonObject> {
+        val agent = newAgent(to)
+        val args = buildJsonObject {
+            if (agent != null) {
+                put("agent", JsonPrimitive(agent))
+                if (text.isNotBlank()) put("prompt", JsonPrimitive(text))
+            } else {
+                put("id", JsonPrimitive(to))
+                put("text", JsonPrimitive(text))
+            }
+            if (attach != null) put("attach", JsonArray(listOf(JsonPrimitive(attach))))
+            if (gate != null) put("confirm", JsonPrimitive(gate))
+        }
+        return (if (agent != null) "console.new" else "console.send") to args
+    }
+
+    /** Where `console.stage` put a picture on the PC, to hang on the message. */
+    fun stagedPath(result: JsonElement?): String? = (result as? JsonObject)?.str("path")?.takeIf { it.isNotBlank() }
 
     /** The words a share carries: its subject leads unless the text already starts with it. Null when empty. */
     fun text(subject: String?, body: String?): String? {
@@ -103,6 +141,10 @@ object Share {
     }
 
     data class Receipt(val delivered: Boolean, val title: String, val text: String)
+
+    /** A file's size the way a person reads it: KB under a megabyte, MB with one decimal above. */
+    fun size(bytes: Long): String =
+        if (bytes < 1024 * 1024) "${(bytes + 1023) / 1024} KB" else String.format("%.1f MB", bytes / 1_048_576.0)
 
     fun preview(text: String): String = if (text.length <= PREVIEW_CHARS) text else text.take(PREVIEW_CHARS).trimEnd() + "…"
 

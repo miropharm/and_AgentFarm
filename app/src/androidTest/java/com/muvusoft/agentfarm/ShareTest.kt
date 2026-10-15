@@ -2,7 +2,11 @@ package com.muvusoft.agentfarm
 
 import android.app.NotificationManager
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.Color
 import android.net.Uri
+import android.os.StrictMode
+import java.io.File
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsSelected
@@ -104,6 +108,50 @@ class ShareTest {
             assertTrue(state, Regex("\"confirm\"\\s*:\\s*\"risk\"").containsMatchIn(state))
             rule.waitForIdle()
             Shots.take("share-confirmed")
+        }
+    }
+
+    /** A small picture in the app's own cache, shared the way a gallery shares one. */
+    private fun sharedPicture(words: String): Intent {
+        val file = File(ctx.cacheDir, "ekran-görüntüsü.png")
+        val bmp = Bitmap.createBitmap(48, 32, Bitmap.Config.ARGB_8888).apply { eraseColor(Color.rgb(30, 120, 200)) }
+        file.outputStream().use { bmp.compress(Bitmap.CompressFormat.PNG, 100, it) }
+        // The test package starts the app's activity, so a file uri counts as leaving the package; a gallery sends a content uri.
+        StrictMode.setVmPolicy(StrictMode.VmPolicy.Builder().build())
+        return Intent(ctx, MainActivity::class.java).setAction(Intent.ACTION_SEND).setType("image/png")
+            .putExtra(Intent.EXTRA_STREAM, Uri.fromFile(file)).putExtra(Intent.EXTRA_TEXT, words)
+    }
+
+    @Test
+    fun aSharedPictureGoesUpToThePcAndIntoTheChosenSession() {
+        pair()
+        ActivityScenario.launch<MainActivity>(sharedPicture("Bu hatayı gör")).use {
+            rule.waitUntil(20_000) { rule.onAllNodes(hasTestTag("share-to-c_dev")).fetchSemanticsNodes().isNotEmpty() }
+            rule.onNodeWithTag("share-image").assertIsDisplayed()
+            rule.waitForIdle()
+            Shots.take("share-picture")
+            rule.onNodeWithTag("share-send").performClick()
+            waitOutcome("→ developer")
+            val state = farmState()
+            // The picture went up first, and the session's message names where the farm put it.
+            assertTrue(state, Regex("\"op\"\\s*:\\s*\"console.stage\"").containsMatchIn(state))
+            assertTrue(state, Regex("\"attach\"\\s*:\\s*\\[").containsMatchIn(state) && state.contains("c_dev"))
+        }
+    }
+
+    @Test
+    fun aShareOpensANewSessionWithTheChosenAgent() {
+        pair()
+        ActivityScenario.launch<MainActivity>(shared(null, "Yeni bir konu: yarınki toplantı")).use {
+            rule.waitUntil(20_000) { rule.onAllNodes(hasTestTag("share-new-psikolog")).fetchSemanticsNodes().isNotEmpty() }
+            rule.onNodeWithTag("share-new-psikolog").performClick()
+            rule.onNodeWithTag("share-new-psikolog").assertIsSelected()
+            rule.waitForIdle()
+            Shots.take("share-new")
+            rule.onNodeWithTag("share-send").performClick()
+            waitOutcome("a Console session is open")
+            val state = farmState()
+            assertTrue(state, Regex("\"op\"\\s*:\\s*\"console.new\"").containsMatchIn(state) && state.contains("psikolog"))
         }
     }
 

@@ -80,6 +80,38 @@ class ShareTest {
     }
 
     @Test
+    fun aShareIsWordsAPictureOrBothAndNothingWithoutEither() {
+        val pic = SharedImage("content://media/1", "ekran.png", "image/png", 2_000)
+        assertNull(Shared.of(null, "  ", null))
+        assertEquals(Shared("", pic), Shared.of(null, null, pic))
+        assertEquals(Shared("Not\nbak", pic), Shared.of("Not", "bak", pic))
+        assertFalse(pic.tooBig)
+        assertTrue(pic.copy(bytes = Share.IMAGE_MAX_BYTES + 1).tooBig)
+        assertFalse(pic.copy(bytes = null).tooBig)
+        assertEquals("2 KB", Share.size(2_000))
+        assertTrue(Share.size(3 * 1_048_576L).startsWith("3"))
+    }
+
+    @Test
+    fun aShareGoesIntoASessionOrOpensANewOneWithItsPicture() {
+        val (op, args) = Share.call("c_dev", "bak", "C:\\Temp\\a.png", null)
+        assertEquals("console.send", op)
+        assertEquals("""{"id":"c_dev","text":"bak","attach":["C:\\Temp\\a.png"]}""", args.toString())
+        val (newOp, newArgs) = Share.call(Share.newTarget("psikolog"), "yarın", null, null)
+        assertEquals("console.new", newOp)
+        assertEquals("""{"agent":"psikolog","prompt":"yarın"}""", newArgs.toString())
+        assertEquals("""{"agent":"psikolog"}""", Share.call(Share.newTarget("psikolog"), " ", null, null).second.toString())
+        assertEquals("risk", Share.call("c_dev", "rm -rf x", null, "risk").second["confirm"].toString().trim('"'))
+        assertEquals("psikolog", Share.newAgent(Share.newTarget("psikolog")))
+        assertNull(Share.newAgent("c_dev"))
+        assertNull(Share.newAgent(null))
+        assertEquals(listOf("developer", "psikolog"), Share.agents(json("""{"agents":["developer","psikolog",""]}""")))
+        assertEquals(emptyList<String>(), Share.agents(json("""{"error":"unknown op"}""")))
+        assertEquals("C:\\Temp\\a.png", Share.stagedPath(json("""{"path":"C:\\Temp\\a.png"}""")))
+        assertNull(Share.stagedPath(json("{}")))
+    }
+
+    @Test
     fun aFarmThatDoesNotAnswerIsChosenOnlyWhenPickedOrWhenNoneAnswers() {
         val online = listOf("b")
         val offered = listOf("a", "b", "c")

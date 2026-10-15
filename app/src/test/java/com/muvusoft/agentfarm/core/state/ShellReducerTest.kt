@@ -97,5 +97,7 @@ class ShellReducerTest {
         assertEquals(listed, s.farm("farm_a")?.sessions)
         assertEquals(1, s.farm("farm_a")?.running)
         assertNull(ShellReducer.sessions(s0, "farm_x", listed).farm("farm_x"))
+        assertEquals(listOf("developer"), ShellReducer.agents(s, "farm_a", listOf("developer")).farm("farm_a")?.agents)
+        assertEquals(listed, ShellReducer.agents(s, "farm_a", listOf("developer")).farm("farm_a")?.sessions)
     }
 }

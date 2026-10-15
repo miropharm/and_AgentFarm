@@ -21,6 +21,12 @@ const OPS = {
         { id: 'c_psy', agent: 'psikolog', status: 'idle', steerable: true, asking: null },
         { id: 'c_old', agent: 'yazar', status: 'ended', steerable: false, asking: null },
     ],
+    // A shared picture goes up first (vsc console.stage): the farm says where it put it.
+    'console.stage': a => ({ path: 'C:\\Temp\\agentfarm-attachments\\' + String(a.name || 'shared.png'), bytes: Buffer.from(String(a.data || ''), 'base64').length }),
+    // A new session the phone's way (vsc console.new): called bare it lists the agents it can open with.
+    'console.new': a => (a.agent
+        ? { id: 'c_new', agent: a.agent, note: `▶ ${a.agent} — a Console session is open.` }
+        : { agents: ['developer', 'psikolog'] }),
     'needs.act': () => ({ done: true }),
     'console.interrupt': a => ({ id: a.id, interrupted: true, engine: 'claude', how: 'interrupted over the control channel — the process stays' }),
     'workflows.answer': a => ({ answered: a.id, runId: 'r_fake', answer: a.answer || `option ${a.option}` }),

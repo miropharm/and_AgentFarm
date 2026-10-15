@@ -55,6 +55,8 @@ data class FarmStatus(
     val away: Away? = null,
     /** The sessions console.sessions last listed, kept so a share made while the farm cannot be reached can still name one. */
     val sessions: List<ShareTarget>? = null,
+    /** The agents a new session can be opened with, as console.new last listed them. */
+    val agents: List<String>? = null,
 )
 
 /** A call written while offline, sent when its farm is reachable; its id makes a resend harmless. */

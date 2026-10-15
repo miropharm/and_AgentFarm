@@ -21,6 +21,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.saveable.rememberSaveable
 import com.muvusoft.agentfarm.core.link.LinkText
+import com.muvusoft.agentfarm.core.share.Shared
 import com.muvusoft.agentfarm.core.view.PageRoute
 import com.muvusoft.agentfarm.ui.page.FarmPage
 import com.muvusoft.agentfarm.core.pairing.PairingStep
@@ -47,8 +48,8 @@ fun ShellApp(
     prefs: ShellPrefs,
     manager: ConnectionManager,
     incomingLink: String?,
-    /** Text another app shared to Agent Farm; `onShareDone` once it was sent or given up. */
-    incomingShare: String?,
+    /** Words or a picture another app shared to Agent Farm; `onShareDone` once it was sent or given up. */
+    incomingShare: Shared?,
     onShareDone: () -> Unit,
     /** The widget or the tile was tapped: open the focused farm's Now page; `onOpenNowDone` once it is. */
     openNow: Boolean,
@@ -70,7 +71,7 @@ fun ShellApp(
         onLocked = { WebStorage.getInstance().deleteAllData() },
     ) {
         if (incomingShare != null) {
-            ShareScreen(text = incomingShare, manager = manager, onDone = onShareDone)
+            ShareScreen(shared = incomingShare, manager = manager, onDone = onShareDone)
             return@LockGate
         }
         if (openStop) {

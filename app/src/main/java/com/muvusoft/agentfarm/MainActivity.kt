@@ -1,14 +1,17 @@
 package com.muvusoft.agentfarm
 
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.speech.RecognizerIntent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.IntentCompat
 import androidx.fragment.app.FragmentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.mutableStateOf
-import com.muvusoft.agentfarm.core.share.Share
+import com.muvusoft.agentfarm.core.share.Shared
 import com.muvusoft.agentfarm.core.view.ShellRequest
+import com.muvusoft.agentfarm.net.SharedImages
 import com.muvusoft.agentfarm.ui.page.dictationLanguage
 import com.muvusoft.agentfarm.ui.page.speechIntent
 import com.muvusoft.agentfarm.ui.AppTheme
@@ -17,14 +20,14 @@ import com.muvusoft.agentfarm.ui.ShellApp
 /** A FragmentActivity because the system owner prompt (biometric or screen lock) needs one. */
 class MainActivity : FragmentActivity() {
     private val incomingLink = mutableStateOf<String?>(null)
-    private val incomingShare = mutableStateOf<String?>(null)
+    private val incomingShare = mutableStateOf<Shared?>(null)
     private val openNow = mutableStateOf(false)
     private val openStop = mutableStateOf(false)
 
     // The widget's microphone: what the recogniser heard goes to the share screen, which says it into a session.
     private val dictate = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { r ->
         val results = if (r.resultCode == RESULT_OK) r.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS) else null
-        ShellRequest.heard(results)?.let { incomingShare.value = it }
+        ShellRequest.heard(results)?.let { incomingShare.value = Shared(it) }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -62,7 +65,10 @@ class MainActivity : FragmentActivity() {
             intent.removeExtra(OPEN_STOP)
             openStop.value = true
         } else if (intent?.action == Intent.ACTION_SEND) {
-            incomingShare.value = Share.text(intent.getStringExtra(Intent.EXTRA_SUBJECT), intent.getStringExtra(Intent.EXTRA_TEXT))
+            val image = intent.type?.takeIf { it.startsWith("image/") }?.let { mime ->
+                IntentCompat.getParcelableExtra(intent, Intent.EXTRA_STREAM, Uri::class.java)?.let { SharedImages.describe(this, it, mime) }
+            }
+            incomingShare.value = Shared.of(intent.getStringExtra(Intent.EXTRA_SUBJECT), intent.getStringExtra(Intent.EXTRA_TEXT), image)
         } else {
             incomingLink.value = intent?.dataString
         }

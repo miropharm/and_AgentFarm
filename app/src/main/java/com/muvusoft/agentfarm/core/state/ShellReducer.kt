@@ -39,6 +39,8 @@ object ShellReducer {
     fun sessions(s: ShellState, farmId: String, targets: List<ShareTarget>): ShellState =
         running(update(s, farmId) { it.copy(sessions = targets) }, farmId, targets.count { it.status == "running" })
 
+    fun agents(s: ShellState, farmId: String, names: List<String>): ShellState = update(s, farmId) { it.copy(agents = names) }
+
     fun away(s: ShellState, farmId: String, away: Away?): ShellState = update(s, farmId) { it.copy(away = away) }
 
     /** What a frame from a farm changes. Frames that concern a page (view.*) change nothing here. */

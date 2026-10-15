@@ -95,6 +95,8 @@ class ConnectionManager(
 
     fun sessions(farmId: String, targets: List<ShareTarget>) = _state.update { ShellReducer.sessions(it, farmId, targets) }
 
+    fun agents(farmId: String, names: List<String>) = _state.update { ShellReducer.agents(it, farmId, names) }
+
     /** Drops what waited too long, telling the receipts; also run on a clock, since a farm that never answers flushes nothing. */
     fun expire() {
         val now = clock()

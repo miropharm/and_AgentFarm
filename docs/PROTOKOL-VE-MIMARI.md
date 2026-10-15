@@ -168,7 +168,13 @@ Tasarımın gerekçesi: vault projesi `10_Notes/A-PLN - Android Uygulaması Yeni
   "Wake this PC" gösterir: sihirli paket (6×FF + 16×MAC) UDP 9'a kartın yayın adresine ve 255.255.255.255'e
   gider, ardından bağlantı geri çekilme beklemeden birkaç kez dener (`Reconnect.AFTER_WAKE_MS`).
 - **Yerel "yeni oturum"** (paylaşım, ses, widget) Telegram `/new` ile aynı kararı kullanır ve son ayarları
-  devralır (`seedLastLaunch`). Köprüdeki `sessions.start` devralmadığı için kullanılmaz.
+  devralır (`seedLastLaunch`). Köprüdeki `sessions.start` devralmadığı için kullanılmaz. Kapısı
+  `console.new { agent, prompt?, attach? }`: argümansız çağrılınca açılabilecek ajanları (`agents`) verir;
+  telefondan gelince Telegram'ın günlük bütçesine sayılır, bütçe bitmişse `ok:false` ile reddeder.
+- **Paylaşılan görsel** önce `console.stage { name, data (base64), mediaType }` ile PC'nin geçici ek klasörüne
+  gider, dönen `path` mesajın `attach` listesine konur (`console.send` ya da `console.new`). Telefon yalnız
+  kendi yüklediği (o klasördeki) yolları ekleyebilir; görsel en çok 5 MB, meşgul bir tura bekletilemez.
+  Görsel yalnız o an cevap veren çiftliğe gider; çevrimdışı giden kutusu yalnız metin taşır.
 - Uzaktan açılan sayfalar yeni bir oturum kapısı değildir; masaüstündeki kapıların kendisidir.
 - **Kabuğun `console.send`'i Telegram'la aynı uzaktan kapıdan geçer** (bugünkü bütçe, geri alınamayan komut,
   meşgulse kuyruk; tek defter, tek tavan): durdurulursa cevap `ok:true` + `{ sent:false, confirm:<kapı>, note }`.

@@ -55,7 +55,16 @@ Tasarımın gerekçesi: vault projesi `10_Notes/A-PLN - Android Uygulaması Yeni
 - **İmza:** ECDSA P-256 + SHA-256 (DER). İmzalanan metin UTF-8 olarak
   `agentfarm.remote/1|<farm id>|<device id>|<nonce>`. Cihazın açık anahtarı X.509 SPKI DER, base64.
 - **Adresler:** eşleşme bağlantısı aday adres listesi taşır (en yerel önce). Bağlantı yöneticisi
-  sırayla dener; kullanıcı yol seçmez, yalnız durum şeridinde görür.
+  sırayla dener; kullanıcı yol seçmez, yalnız durum şeridinde görür. Agent Farm "Your network"
+  (`lan`) kipinde tüm arayüzleri dinler; QR önce özel ağ adreslerini, sonra makinede Tailscale varsa
+  onun 100.x adresini yazar — Tailscale'i olan telefon aynı eşleşmeyle evin dışından da ulaşır.
+- **Keşif (`transport.discovery`):** `lan` kipinde Agent Farm yerel ağda mDNS (DNS-SD) ile
+  `_agentfarm._tcp.local` olarak cevap verir: SRV portu, A özel IPv4 adreslerini, TXT `farm=<farm id>`
+  ve `contract=<sürüm>` taşır (`vsc_AgentFarm/src/remote/server/mdns.ts`). Telefon yalnız bir çiftliğe
+  yeni bir adresin çözebileceği bir nedenle ulaşamazken arar (`core/link/Discovery.wanted`,
+  `net/FarmFinder`), kendi eşleştiği çiftliğin kimliğini görürse o adresi ilk sıraya koyar ve
+  beklemeyi keser (`Reconnect.order`). PC'nin adresi değişse de yeni QR gerekmez; eşleşme ve sabitlenen
+  sertifika aynı kalır.
 
 ## 4. Eşleşme
 

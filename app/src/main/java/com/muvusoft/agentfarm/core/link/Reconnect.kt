@@ -12,9 +12,14 @@ object Reconnect {
         return base + (base * 0.25 * random01.coerceIn(0.0, 1.0)).toLong()
     }
 
-    /** The addresses in the order to try: the last one that worked first, then the link's own order. */
-    fun order(addresses: List<String>, lastGood: String?): List<String> =
-        if (lastGood != null && lastGood in addresses) listOf(lastGood) + (addresses - lastGood) else addresses
+    /**
+     * The addresses in the order to try: where the farm answered on the local network just now (`found`),
+     * then the last one that worked, then the link's own order.
+     */
+    fun order(addresses: List<String>, lastGood: String?, found: String?): List<String> {
+        val known = if (lastGood != null && lastGood in addresses) listOf(lastGood) + (addresses - lastGood) else addresses
+        return if (found == null) known else listOf(found) + (known - found)
+    }
 
     /** What happened to the phone's default network. */
     enum class Net { AVAILABLE, SWITCHED, LOST }

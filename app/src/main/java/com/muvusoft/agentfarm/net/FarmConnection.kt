@@ -44,6 +44,7 @@ class FarmConnection(
     @Volatile private var welcomed = false
     @Volatile private var stopped = false
     private var lastGood: String? = null
+    @Volatile private var found: String? = null
     @Volatile private var current: String? = null
     private var job: Job? = null
     private val wake = Channel<Unit>(Channel.CONFLATED)
@@ -86,7 +87,8 @@ class FarmConnection(
     private suspend fun loop() {
         var attempt = 0
         while (true) {
-            for (address in Reconnect.order(farm.addresses, lastGood)) {
+            val seen = found
+            for (address in Reconnect.order(farm.addresses, lastGood, seen)) {
                 attempt++
                 link(Link.Connecting(address, attempt, clock()))
                 val end = session(address)
@@ -94,6 +96,8 @@ class FarmConnection(
                 val refuse = end.refuse
                 if (refuse != null && Reconnect.isFinal(refuse.reason)) return
                 if (end.welcomed) break
+                // The farm just answered somewhere new: the old list waits, the new address goes first.
+                if (found != seen) break
             }
             if (attempt > 0) link(Link.Offline("unreachable", clock()))
             // A network that comes back cuts the wait short; the backoff starts over from there.
@@ -109,6 +113,15 @@ class FarmConnection(
             Reconnect.Nudge.RECONNECT -> socket?.cancel()
             Reconnect.Nudge.NONE -> Unit
         }
+    }
+
+    /** The farm answered on the local network at `address`: tried first from now on, and at once if the link is down. */
+    fun onFound(address: String) {
+        found = address
+        if (stopped || welcomed) return
+        wake.trySend(Unit)
+        // An attempt still hanging on an old address would hold the new one back until its timeout.
+        if (current != address) socket?.cancel()
     }
 
     private class End(val welcomed: Boolean, val refuse: Refuse?)

@@ -22,6 +22,7 @@ import com.muvusoft.agentfarm.core.contract.AskOpened
 import com.muvusoft.agentfarm.core.contract.SessionEnded
 import com.muvusoft.agentfarm.core.contract.TurnFinished
 import com.muvusoft.agentfarm.core.contract.Welcome
+import com.muvusoft.agentfarm.core.link.Discovery
 import com.muvusoft.agentfarm.core.share.Share
 import com.muvusoft.agentfarm.core.state.Link
 import com.muvusoft.agentfarm.widget.StatusSurfaces
@@ -33,6 +34,8 @@ import com.muvusoft.agentfarm.core.notify.StatusLine
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 /**
@@ -44,6 +47,8 @@ class LinkService : Service() {
     private var alerts: Job? = null
     private var poll: Job? = null
     private var network: NetworkWatch? = null
+    private var finder: FarmFinder? = null
+    private var seek: Job? = null
     private val book = AlertBook()
     private val prefs by lazy { ShellPrefs(this) }
     private val speaker: Speaker get() = AgentFarmApp.of(this).speaker
@@ -56,6 +61,14 @@ class LinkService : Service() {
         ServiceCompat.startForeground(this, NOTIFICATION_ID, build(StatusLine.of(app.manager.state.value, System.currentTimeMillis())), type())
         app.manager.setFarms(app.store.load())
         if (network == null) network = NetworkWatch(this) { app.manager.onNetwork(it) }.also { it.start() }
+        if (seek == null) {
+            val f = FarmFinder(this) { farm, address -> app.manager.onFound(farm, address) }
+            finder = f
+            // Multicast costs battery: the network is asked only while a farm is out of reach.
+            seek = app.scope.launch {
+                app.manager.state.map { Discovery.wanted(it) }.distinctUntilChanged().collect { if (it) f.start() else f.stop() }
+            }
+        }
         if (alerts == null) {
             alerts = app.scope.launch {
                 app.manager.frames.collect { f ->
@@ -110,6 +123,10 @@ class LinkService : Service() {
         poll = null
         network?.stop()
         network = null
+        seek?.cancel()
+        seek = null
+        finder?.stop()
+        finder = null
         speaker.shutdown()
         super.onDestroy()
     }

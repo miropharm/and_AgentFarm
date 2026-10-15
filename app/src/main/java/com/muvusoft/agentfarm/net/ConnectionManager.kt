@@ -93,6 +93,9 @@ class ConnectionManager(
 
     fun onNetwork(net: Reconnect.Net) = conns.values.forEach { it.onNetwork(net) }
 
+    /** A paired farm answered on the local network at `address` (FarmFinder). */
+    fun onFound(farmId: String, address: String) = conns[farmId]?.onFound(address)
+
     @Synchronized
     fun stopAll() {
         conns.values.forEach { it.stop() }

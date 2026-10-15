@@ -45,9 +45,18 @@ class LinkTest {
     @Test
     fun theLastGoodAddressIsTriedFirst() {
         val a = listOf("192.168.1.2:8743", "100.64.0.2:8743")
-        assertEquals(a, Reconnect.order(a, null))
-        assertEquals(a.reversed(), Reconnect.order(a, "100.64.0.2:8743"))
-        assertEquals(a, Reconnect.order(a, "gone:1"))
+        assertEquals(a, Reconnect.order(a, null, null))
+        assertEquals(a.reversed(), Reconnect.order(a, "100.64.0.2:8743", null))
+        assertEquals(a, Reconnect.order(a, "gone:1", null))
+    }
+
+    @Test
+    fun whereTheFarmAnsweredOnTheNetworkIsTriedBeforeEverythingElse() {
+        val a = listOf("192.168.1.2:8743", "100.64.0.2:8743")
+        // The PC's address changed: the new one comes first, the pairing's own stay behind it.
+        assertEquals(listOf("192.168.1.9:8743") + a.reversed(), Reconnect.order(a, "100.64.0.2:8743", "192.168.1.9:8743"))
+        // Found at an address the link already knows: tried first, never twice.
+        assertEquals(a, Reconnect.order(a, "100.64.0.2:8743", "192.168.1.2:8743"))
     }
 
     @Test

@@ -114,6 +114,23 @@ class ConnectionE2ETest {
     }
 
     @Test
+    fun aFarmFoundAtANewAddressIsReachedThereAtOnce() {
+        val farm = paired()
+        val real = farm.addresses.first()
+        // The PC moved: the pairing's address answers nothing any more. (The emulator's network carries
+        // no multicast, so the finder's answer is handed in directly; FarmFinder is tried on a real phone.)
+        manager.setFarms(listOf(farm.copy(addresses = listOf("10.0.2.2:1"))))
+        runBlocking { withTimeout(30_000) { manager.state.first { s -> ((s.farm(farm.id)?.link as? Link.Connecting)?.attempt ?: 0) >= 4 } } }
+        // From attempt 4 the backoff waits 8-10 s; the farm's answer on the network cuts that short.
+        val t = System.currentTimeMillis()
+        manager.onFound(farm.id, real)
+        val s = await(farm.id, "online at the found address") { it.link is Link.Online }
+        val took = System.currentTimeMillis() - t
+        assertEquals(real, (s.link as Link.Online).address)
+        assertTrue("online $took ms after the answer", took < 6_000)
+    }
+
+    @Test
     fun aRevokedDeviceStopsTrying() {
         val farm = paired()
         FakeHost.post("/_test/revoke", "{\"device\":\"${farm.device}\"}")

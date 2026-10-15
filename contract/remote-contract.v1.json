@@ -9,7 +9,8 @@
     "view": "GET /view/<page>?view=<view id> — the page's HTML as the remote host renders it, the same page code as in VS Code with afRemote.js in place of acquireVsCodeApi; header Authorization: AF <welcome.session>",
     "res": "GET /res/<path> — the resources a page loads (media/*.js, common.css, fonts, images); header Authorization: AF <welcome.session>; anything outside the page resource folders is 404",
     "tls": "The host serves its own certificate; the client pins the SHA-256 fingerprint it read from the pairing URI and never trusts any other.",
-    "signature": "ECDSA P-256 with SHA-256 (DER), over the UTF-8 text `agentfarm.remote/1|<farm id>|<device id>|<nonce>`; the device public key is X.509 SubjectPublicKeyInfo DER, base64."
+    "signature": "ECDSA P-256 with SHA-256 (DER), over the UTF-8 text `agentfarm.remote/1|<farm id>|<device id>|<nonce>`; the device public key is X.509 SubjectPublicKeyInfo DER, base64.",
+    "discovery": "While the host listens on the local network it answers mDNS (DNS-SD) for _agentfarm._tcp.local: SRV gives its port, A its private IPv4 addresses, TXT farm=<farm id> and contract=<version>. A paired client that finds its farm's id there tries that address too; pairing and the pinned certificate are unchanged."
   },
   "pairing": {
     "uri": "agentfarm://pair?v=1&farm=<farm id>&name=<farm name>&code=<one-time code>&fp=<sha256 hex>&a=<host:port>[,<host:port>…]",

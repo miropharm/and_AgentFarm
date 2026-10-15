@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- values-night holds the dark twin. A farm page's WebView reads prefers-color-scheme from this theme's
+         isLightTheme, so the app must be light on a light phone and dark on a dark one. -->
+    <style name="Theme.AgentFarm" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/shell_background</item>
+        <item name="android:statusBarColor">@color/shell_background</item>
+        <item name="android:navigationBarColor">@color/shell_background</item>
+        <item name="android:windowLightStatusBar">true</item>
+    </style>
+</resources>

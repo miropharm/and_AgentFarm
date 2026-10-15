@@ -166,6 +166,37 @@ class FarmPageTest {
         assertEquals("kopya metni", clip)
     }
 
+    private fun nightMode(on: Boolean) {
+        InstrumentationRegistry.getInstrumentation().uiAutomation
+            .executeShellCommand("cmd uimode night ${if (on) "yes" else "no"}").close()
+    }
+
+    @Test
+    fun anOpenPageFollowsTheDevicesThemeWithoutReloading() {
+        nightMode(false)
+        try {
+            openFarm()
+            assertEquals(diagnosis(), "Fake page: now", titleUntil("Fake page: now"))
+            js("window.afLoaded = 'first'")
+            assertEquals("true", jsUntil("String(matchMedia('(prefers-color-scheme: light)').matches)") { it == "true" })
+            assertEquals("true", jsUntil("String(document.body.classList.contains('vscode-light'))") { it == "true" })
+            Shots.take("page-light")
+
+            nightMode(true)
+            assertEquals(diagnosis(), "false", jsUntil("String(matchMedia('(prefers-color-scheme: light)').matches)") { it == "false" })
+            assertEquals("false", jsUntil("String(document.body.classList.contains('vscode-light'))") { it == "false" })
+            // The same document: the theme changed under it, nothing reloaded it.
+            assertEquals("first", js("window.afLoaded || ''"))
+            Shots.take("page-dark")
+
+            nightMode(false)
+            assertEquals("true", jsUntil("String(matchMedia('(prefers-color-scheme: light)').matches)") { it == "true" })
+            assertEquals("first", js("window.afLoaded || ''"))
+        } finally {
+            nightMode(false)
+        }
+    }
+
     @Test
     fun aFarmRowOpensItsPageThroughTheShell() {
         openFarm()

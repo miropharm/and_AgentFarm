@@ -3,11 +3,13 @@
 'use strict';
 
 const RES = {
-    'common.css': { type: 'text/css; charset=utf-8', body: 'body{font-family:sans-serif;margin:16px}h1{font-size:20px}' },
+    'common.css': { type: 'text/css; charset=utf-8', body: 'body{font-family:sans-serif;margin:16px;background:#1e1e1e;color:#ccc}body.vscode-light{background:#fff;color:#333}h1{font-size:20px}' },
     'afRemote.js': {
         type: 'text/javascript; charset=utf-8',
-        // Mirrors acquireVsCodeApi's shape; the real one lives in vsc_AgentFarm.
-        body: 'window.acquireVsCodeApi=function(){return{postMessage:function(m){window.afShell&&afShell.post(JSON.stringify(m));},getState:function(){return null;},setState:function(){}};};',
+        // Mirrors acquireVsCodeApi's shape and its device-theme follower (U-238); the real one lives in vsc_AgentFarm.
+        body: 'window.acquireVsCodeApi=function(){return{postMessage:function(m){window.afShell&&afShell.post(JSON.stringify(m));},getState:function(){return null;},setState:function(){}};};' +
+            'document.addEventListener("DOMContentLoaded",function(){var mq=matchMedia("(prefers-color-scheme: light)");' +
+            'var apply=function(){document.body.classList.toggle("vscode-light",mq.matches===true);};apply();mq.addEventListener("change",apply);});',
     },
 };
 

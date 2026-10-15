@@ -25,6 +25,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
@@ -128,6 +129,7 @@ private fun PageView(
         }
     }
 
+    val background = MaterialTheme.colorScheme.background.toArgb()
     AndroidView(
         modifier = Modifier.fillMaxSize().testTag("farm-page"),
         factory = { ctx ->
@@ -170,6 +172,8 @@ private fun PageView(
                 web = this
             }
         },
+        // Until the page paints, the WebView shows its own background: the theme's, never a white flash on a dark phone.
+        update = { it.setBackgroundColor(background) },
         onRelease = { it.clearCache(true); it.destroy() },
     )
 }

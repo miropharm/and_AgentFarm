@@ -13,6 +13,7 @@ import com.muvusoft.agentfarm.core.speech.ReadingAt
 import com.muvusoft.agentfarm.core.speech.ReadingControl
 import com.muvusoft.agentfarm.core.speech.ReadingMove
 import com.muvusoft.agentfarm.core.speech.ReadingPiece
+import com.muvusoft.agentfarm.core.speech.Speech
 import com.muvusoft.agentfarm.core.speech.SpokenLog
 import com.muvusoft.agentfarm.core.speech.Utterance
 import java.util.Locale
@@ -65,7 +66,7 @@ class Speaker(private val context: Context, private val language: () -> Locale) 
             start()
             return
         }
-        if (apply()) speak(u)
+        if (apply(u.lang)) speak(u)
     }
 
     /** Read a page's text, cutting whatever this phone reads; [tell] hears every state, the last one idle. */
@@ -128,27 +129,29 @@ class Speaker(private val context: Context, private val language: () -> Locale) 
         engine.setOnUtteranceProgressListener(progress)
         ready = true
         val queued = waiting.toList().also { waiting.clear() }
-        if (queued.isNotEmpty() && apply()) queued.forEach(::speak)
+        queued.forEach { if (apply(it.lang)) speak(it) }
         if (reading != null) play()
     }
 
     /**
-     * Points the voice at the language in effect. False when this phone has no voice for it: a voice that
-     * cannot say the language would mangle every word, so nothing is read (Settings says why on screen).
+     * Points the voice at the text's language, else the voice language in effect. False when this phone has a
+     * voice for neither: a voice that cannot say the language would mangle every word, so nothing is read
+     * (Settings says why on screen).
      */
-    private fun apply(): Boolean {
-        val want = language()
-        if (want == applied) return true
+    private fun apply(textLang: String): Boolean {
         val engine = tts ?: return false
-        // setLanguage answers LANG_AVAILABLE (0) or better when the voice can say the language; negative when not.
-        val r = engine.setLanguage(want)
-        if (r < TextToSpeech.LANG_AVAILABLE) {
+        for (want in Speech.voices(textLang, language())) {
+            if (want == applied) return true
+            // setLanguage answers LANG_AVAILABLE (0) or better when the voice can say the language; negative when not.
+            val r = engine.setLanguage(want)
+            if (r >= TextToSpeech.LANG_AVAILABLE) {
+                applied = want
+                return true
+            }
             Log.w(TAG, "no voice for ${want.toLanguageTag()} (language=$r)")
-            applied = null
-            return false
         }
-        applied = want
-        return true
+        applied = null
+        return false
     }
 
     // The engine copies its language, rate and audio attributes into each request as it is made, so an alert
@@ -169,7 +172,7 @@ class Speaker(private val context: Context, private val language: () -> Locale) 
         if (!hold()) return halt(r, r.at.copy(paused = true))
         // The reading leaves the engine on its own language: the next alert points it back.
         applied = null
-        val voice = listOfNotNull(r.ask.lang.takeIf { it.isNotBlank() }?.let(Locale::forLanguageTag), language())
+        val voice = Speech.voices(r.ask.lang, language())
             .firstOrNull { engine.setLanguage(it) >= TextToSpeech.LANG_AVAILABLE }
             ?: return end(PageReading.noVoice(r.ask.lang.ifBlank { language().toLanguageTag() }))
         Log.i(TAG, "reading ${r.at.paragraph + 1}/${r.at.count} in ${voice.toLanguageTag()}")

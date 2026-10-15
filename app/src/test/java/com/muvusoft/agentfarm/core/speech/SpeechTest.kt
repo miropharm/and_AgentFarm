@@ -3,8 +3,11 @@ package com.muvusoft.agentfarm.core.speech
 import com.muvusoft.agentfarm.core.contract.AskOpened
 import com.muvusoft.agentfarm.core.contract.AskOption
 import com.muvusoft.agentfarm.core.contract.NoticePosted
+import com.muvusoft.agentfarm.core.contract.SessionEnded
+import com.muvusoft.agentfarm.core.contract.Spoken
 import com.muvusoft.agentfarm.core.contract.TurnFinished
 import com.muvusoft.agentfarm.core.notify.Alerts
+import java.util.Locale
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -40,6 +43,39 @@ class SpeechTest {
         val notice = Alerts.of("Ev", NoticePosted("n1", "Rapor hazır", 2, "developer"))!!
         assertNull(Speech.of(notice, SpeakMode.ASKS_AND_TURNS))
         for (level in 1L..4L) assertNull(Speech.of(Alerts.of("Ev", NoticePosted("n$level", "t", level, "a"))!!, SpeakMode.ASKS_AND_TURNS))
+    }
+
+    @Test
+    fun theFarmsSpokenTextIsReadAsWrittenInItsLanguage() {
+        val spoken = Spoken("developer soruyor: Testleri şimdi çalıştırayım mı? Seçenekler: Evet.", "tr")
+        val u = Speech.of(ask, SpeakMode.ASKS, spoken = spoken)!!
+        assertEquals(spoken.text, u.text)
+        assertEquals("tr", u.lang)
+        assertTrue(u.interrupt)
+        val long = "x ".repeat(Speech.MAX_CHARS)
+        assertEquals(long.trim(), Speech.of(turn, SpeakMode.ASKS_AND_TURNS, summary = "ignored", spoken = Spoken(long, "en"))!!.text)
+        assertNull(Speech.of(turn, SpeakMode.ASKS, spoken = Spoken("Paket yeşil.", "tr")))
+    }
+
+    @Test
+    fun withoutTheFarmsTextThePhoneReadsItsOwnInTheUsersLanguage() {
+        assertEquals("", Speech.of(ask, SpeakMode.ASKS)!!.lang)
+        assertEquals("", Speech.of(ask, SpeakMode.ASKS, spoken = Spoken("  ", "tr"))!!.lang)
+        val e = AskOpened("s1", "developer", "q1", "Hangisi?", emptyList(), spoken = Spoken("Which one?", "en"))
+        assertEquals(Spoken("Which one?", "en"), Speech.spokenOf(e))
+        assertNull(Speech.spokenOf(SessionEnded("s1", "developer")))
+    }
+
+    @Test
+    fun aTextIsReadInItsOwnLanguageElseInTheUsers() {
+        val user = Locale.forLanguageTag("tr-TR")
+        assertEquals(listOf(Locale.forLanguageTag("de"), user), Speech.voices("de", user))
+        assertEquals(listOf(user), Speech.voices("", user))
+        assertEquals(listOf(user), Speech.voices("tr-TR", user))
+        // a phone with no German voice falls to the user's; with neither, nothing is read
+        val has = setOf(user)
+        assertEquals(user, Speech.voices("de", user).firstOrNull { it in has })
+        assertNull(Speech.voices("de", Locale.forLanguageTag("fr")).firstOrNull { it in has })
     }
 
     @Test

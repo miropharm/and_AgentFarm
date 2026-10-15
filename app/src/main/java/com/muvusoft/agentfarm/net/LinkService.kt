@@ -65,7 +65,7 @@ class LinkService : Service() {
                     Alerts.of(name, data)?.let {
                         AlertPoster.post(this@LinkService, f.farm, it)
                         book.posted(f.farm, data, it)
-                        Speech.of(it, prefs.speakMode, (data as? TurnFinished)?.summary)?.let(speaker::say)
+                        Speech.of(it, prefs.speakMode, (data as? TurnFinished)?.summary, Speech.spokenOf(data))?.let(speaker::say)
                     }
                 }
             }

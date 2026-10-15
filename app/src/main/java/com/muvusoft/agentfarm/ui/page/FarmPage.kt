@@ -46,6 +46,7 @@ import com.muvusoft.agentfarm.core.view.ShellRequest
 import com.muvusoft.agentfarm.net.ConnectionManager
 import java.util.UUID
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.onSubscription
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
@@ -112,8 +113,8 @@ private fun PageView(
     val dictation = rememberDictation(deliver)
 
     LaunchedEffect(viewId) {
-        manager.send(farmId, ViewOpen(viewId, page, args))
-        manager.frames.collect { f ->
+        // frames keeps no replay: the open goes out only once this page listens, or a fast answer is lost.
+        manager.frames.onSubscription { manager.send(farmId, ViewOpen(viewId, page, args)) }.collect { f ->
             val post = f.frame as? ViewPost ?: return@collect
             if (f.farm != farmId || post.view != viewId) return@collect
             val json = Codec.json.encodeToString(JsonElement.serializer(), post.message)

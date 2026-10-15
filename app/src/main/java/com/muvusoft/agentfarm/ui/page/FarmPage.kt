@@ -61,9 +61,13 @@ fun FarmPage(farmId: String, page: String, manager: ConnectionManager, onBack: (
     var generation by remember { mutableIntStateOf(0) }
     val viewId = remember(generation, current) { "v_" + UUID.randomUUID().toString().take(8) }
     val state by manager.state.collectAsState()
-    val link = state.farm(farmId)?.link
+    val status = state.farm(farmId)
+    val link = status?.link
+    val away = status?.away
     Surface(Modifier.fillMaxSize()) {
-        if (link is Link.Online) {
+        if (link is Link.Online && away != null) {
+            AwayScreen(farmId = farmId, farmName = status?.farm?.name ?: farmId, away = away, manager = manager)
+        } else if (link is Link.Online) {
             key(generation, current) {
                 PageView(
                     farmId = farmId, page = current.page, args = current.args, viewId = viewId, manager = manager,

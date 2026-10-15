@@ -1,6 +1,8 @@
 package com.muvusoft.agentfarm.core.link
 
 import com.muvusoft.agentfarm.core.Time.ago
+import com.muvusoft.agentfarm.core.away.Away
+import com.muvusoft.agentfarm.core.away.AwayVerdict
 import com.muvusoft.agentfarm.core.contract.CONTRACT_VERSION
 import com.muvusoft.agentfarm.core.state.Link
 
@@ -11,8 +13,15 @@ import com.muvusoft.agentfarm.core.state.Link
 object LinkText {
     data class Text(val short: String, val long: String)
 
-    fun of(link: Link, now: Long): Text = when (link) {
-        is Link.Online -> Text("Connected · ${link.address}", "Connected: ${link.address}, scope ${link.scope}, ${ago(now - link.since)} ago.")
+    fun of(link: Link, now: Long, away: Away? = null): Text = when (link) {
+        is Link.Online -> if (away != null) {
+            Text(
+                AwayVerdict.short(away, now),
+                "${away.sentence} Its service answers at ${link.address}; open the farm to start Agent Farm from here.",
+            )
+        } else {
+            Text("Connected · ${link.address}", "Connected: ${link.address}, scope ${link.scope}, ${ago(now - link.since)} ago.")
+        }
         is Link.Connecting -> Text(
             if (link.attempt <= 1) "Connecting · ${link.address}" else "Reconnecting · attempt ${link.attempt}",
             "Connecting: ${link.address}, attempt ${link.attempt}, started ${ago(now - link.since)} ago. It connects by itself once the farm is reachable.",
@@ -29,8 +38,8 @@ object LinkText {
     }
 
     /** The link detail sheet: the long form first, then where the phone looks for the farm. */
-    fun sheet(link: Link, addresses: List<String>, now: Long): List<String> =
-        listOf(of(link, now).long) + (if (addresses.isEmpty()) emptyList() else listOf("Addresses: " + addresses.joinToString(", ")))
+    fun sheet(link: Link, addresses: List<String>, now: Long, away: Away? = null): List<String> =
+        listOf(of(link, now, away).long) +(if (addresses.isEmpty()) emptyList() else listOf("Addresses: " + addresses.joinToString(", ")))
 
     /** Which side is behind: the farm needs a newer contract than this app speaks, or the other way round. */
     private fun appIsBehind(minContract: Long?): Boolean? = minContract?.let { it > CONTRACT_VERSION }

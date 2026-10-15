@@ -107,6 +107,26 @@ async function main() {
     const notHello = await early.waitFor(f => f.kind === 'refuse');
     t.ok(notHello && notHello.reason === 'not-allowed', 'anything before hello is refused');
 
+    const running = await hs(me);
+    running.send({ kind: 'call', id: 'a0', op: 'farm.away' });
+    const notAway = await running.waitFor(f => f.kind === 'result' && f.id === 'a0');
+    t.ok(notAway && notAway.ok && notAway.result.away === false, 'a running farm answers farm.away with away:false');
+    await P.request(port, 'POST', '/_test/away', { away: true });
+    await P.tick();
+    t.ok(running.closed, '/_test/away closes the sockets: VS Code went away');
+    const svc = await hs(me);
+    svc.send({ kind: 'call', id: 'a1', op: 'farm.away' });
+    svc.send({ kind: 'call', id: 'a2', op: 'console.sessions' });
+    const away = await svc.waitFor(f => f.kind === 'result' && f.id === 'a1');
+    const elsewhere = await svc.waitFor(f => f.kind === 'result' && f.id === 'a2');
+    t.ok(away && away.ok && away.result.away === true && away.result.snapshot.totals.needs === 2, 'the service answers farm.away with away:true and the last snapshot');
+    t.ok(elsewhere && elsewhere.ok === false && /VS Code is closed/.test(elsewhere.error), 'the service refuses every other op with its sentence');
+    svc.send({ kind: 'call', id: 'a3', op: 'farm.open' });
+    const opening = await svc.waitFor(f => f.kind === 'result' && f.id === 'a3');
+    t.ok(opening && opening.ok && opening.result.opening === true, 'farm.open starts VS Code');
+    await new Promise(r => setTimeout(r, 1700));
+    t.ok(svc.closed && host.away === false, 'once VS Code is up the service lets go of the socket and the full farm answers');
+
     await P.request(port, 'POST', '/_test/revoke', { device: me.device });
     const revoked = await hs(me);
     t.ok(revoked.answer && revoked.answer.reason === 'revoked', 'a revoked device is refused');

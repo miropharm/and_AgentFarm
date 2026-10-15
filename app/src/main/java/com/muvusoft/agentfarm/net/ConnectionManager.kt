@@ -1,5 +1,6 @@
 package com.muvusoft.agentfarm.net
 
+import com.muvusoft.agentfarm.core.away.Away
 import com.muvusoft.agentfarm.core.contract.Call
 import com.muvusoft.agentfarm.core.contract.Frame
 import com.muvusoft.agentfarm.core.contract.Welcome
@@ -80,6 +81,8 @@ class ConnectionManager(
     fun focus(farmId: String) = _state.update { ShellReducer.focus(it, farmId) }
 
     fun running(farmId: String, count: Int) = _state.update { ShellReducer.running(it, farmId, count) }
+
+    fun away(farmId: String, away: Away?) = _state.update { ShellReducer.away(it, farmId, away) }
 
     /** Where a farm's pages come from right now; null while it is not online. */
     fun pageAccess(farmId: String): PageAccess? = conns[farmId]?.pageAccess()

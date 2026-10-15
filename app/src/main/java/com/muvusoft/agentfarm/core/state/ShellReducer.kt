@@ -1,5 +1,6 @@
 package com.muvusoft.agentfarm.core.state
 
+import com.muvusoft.agentfarm.core.away.Away
 import com.muvusoft.agentfarm.core.contract.CallResult
 import com.muvusoft.agentfarm.core.contract.Codec
 import com.muvusoft.agentfarm.core.contract.NeedsChanged
@@ -33,12 +34,15 @@ object ShellReducer {
 
     fun running(s: ShellState, farmId: String, count: Int): ShellState = update(s, farmId) { it.copy(running = count) }
 
+    fun away(s: ShellState, farmId: String, away: Away?): ShellState = update(s, farmId) { it.copy(away = away) }
+
     /** What a frame from a farm changes. Frames that concern a page (view.*) change nothing here. */
     fun onFrame(s: ShellState, farmId: String, frame: Frame, address: String, now: Long): ShellState = when (frame) {
+        // Whether Agent Farm itself or its headless service answered is asked anew on every welcome (farm.away).
         is Welcome -> update(s, farmId) {
-            it.copy(link = Link.Online(address, frame.scope, frame.features, now))
+            it.copy(link = Link.Online(address, frame.scope, frame.features, now), away = null)
         }
-        is Refuse -> update(s, farmId) { it.copy(link = Link.Refused(frame.reason, frame.detail, now, frame.minContract)) }
+        is Refuse -> update(s, farmId) { it.copy(link = Link.Refused(frame.reason, frame.detail, now, frame.minContract), away = null) }
         is EventFrame -> update(s, farmId) { event(it.copy(lastSeq = maxOf(it.lastSeq, frame.seq)), frame) }
         is Gap -> update(s, farmId) { it.copy(lastSeq = maxOf(it.lastSeq, frame.to)) }
         is CallResult -> s.copy(outbox = s.outbox.filterNot { it.id == frame.id && it.farm == farmId })

@@ -1,5 +1,6 @@
 package com.muvusoft.agentfarm.core.state
 
+import com.muvusoft.agentfarm.core.away.Away
 import com.muvusoft.agentfarm.core.contract.FeatureAnswer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonObject
@@ -49,6 +50,8 @@ data class FarmStatus(
     val lastTurnAt: Long? = null,
     /** Console sessions running a turn, as console.sessions last said; null = not asked yet. */
     val running: Int? = null,
+    /** VS Code is closed and the farm's headless service answers (farm.away); null = Agent Farm runs or unknown. */
+    val away: Away? = null,
 )
 
 /** A call written while offline, sent when its farm is reachable; its id makes a resend harmless. */

@@ -190,8 +190,8 @@ private fun Shell(
     PairingScreen(
         versionName = versionName,
         farms = farms,
-        links = shell.farms.associate { it.farm.id to LinkText.of(it.link, now) },
-        tips = shell.farms.associate { it.farm.id to LinkText.sheet(it.link, it.farm.addresses, now) },
+        links = shell.farms.associate { it.farm.id to LinkText.of(it.link, now, it.away) },
+        tips = shell.farms.associate { it.farm.id to LinkText.sheet(it.link, it.farm.addresses, now, it.away) },
         ui = ui,
         onLinkChange = { ui = ui.copy(link = it, message = null, failed = false) },
         onPair = pair,

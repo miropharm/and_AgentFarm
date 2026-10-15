@@ -64,6 +64,7 @@ function createHost(opts = {}) {
         }
         if (req.method === 'POST' && url === '/_test/event') { const b = await body(req); return reply(res, 200, { seq: h.emit(b.type, b.data) }); }
         if (req.method === 'POST' && url === '/_test/drop') { for (const conn of [...h.conns]) { conn.close(); } return reply(res, 200, { dropped: true }); }
+        if (req.method === 'POST' && url === '/_test/away') { const b = await body(req); h.away = b.away === true; for (const conn of [...h.conns]) { conn.close(); } return reply(res, 200, { away: h.away }); }
         if (req.method === 'POST' && url === '/_test/revoke') { const b = await body(req); const d = h.devices.get(b.device); if (d) { d.revoked = true; } return reply(res, 200, { revoked: !!d }); }
         if (req.method === 'GET' && url === '/_test/state') { return reply(res, 200, { lastSeq: h.seq, devices: [...h.devices.keys()], calls: h.calls, code: [...h.codes][0] || h.newCode() }); }
         reply(res, 404, { error: 'not found' });
@@ -97,12 +98,40 @@ function createHost(opts = {}) {
         }
     }
 
+    // While h.away, the socket is the farm's headless service (vsc src/service/serviceRemote.ts): VS Code is
+    // closed, three ops answer and every other one is refused with the same sentence.
+    function awayAnswer(op) {
+        const sentence = `Agent Farm is not running: VS Code is closed on ${farm.name}.`;
+        if (op === 'farm.ping') { return { ok: true, result: { pong: true, away: true } }; }
+        if (op === 'farm.away') {
+            const ts = Date.now() - 12 * 60000;
+            return { ok: true, result: { away: true, farm: farm.name, sentence, since: ts, snapshot: {
+                v: 2, ts, writer: 'service', host: farm.name,
+                totals: { agents: 3, activeAgents: 1, dormantAgents: 2, costToday: 1.5, cost30: 40, tokensToday: 1000, needs: 2, unreadNotices: 4, runningTasks: 1 },
+                needs: [{ kind: 'ask', agent: 'developer', title: 'Testleri şimdi çalıştırayım mı?', detail: '', ts }, { kind: 'permission', agent: 'psikolog', title: 'Bash: git status', detail: '', ts }],
+            }, age: { seconds: 720, stale: true, note: 'VS Code is closed.' } } };
+        }
+        if (op === 'farm.open') {
+            // VS Code starts, the service lets go of the socket, the shell reconnects to the full farm.
+            setTimeout(() => { h.away = false; for (const conn of [...h.conns]) { conn.close(); } }, 1500);
+            return { ok: true, result: { opening: true } };
+        }
+        return { ok: false, error: sentence };
+    }
+
+    function answer(op, args) {
+        if (h.away) { return awayAnswer(op); }
+        if (op === 'farm.away') { return { ok: true, result: { away: false, farm: farm.name } }; }
+        if (op === 'farm.open') { return { ok: true, result: { opening: false, already: true, farm: farm.name } }; }
+        const run = OPS[op];
+        return run ? { ok: true, result: run(args) } : { ok: false, error: `unknown op ${op}` };
+    }
+
     function call(conn, f) {
         const done = h.results.get(f.id);
         if (done) { return conn.send(JSON.stringify({ ...done, duplicate: true })); }
         h.calls.push({ id: f.id, op: f.op, args: f.args || null, device: conn.device });
-        const run = OPS[f.op];
-        const r = run ? { kind: 'result', id: f.id, ok: true, result: run(f.args || {}) } : { kind: 'result', id: f.id, ok: false, error: `unknown op ${f.op}` };
+        const r = { kind: 'result', id: f.id, ...answer(f.op, f.args || {}) };
         h.results.set(f.id, r);
         conn.send(JSON.stringify(r));
     }

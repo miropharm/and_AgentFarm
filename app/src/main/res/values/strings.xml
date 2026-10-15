@@ -79,6 +79,8 @@
     <string name="voice_unavailable">This phone has no speech recognition.</string>
     <string name="page_blocked">This address does not open in the app.</string>
     <string name="page_offline">The farm is not connected right now.</string>
+    <string name="away_open">Open Agent Farm</string>
+    <string name="away_waiting">Waiting for you</string>
 
     <!-- Notification channels (system settings show these) -->
     <string name="channel_ask">Questions and permissions</string>

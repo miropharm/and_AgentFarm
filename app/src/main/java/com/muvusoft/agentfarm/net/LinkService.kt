@@ -15,6 +15,7 @@ import androidx.core.content.ContextCompat
 import com.muvusoft.agentfarm.AgentFarmApp
 import com.muvusoft.agentfarm.MainActivity
 import com.muvusoft.agentfarm.R
+import com.muvusoft.agentfarm.core.away.AwayVerdict
 import com.muvusoft.agentfarm.core.contract.Codec
 import com.muvusoft.agentfarm.core.contract.EventFrame
 import com.muvusoft.agentfarm.core.contract.AskOpened
@@ -56,7 +57,10 @@ class LinkService : Service() {
         if (alerts == null) {
             alerts = app.scope.launch {
                 app.manager.frames.collect { f ->
-                    if (f.frame is Welcome) refreshRunning(f.farm)
+                    if (f.frame is Welcome) {
+                        refreshAway(f.farm)
+                        refreshRunning(f.farm)
+                    }
                     val ev = f.frame as? EventFrame ?: return@collect
                     val data = Codec.eventData(ev) ?: return@collect
                     val name = app.manager.state.value.farm(f.farm)?.farm?.name ?: f.farm
@@ -104,6 +108,15 @@ class LinkService : Service() {
         poll = null
         speaker.shutdown()
         super.onDestroy()
+    }
+
+    /** Agent Farm itself, or its headless service while VS Code is closed? An older farm without the op is running. */
+    private fun refreshAway(farmId: String) {
+        val app = AgentFarmApp.of(this)
+        app.scope.launch {
+            val r = app.manager.request(farmId, "farm.away") ?: return@launch
+            app.manager.away(farmId, if (r.ok) AwayVerdict.of(r.result) else null)
+        }
     }
 
     private fun refreshRunning(farmId: String) {

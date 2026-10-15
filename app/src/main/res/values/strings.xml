@@ -83,10 +83,14 @@
     <!-- Notification channels (system settings show these) -->
     <string name="channel_ask">Questions and permissions</string>
     <string name="channel_ask_detail">An agent waits for an answer or a permission</string>
+    <string name="channel_important">Important notices</string>
+    <string name="channel_important_detail">Agents\' important and critical notices</string>
     <string name="channel_notice">Notices</string>
     <string name="channel_notice_detail">Agents\' notices and quota warnings</string>
     <string name="channel_turn">Turn finished</string>
     <string name="channel_turn_detail">An agent\'s turn finished</string>
+    <string name="channel_routine">Routine notices</string>
+    <string name="channel_routine_detail">Agents\' routine updates, shown without sound</string>
     <string name="channel_link">Link</string>
     <string name="channel_link_detail">The steady status line of the link to your farms</string>
 </resources>

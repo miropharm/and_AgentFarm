@@ -27,10 +27,10 @@ object Speech {
      * own summary) is read instead of the notification's one-line text when there is one.
      */
     fun of(alert: Alert, mode: SpeakMode, summary: String? = null): Utterance? {
-        val speaks = when (alert.channel) {
+        val speaks = !alert.silent && when (alert.channel) {
             Channel.ASK -> mode != SpeakMode.OFF
             Channel.TURN -> mode == SpeakMode.ASKS_AND_TURNS
-            Channel.NOTICE, Channel.LINK -> false
+            Channel.IMPORTANT, Channel.NOTICE, Channel.ROUTINE, Channel.LINK -> false
         }
         if (!speaks) return null
         val body = spoken(summary?.takeIf { it.isNotBlank() } ?: alert.text)

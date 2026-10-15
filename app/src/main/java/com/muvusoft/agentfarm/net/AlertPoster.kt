@@ -17,8 +17,10 @@ import com.muvusoft.agentfarm.core.notify.Channel
 object AlertPoster {
     private val SPEC = mapOf(
         Channel.ASK to Triple(R.string.channel_ask, NotificationManager.IMPORTANCE_HIGH, R.string.channel_ask_detail),
+        Channel.IMPORTANT to Triple(R.string.channel_important, NotificationManager.IMPORTANCE_HIGH, R.string.channel_important_detail),
         Channel.NOTICE to Triple(R.string.channel_notice, NotificationManager.IMPORTANCE_DEFAULT, R.string.channel_notice_detail),
         Channel.TURN to Triple(R.string.channel_turn, NotificationManager.IMPORTANCE_LOW, R.string.channel_turn_detail),
+        Channel.ROUTINE to Triple(R.string.channel_routine, NotificationManager.IMPORTANCE_LOW, R.string.channel_routine_detail),
         Channel.LINK to Triple(R.string.channel_link, NotificationManager.IMPORTANCE_MIN, R.string.channel_link_detail),
     )
 
@@ -27,7 +29,7 @@ object AlertPoster {
         for ((ch, spec) in SPEC) {
             nm.createNotificationChannel(NotificationChannel(ch.id, context.getString(spec.first), spec.second).apply {
                 description = context.getString(spec.third)
-                setShowBadge(ch == Channel.ASK || ch == Channel.NOTICE)
+                setShowBadge(ch == Channel.ASK || ch == Channel.IMPORTANT || ch == Channel.NOTICE)
             })
         }
     }
@@ -45,6 +47,7 @@ object AlertPoster {
             .setContentIntent(open)
             .setAutoCancel(true)
             .setOnlyAlertOnce(true)
+            .setSilent(alert.silent)
             .setCategory(if (alert.channel == Channel.ASK) NotificationCompat.CATEGORY_MESSAGE else NotificationCompat.CATEGORY_STATUS)
             .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
         alert.actions.forEachIndexed { i, a ->

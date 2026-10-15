@@ -39,6 +39,13 @@ class SpeechTest {
     fun noticesAreNeverReadAloud() {
         val notice = Alerts.of("Ev", NoticePosted("n1", "Rapor hazır", 2, "developer"))!!
         assertNull(Speech.of(notice, SpeakMode.ASKS_AND_TURNS))
+        for (level in 1L..4L) assertNull(Speech.of(Alerts.of("Ev", NoticePosted("n$level", "t", level, "a"))!!, SpeakMode.ASKS_AND_TURNS))
+    }
+
+    @Test
+    fun anAlertTheUserSilencedOnTheFarmIsNotReadAloud() {
+        assertNull(Speech.of(ask.copy(silent = true), SpeakMode.ASKS_AND_TURNS))
+        assertNull(Speech.of(turn.copy(silent = true), SpeakMode.ASKS_AND_TURNS))
     }
 
     @Test

@@ -16,6 +16,13 @@ data class AskOption(val label: String)
 @Serializable
 data class Spoken(val text: String, val lang: String)
 
+/**
+ * The farm's alert gate silences this event right now: `reasons` are fleet (the mute), session (that
+ * session muted) or quiet-hours; `detail` is the farm's own sentence.
+ */
+@Serializable
+data class Quiet(val reasons: List<String> = emptyList(), val detail: String = "")
+
 @Serializable
 data class NeedsChanged(val count: Long, val top: JsonObject? = null) : FarmEventData
 
@@ -27,6 +34,7 @@ data class AskOpened(
     val question: String,
     val options: List<AskOption>,
     val spoken: Spoken? = null,
+    val quiet: Quiet? = null,
 ) : FarmEventData
 
 /** A question that answers itself at `dueAt` unless somebody answers it first. */
@@ -38,6 +46,7 @@ data class AskAnswersSoon(
     val dueAt: Long,
     val minutes: Long,
     val spoken: Spoken? = null,
+    val quiet: Quiet? = null,
 ) : FarmEventData
 
 @Serializable
@@ -50,6 +59,7 @@ data class PermissionOpened(
     /** The Needs You row key: answered with needs.act { key, action }; never built on the phone. */
     val key: String,
     val spoken: Spoken? = null,
+    val quiet: Quiet? = null,
 ) : FarmEventData
 
 @Serializable
@@ -59,13 +69,14 @@ data class TurnFinished(
     val title: String,
     val summary: String,
     val spoken: Spoken? = null,
+    val quiet: Quiet? = null,
 ) : FarmEventData
 
 @Serializable
-data class NoticePosted(val id: String, val title: String, val level: Long, val agent: String, val spoken: Spoken? = null) : FarmEventData
+data class NoticePosted(val id: String, val title: String, val level: Long, val agent: String, val spoken: Spoken? = null, val quiet: Quiet? = null) : FarmEventData
 
 @Serializable
-data class QuotaWarn(val engine: String, val percent: Double, val window: String) : FarmEventData
+data class QuotaWarn(val engine: String, val percent: Double, val window: String, val quiet: Quiet? = null) : FarmEventData
 
 @Serializable
 data class SessionEnded(val session: String, val agent: String) : FarmEventData

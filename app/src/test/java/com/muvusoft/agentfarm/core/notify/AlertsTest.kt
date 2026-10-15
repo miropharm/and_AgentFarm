@@ -2,7 +2,10 @@ package com.muvusoft.agentfarm.core.notify
 
 import com.muvusoft.agentfarm.core.contract.AskOpened
 import com.muvusoft.agentfarm.core.contract.AskOption
+import com.muvusoft.agentfarm.core.contract.NoticePosted
 import com.muvusoft.agentfarm.core.contract.PermissionOpened
+import com.muvusoft.agentfarm.core.contract.Quiet
+import com.muvusoft.agentfarm.core.contract.QuotaWarn
 import com.muvusoft.agentfarm.core.contract.SessionEnded
 import com.muvusoft.agentfarm.core.contract.TurnFinished
 import kotlinx.serialization.json.jsonObject
@@ -51,6 +54,31 @@ class AlertsTest {
     fun aQuestionIsNeverAnsweredWithTheApprovalOp() {
         assertTrue(Alerts.of("x", ask(2))!!.actions.none { it.op == "needs.act" })
         assertTrue(Alerts.of("x", ask(5))!!.actions.none { it.op == "needs.act" })
+    }
+
+    @Test
+    fun aNoticeGoesToTheChannelOfItsImportance() {
+        fun channel(level: Long) = Alerts.of("x", NoticePosted("n1", "Rapor hazır", level, "developer"))!!.channel
+        assertEquals(Channel.ROUTINE, channel(1))
+        assertEquals(Channel.NOTICE, channel(2))
+        assertEquals(Channel.IMPORTANT, channel(3))
+        assertEquals(Channel.IMPORTANT, channel(4))
+        assertEquals(Channel.ROUTINE, channel(0))
+        assertEquals(Channel.NOTICE, Alerts.of("x", QuotaWarn("claude", 91.0, "5h"))!!.channel)
+    }
+
+    @Test
+    fun theFarmsMuteAndAMutedSessionSilenceTheAlertButQuietHoursAloneDoNot() {
+        fun silent(vararg reasons: String) =
+            Alerts.of("x", ask(2).copy(quiet = Quiet(reasons.toList(), "muted on the farm")))!!.silent
+        assertTrue(silent("fleet"))
+        assertTrue(silent("session"))
+        assertTrue(silent("quiet-hours", "session"))
+        assertFalse(silent("quiet-hours"))
+        assertFalse(silent())
+        assertFalse(Alerts.of("x", ask(2))!!.silent)
+        assertTrue(Alerts.of("x", TurnFinished("s", "a", "t", "s", quiet = Quiet(listOf("fleet"))))!!.silent)
+        assertTrue(Alerts.of("x", NoticePosted("n", "t", 4, "a", quiet = Quiet(listOf("fleet"))))!!.silent)
     }
 
     @Test

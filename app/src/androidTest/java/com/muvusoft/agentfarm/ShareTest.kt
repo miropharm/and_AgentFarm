@@ -1,5 +1,6 @@
 package com.muvusoft.agentfarm
 
+import android.app.NotificationManager
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.ui.test.assert
@@ -16,14 +17,18 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.muvusoft.agentfarm.core.contract.Pairing
 import com.muvusoft.agentfarm.core.lock.LockPolicy
+import com.muvusoft.agentfarm.core.state.Link
 import com.muvusoft.agentfarm.ui.lock.OwnerCheck
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import org.junit.Assert.assertTrue
 import org.junit.Assume.assumeTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-/** Share → Agent Farm: the text goes into a running Console session through console.send. */
+/** Share → Agent Farm: the text goes into a running Console session through console.send, at once or once the farm answers. */
 @RunWith(AndroidJUnit4::class)
 class ShareTest {
     @get:Rule
@@ -100,5 +105,46 @@ class ShareTest {
             rule.waitForIdle()
             Shots.take("share-confirmed")
         }
+    }
+
+    private fun receiptTitle(prefix: String, timeoutMs: Long): String? {
+        val nm = ctx.getSystemService(NotificationManager::class.java)
+        val end = System.currentTimeMillis() + timeoutMs
+        while (System.currentTimeMillis() < end) {
+            nm.activeNotifications.mapNotNull { it.notification.extras.getCharSequence("android.title")?.toString() }
+                .firstOrNull { it.startsWith(prefix) }?.let { return it }
+            Thread.sleep(500)
+        }
+        return null
+    }
+
+    @Test
+    fun aShareMadeWhileThePcSleepsWaitsOnThePhoneAndItsReceiptSaysItArrived() {
+        pair()
+        // Opening the sheet while the farm answers reads its sessions; they are kept for a share made offline.
+        ActivityScenario.launch<MainActivity>(shared(null, "ilk bakış")).use {
+            rule.waitUntil(20_000) { rule.onAllNodes(hasTestTag("share-to-c_dev")).fetchSemanticsNodes().isNotEmpty() }
+        }
+        val app = AgentFarmApp.of(ctx)
+        FakeHost.post("/_test/sleep", "{\"asleep\":true}")
+        try {
+            runBlocking { withTimeout(30_000) { app.manager.state.first { s -> s.farms.none { it.link is Link.Online } } } }
+            ActivityScenario.launch<MainActivity>(shared(null, "Uyurken yazıldı: kuyruk-7f")).use {
+                rule.waitUntil(15_000) { rule.onAllNodes(hasText("not connected", substring = true)).fetchSemanticsNodes().isNotEmpty() }
+                rule.onNodeWithTag("share-to-c_dev").assertIsSelected()
+                rule.waitForIdle()
+                Shots.take("share-offline")
+                rule.onNodeWithTag("share-send").performClick()
+                waitOutcome("Waiting on this phone")
+                rule.waitForIdle()
+                Shots.take("share-queued")
+            }
+        } finally {
+            FakeHost.post("/_test/sleep", "{\"asleep\":false}")
+        }
+        // The farm answers again: the text goes from the outbox, and a notification says it arrived.
+        val title = receiptTitle("Delivered to developer", 90_000)
+        assertTrue("no receipt said the queued share arrived", title != null)
+        assertTrue(farmState(), farmState().contains("kuyruk-7f"))
     }
 }

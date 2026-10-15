@@ -8,6 +8,7 @@ import com.muvusoft.agentfarm.core.contract.Gap
 import com.muvusoft.agentfarm.core.contract.Ping
 import com.muvusoft.agentfarm.core.contract.Refuse
 import com.muvusoft.agentfarm.core.contract.Welcome
+import com.muvusoft.agentfarm.core.share.ShareTarget
 import kotlinx.serialization.json.JsonObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -86,5 +87,15 @@ class ShellReducerTest {
         val a = newCallId(1_790_760_000_000, 1)
         val b = newCallId(1_790_760_000_000, 2)
         assertTrue(a.startsWith("c_") && a != b)
+    }
+
+    @Test
+    fun theListedSessionsAreKeptAndTheRunningCountReadFromThem() {
+        val s0 = ShellReducer.pair(ShellState(), home, 1)
+        val listed = listOf(ShareTarget("c_dev", "developer", "running", true), ShareTarget("c_ops", "ops", "idle", false))
+        val s = ShellReducer.sessions(s0, "farm_a", listed)
+        assertEquals(listed, s.farm("farm_a")?.sessions)
+        assertEquals(1, s.farm("farm_a")?.running)
+        assertNull(ShellReducer.sessions(s0, "farm_x", listed).farm("farm_x"))
     }
 }

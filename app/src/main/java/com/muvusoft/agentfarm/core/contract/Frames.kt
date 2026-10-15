@@ -40,7 +40,12 @@ data class Welcome(
     val lastSeq: Long,
     /** Authorizes /view and /res while this socket is open; held in memory only. */
     val session: String? = null,
+    /** The farm's network cards on the local network, for Wake-on-LAN while the PC sleeps; empty off the LAN. */
+    val wake: List<WakeNic>? = null,
 ) : Frame()
+
+@Serializable
+data class WakeNic(val mac: String, val broadcast: String)
 
 @Serializable
 @SerialName("refuse")

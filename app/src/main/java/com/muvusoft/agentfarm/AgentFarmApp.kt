@@ -2,6 +2,8 @@ package com.muvusoft.agentfarm
 
 import android.app.Application
 import android.content.Context
+import com.muvusoft.agentfarm.core.notify.Alerts
+import com.muvusoft.agentfarm.net.AlertPoster
 import com.muvusoft.agentfarm.net.ConnectionManager
 import com.muvusoft.agentfarm.net.FarmStore
 import com.muvusoft.agentfarm.net.OutboxStore
@@ -24,7 +26,13 @@ class AgentFarmApp : Application() {
     private val outbox by lazy { OutboxStore(this) }
     val speaker by lazy { Speaker(this) { VoiceLanguage.locale(prefs.voiceLanguage, phoneLocale()) } }
     val manager by lazy {
-        ConnectionManager(scope, saved = outbox.load(System.currentTimeMillis()), save = { outbox.save(it) })
+        ConnectionManager(
+            scope,
+            saved = outbox.load(System.currentTimeMillis()),
+            save = { outbox.save(it) },
+            onWake = { farm, nics -> prefs.setWake(farm, nics) },
+            onReceipt = { farmName, item, result -> AlertPoster.post(this, item.farm, Alerts.receipt(item, farmName, result)) },
+        )
     }
 
     companion object {

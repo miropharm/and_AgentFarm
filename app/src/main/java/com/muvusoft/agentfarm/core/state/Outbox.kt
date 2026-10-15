@@ -9,6 +9,7 @@ import kotlinx.serialization.json.Json
  */
 object Outbox {
     const val MAX_AGE_MS = 6 * 60 * 60 * 1000L
+    const val MAX_AGE_HOURS = MAX_AGE_MS / 3_600_000
 
     private val json = Json { ignoreUnknownKeys = true }
     private val list = ListSerializer(OutboxItem.serializer())

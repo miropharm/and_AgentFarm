@@ -35,6 +35,7 @@ import com.muvusoft.agentfarm.R
 import com.muvusoft.agentfarm.core.share.Share
 import com.muvusoft.agentfarm.core.share.ShareTarget
 import com.muvusoft.agentfarm.core.state.Link
+import com.muvusoft.agentfarm.core.state.Outbox
 import com.muvusoft.agentfarm.net.ConnectionManager
 import com.muvusoft.agentfarm.net.request
 import com.muvusoft.agentfarm.ui.components.AFTip
@@ -50,19 +51,23 @@ import kotlinx.serialization.json.buildJsonObject
 private data class Asked(val farm: String, val target: String, val gate: String)
 
 /**
- * A text shared from another app, said into a running Console session with `console.send`. Only an
- * online farm is offered; the sessions come from `console.sessions`, one waiting on you first.
- * The farm's remote gate (today's budget, a command that cannot be undone) may stop it: the farm's
- * sentence is shown and "Send anyway" asks the owner before the same text goes again with the yes.
+ * A text shared from another app, said into a running Console session with `console.send`. An online
+ * farm is offered, and one that does not answer but whose sessions are known: the text then waits in
+ * the outbox and a notification tells how it went. The sessions come from `console.sessions`, one
+ * waiting on you first. The farm's remote gate (today's budget, a command that cannot be undone) may
+ * stop it: the farm's sentence is shown and "Send anyway" asks the owner before the same text goes
+ * again with the yes.
  */
 @Composable
 fun ShareScreen(text: String, manager: ConnectionManager, onDone: () -> Unit) {
     BackHandler(onBack = onDone)
     val shell by manager.state.collectAsState()
-    val online = shell.farms.filter { it.link is Link.Online }.map { it.farm }
+    val offered = shell.farms.filter { it.link is Link.Online || it.sessions != null }
+    val online = offered.filter { it.link is Link.Online }.map { it.farm.id }
     // Derived, not remembered: a farm that comes online while this is open is offered at once.
     var picked by remember { mutableStateOf<String?>(null) }
-    val farmId = listOfNotNull(picked, shell.focused).firstOrNull { f -> online.any { it.id == f } } ?: online.firstOrNull()?.id
+    val farmId = Share.farmFor(picked, shell.focused, online, offered.map { it.farm.id })
+    val farmOnline = farmId != null && farmId in online
     var targets by remember { mutableStateOf<List<ShareTarget>?>(null) }
     var target by remember { mutableStateOf<String?>(null) }
     var outcome by remember { mutableStateOf<String?>(null) }
@@ -75,13 +80,19 @@ fun ShareScreen(text: String, manager: ConnectionManager, onDone: () -> Unit) {
 
     // Each send is a new call; a yes is the same text again with the gate the farm named.
     fun send(farm: String, to: String, gate: String?) {
+        val args = buildJsonObject {
+            put("id", JsonPrimitive(to))
+            put("text", JsonPrimitive(text))
+            if (gate != null) put("confirm", JsonPrimitive(gate))
+        }
+        if (farm !in online) {
+            val agent = targets?.firstOrNull { it.id == to }?.agent ?: to
+            manager.call(farm, "console.send", args, receipt = agent)
+            outcome = Share.queued(agent, shell.farm(farm)?.farm?.name ?: farm, Outbox.MAX_AGE_HOURS)
+            return
+        }
         busy = true
         scope.launch {
-            val args = buildJsonObject {
-                put("id", JsonPrimitive(to))
-                put("text", JsonPrimitive(text))
-                if (gate != null) put("confirm", JsonPrimitive(gate))
-            }
             val r = manager.request(farm, "console.send", args)
             outcome = Share.outcome(r?.ok == true, r?.result, r?.error)
             asked = Share.asks(r?.ok == true, r?.result)?.let { Asked(farm, to, it) }
@@ -97,24 +108,32 @@ fun ShareScreen(text: String, manager: ConnectionManager, onDone: () -> Unit) {
         }
     }
 
-    LaunchedEffect(farmId) {
+    // A farm that does not answer offers the sessions it last listed; once it answers, they are read again.
+    LaunchedEffect(farmId, farmOnline) {
         targets = null
         val f = farmId ?: return@LaunchedEffect
-        val r = manager.request(f, "console.sessions")
-        targets = if (r?.ok == true) Share.targets(r.result) else emptyList()
-        target = targets?.firstOrNull()?.id
+        val list = if (!farmOnline) manager.state.value.farm(f)?.sessions.orEmpty() else {
+            val r = manager.request(f, "console.sessions")
+            if (r?.ok == true) Share.targets(r.result).also { manager.sessions(f, it) } else emptyList()
+        }
+        targets = list
+        target = target?.takeIf { t -> list.any { it.id == t } } ?: list.firstOrNull()?.id
     }
 
     Surface(Modifier.fillMaxSize().testTag("share")) {
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
             Text(stringResource(R.string.share_title), Modifier.semantics { heading() }, style = MaterialTheme.typography.titleLarge)
             Preview(text)
-            if (online.isEmpty()) {
+            if (offered.isEmpty()) {
                 Text(stringResource(R.string.share_no_farm), Modifier.padding(top = 16.dp).testTag("share-no-farm"))
             }
-            if (online.size > 1) {
+            // One farm that answers needs no chip; one that does not is said on its chip.
+            if (offered.size > 1 || (farmId != null && !farmOnline)) {
                 ChoiceSection(stringResource(R.string.share_farm))
-                Choices(online.map { it.id to it.name }, farmId, "share-farm") { picked = it; startOver() }
+                Choices(offered.map { it.farm.id to Share.farmLabel(it.farm.name, it.farm.id in online) }, farmId, "share-farm") {
+                    picked = it
+                    startOver()
+                }
             }
             val list = targets
             if (farmId != null) {

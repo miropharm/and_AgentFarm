@@ -81,6 +81,12 @@
     <string name="stop_confirm_title">Stop %1$s\'s turn?</string>
     <string name="stop_confirm_detail">The turn ends where it is; the session and its context stay, and the next message carries on.</string>
 
+    <!-- Waking a sleeping farm PC (Wake-on-LAN) -->
+    <string name="wake_go">Wake this PC</string>
+    <string name="wake_hint">Works when the phone is on the PC\'s network and the PC is set to wake from it.</string>
+    <string name="wake_sent">Wake signal sent to %1$s. A PC set to wake from the network starts within a minute; the app connects as soon as it answers.</string>
+    <string name="wake_failed">The wake signal could not be sent: %1$s</string>
+
     <!-- Farm pages -->
     <string name="farm_unpaired">This farm is no longer paired.</string>
     <string name="clipboard_refused">The clipboard did not accept it.</string>

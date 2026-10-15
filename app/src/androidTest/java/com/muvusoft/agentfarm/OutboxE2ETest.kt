@@ -34,7 +34,7 @@ class OutboxE2ETest {
         }
 
         val before = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-        val offline = ConnectionManager(before, saved = store.load(System.currentTimeMillis()), save = { store.save(it) })
+        val offline = ConnectionManager(before, saved = store.load(System.currentTimeMillis()), save = { store.save(it) }, onWake = { _, _ -> }, onReceipt = { _, _, _ -> })
         val id = offline.call(farm.id, "console.answer", buildJsonObject { put("id", JsonPrimitive("s_outbox")) })
         val end = System.currentTimeMillis() + 5_000
         while (store.load(System.currentTimeMillis()).none { it.id == id } && System.currentTimeMillis() < end) Thread.sleep(100)
@@ -42,7 +42,7 @@ class OutboxE2ETest {
         assertEquals(listOf(id), store.load(System.currentTimeMillis()).map { it.id })
 
         val after = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-        val restarted = ConnectionManager(after, saved = store.load(System.currentTimeMillis()), save = { store.save(it) })
+        val restarted = ConnectionManager(after, saved = store.load(System.currentTimeMillis()), save = { store.save(it) }, onWake = { _, _ -> }, onReceipt = { _, _, _ -> })
         try {
             restarted.setFarms(listOf(farm))
             val info = Pairing.parse(FakeHost.requireLink())!!

@@ -124,6 +124,11 @@ class FarmConnection(
         if (current != address) socket?.cancel()
     }
 
+    /** Try at once instead of waiting out the backoff (a PC was just woken). */
+    fun retryNow() {
+        if (!stopped && !welcomed) wake.trySend(Unit)
+    }
+
     private class End(val welcomed: Boolean, val refuse: Refuse?)
 
     private suspend fun session(address: String): End {

@@ -96,6 +96,8 @@ function connect({ host, port, path = '/ws', secure = false, rejectUnauthorized 
         const socket = secure ? tls.connect({ host, port, rejectUnauthorized }) : net.connect({ host, port });
         const key = crypto.randomBytes(16).toString('base64');
         socket.once('error', reject);
+        // A host that drops the socket instead of answering (an asleep PC) is a refusal, not a wait forever.
+        socket.once('close', () => reject(new Error('closed before the upgrade')));
         socket.once(secure ? 'secureConnect' : 'connect', () => {
             socket.write(`GET ${path} HTTP/1.1\r\nHost: ${host}:${port}\r\nUpgrade: websocket\r\n` +
                 `Connection: Upgrade\r\nSec-WebSocket-Key: ${key}\r\nSec-WebSocket-Version: 13\r\n\r\n`);

@@ -1,8 +1,11 @@
 package com.muvusoft.agentfarm.core.share
 
+import com.muvusoft.agentfarm.core.contract.CallResult
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class ShareTest {
@@ -74,5 +77,44 @@ class ShareTest {
         val long = "a".repeat(Share.PREVIEW_CHARS + 50)
         assertEquals(Share.PREVIEW_CHARS + 1, Share.preview(long).length)
         assertEquals("kısa", Share.preview("kısa"))
+    }
+
+    @Test
+    fun aFarmThatDoesNotAnswerIsChosenOnlyWhenPickedOrWhenNoneAnswers() {
+        val online = listOf("b")
+        val offered = listOf("a", "b", "c")
+        assertEquals("c", Share.farmFor("c", "a", online, offered))
+        assertEquals("b", Share.farmFor(null, "a", online, offered))
+        assertEquals("b", Share.farmFor("gone", "b", online, offered))
+        assertEquals("a", Share.farmFor(null, "a", emptyList(), offered))
+        assertEquals("a", Share.farmFor(null, "z", emptyList(), offered))
+        assertNull(Share.farmFor("a", "a", emptyList(), emptyList()))
+    }
+
+    @Test
+    fun aQueuedShareSaysWhereItWaitsAndItsReceiptHowItWent() {
+        assertEquals("Masaüstü", Share.farmLabel("Masaüstü", true))
+        assertEquals("Masaüstü · not connected", Share.farmLabel("Masaüstü", false))
+        val queued = Share.queued("developer", "Masaüstü", 6)
+        assertTrue(queued, queued.contains("developer") && queued.contains("Masaüstü") && queued.contains("6 h"))
+
+        val expired = Share.receipt("developer", "Masaüstü", null, 6)
+        assertFalse(expired.delivered)
+        assertEquals("Not sent to developer · Masaüstü", expired.title)
+        assertTrue(expired.text, expired.text.contains("6 h") && expired.text.contains("dropped"))
+
+        val refused = Share.receipt("developer", "Masaüstü", CallResult("c_1", false, error = "no such session"), 6)
+        assertFalse(refused.delivered)
+        assertEquals("Not sent: no such session", refused.text)
+
+        val gated = CallResult("c_1", true, json("""{"sent":false,"confirm":"risk","message":"This command cannot be undone."}"""))
+        val stopped = Share.receipt("developer", "Masaüstü", gated, 6)
+        assertFalse(stopped.delivered)
+        assertEquals("This command cannot be undone. Share it again to answer.", stopped.text)
+
+        val sent = Share.receipt("developer", "Masaüstü", CallResult("c_1", true, json("""{"sent":true,"note":"→ developer"}""")), 6)
+        assertTrue(sent.delivered)
+        assertEquals("Delivered to developer · Masaüstü", sent.title)
+        assertEquals("→ developer", sent.text)
     }
 }

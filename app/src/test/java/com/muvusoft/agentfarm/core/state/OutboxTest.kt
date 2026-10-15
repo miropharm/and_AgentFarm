@@ -36,4 +36,12 @@ class OutboxTest {
         assertEquals(emptyList<OutboxItem>(), Outbox.decode(null, now))
         assertEquals(emptyList<OutboxItem>(), Outbox.decode("{not json", now))
     }
+
+    @Test
+    fun aShareQueuedOfflineKeepsWhomItGoesToAcrossARestart() {
+        val items = listOf(item("c_1", 1_000).copy(receipt = "developer"), item("c_2", 1_000))
+        val back = Outbox.decode(Outbox.encode(items), now)
+        assertEquals(listOf("developer", null), back.map { it.receipt })
+        assertEquals(6L, Outbox.MAX_AGE_HOURS)
+    }
 }

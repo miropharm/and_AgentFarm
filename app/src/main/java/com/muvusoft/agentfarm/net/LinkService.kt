@@ -28,7 +28,6 @@ import com.muvusoft.agentfarm.core.state.Link
 import com.muvusoft.agentfarm.widget.StatusSurfaces
 import com.muvusoft.agentfarm.core.speech.Speech
 import com.muvusoft.agentfarm.core.notify.AlertBook
-import com.muvusoft.agentfarm.core.notify.Alerts
 import com.muvusoft.agentfarm.core.notify.Channel
 import com.muvusoft.agentfarm.core.notify.StatusLine
 import kotlinx.coroutines.Job
@@ -81,7 +80,7 @@ class LinkService : Service() {
                     val name = app.manager.state.value.farm(f.farm)?.farm?.name ?: f.farm
                     book.settle(f.farm, data).forEach { AlertPoster.cancel(this@LinkService, it) }
                     if (data is TurnFinished || data is SessionEnded || data is AskOpened) refreshRunning(f.farm)
-                    Alerts.of(name, data)?.let {
+                    book.alertFor(f.farm, name, data)?.let {
                         AlertPoster.post(this@LinkService, f.farm, it)
                         book.posted(f.farm, data, it)
                         Speech.of(it, prefs.speakMode, (data as? TurnFinished)?.summary, Speech.spokenOf(data))?.let(speaker::say)
@@ -107,6 +106,8 @@ class LinkService : Service() {
             poll = app.scope.launch {
                 while (true) {
                     app.manager.state.value.farms.filter { it.link is Link.Online }.forEach { refreshRunning(it.farm.id) }
+                    // A share queued for a farm that never answers expires here, and its receipt says so.
+                    app.manager.expire()
                     delay(60_000)
                 }
             }
@@ -144,7 +145,7 @@ class LinkService : Service() {
         val app = AgentFarmApp.of(this)
         app.scope.launch {
             val r = app.manager.request(farmId, "console.sessions") ?: return@launch
-            if (r.ok) app.manager.running(farmId, Share.targets(r.result).count { it.status == "running" })
+            if (r.ok) app.manager.sessions(farmId, Share.targets(r.result))
         }
     }
 

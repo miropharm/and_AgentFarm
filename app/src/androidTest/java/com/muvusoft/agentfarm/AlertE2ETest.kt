@@ -54,7 +54,7 @@ class AlertE2ETest {
         val n = waitFor("ask:a_e2e")
         assertNotNull("no notification for the question", n)
         val actions = n!!.notification.actions
-        assertEquals(listOf("Evet", "Hayır"), actions.map { it.title.toString() })
+        assertEquals(listOf("Evet", "Hayır", "Stop"), actions.map { it.title.toString() })
         assertEquals("ask", n.notification.channelId)
 
         actions[0].actionIntent.send()
@@ -71,12 +71,55 @@ class AlertE2ETest {
         FakeHost.post("/_test/event", "{\"type\":\"permission.opened\",\"data\":$data}")
         val n = waitFor("perm:p_e2e")
         assertNotNull("no notification for the permission", n)
-        val (allow, deny) = n!!.notification.actions.toList()
+        val (allow, deny, stop) = n!!.notification.actions.toList()
         assertEquals("Allow", allow.title.toString())
+        assertEquals("Stop", stop.title.toString())
         if (android.os.Build.VERSION.SDK_INT >= 31) {
             assertTrue(allow.isAuthenticationRequired)
             assertTrue(!deny.isAuthenticationRequired)
+            assertTrue("a stop cannot be undone: it asks for the unlock", stop.isAuthenticationRequired)
         }
+        // The system asks for the unlock before it fires the button; fired here directly, the stop reaches the farm.
+        stop.actionIntent.send()
+        val end = System.currentTimeMillis() + 10_000
+        var calls = hostCalls()
+        while (!calls.contains("console.interrupt") && System.currentTimeMillis() < end) { Thread.sleep(300); calls = hostCalls() }
+        assertTrue("the farm did not receive the stop: $calls", Regex("\"op\":\"console.interrupt\",\"args\":\\{\"id\":\"s_p\"").containsMatchIn(calls))
+    }
+
+    @Test
+    fun aQuestionAboutToAnswerItselfComesBackWithItsButtonsAndTheTimeLeft() {
+        online()
+        val data = "{\"session\":\"s_soon\",\"agent\":\"developer\",\"askId\":\"a_soon\",\"question\":\"Sürüm çıksın mı?\",\"options\":[{\"label\":\"Evet\"},{\"label\":\"Hayır\"}]}"
+        FakeHost.post("/_test/event", "{\"type\":\"ask.opened\",\"data\":$data}")
+        assertNotNull("no notification for the question", waitFor("ask:a_soon"))
+        val soon = "{\"session\":\"card_soon\",\"agent\":\"developer\",\"askId\":\"a_soon\",\"dueAt\":1,\"minutes\":2}"
+        FakeHost.post("/_test/event", "{\"type\":\"ask.answersSoon\",\"data\":$soon}")
+        val nm = ctx.getSystemService(NotificationManager::class.java)
+        val end = System.currentTimeMillis() + 10_000
+        fun title() = nm.activeNotifications.firstOrNull { it.tag == "ask:a_soon" }?.notification?.extras?.getCharSequence("android.title")?.toString().orEmpty()
+        while (!title().startsWith("Answers itself") && System.currentTimeMillis() < end) Thread.sleep(250)
+        assertTrue("the reminder did not reach the question: ${title()}", title().startsWith("Answers itself in 2 min"))
+        val n = nm.activeNotifications.first { it.tag == "ask:a_soon" }
+        assertEquals(listOf("Evet", "Hayır", "Stop"), n.notification.actions.map { it.title.toString() })
+        assertEquals(1, nm.activeNotifications.count { it.tag == "ask:a_soon" })
+    }
+
+    @Test
+    fun aWorkflowsGateIsAnsweredFromItsNotification() {
+        online()
+        val data = "{\"gateId\":\"wq_e2e\",\"run\":\"r_e2e\",\"workflow\":\"Yayın\",\"question\":\"Sürüm çıksın mı?\",\"options\":[\"Evet\",\"Bekle\"]}"
+        FakeHost.post("/_test/event", "{\"type\":\"gate.opened\",\"data\":$data}")
+        val n = waitFor("gate:wq_e2e")
+        assertNotNull("no notification for the gate", n)
+        assertEquals("ask", n!!.notification.channelId)
+        val actions = n.notification.actions
+        assertEquals(listOf("Evet", "Bekle"), actions.map { it.title.toString() })
+        actions[1].actionIntent.send()
+        val end = System.currentTimeMillis() + 10_000
+        var calls = hostCalls()
+        while (!calls.contains("wq_e2e") && System.currentTimeMillis() < end) { Thread.sleep(300); calls = hostCalls() }
+        assertTrue("the farm did not receive the answer: $calls", Regex("\"op\":\"workflows.answer\",\"args\":\\{\"id\":\"wq_e2e\",\"option\":2\\}").containsMatchIn(calls))
     }
 
     @Test

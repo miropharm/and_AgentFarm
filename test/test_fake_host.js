@@ -127,6 +127,18 @@ async function main() {
     await new Promise(r => setTimeout(r, 1700));
     t.ok(svc.closed && host.away === false, 'once VS Code is up the service lets go of the socket and the full farm answers');
 
+    const awake = await hs(me);
+    t.ok(Array.isArray(awake.answer.wake) && awake.answer.wake.length > 0 && awake.answer.wake.every(n => /^([0-9a-f]{2}:){5}[0-9a-f]{2}$/.test(n.mac) && n.broadcast),
+        'welcome names the farm\'s network cards for Wake-on-LAN');
+    await P.request(port, 'POST', '/_test/sleep', { asleep: true });
+    await P.tick();
+    t.ok(awake.closed, '/_test/sleep closes the sockets: the PC went to sleep');
+    const knocked = await P.open(port, c).then(s => { all.push(s); return s.waitFor(f => f.kind === 'challenge', 500); }, () => null);
+    t.ok(!knocked, 'an asleep PC answers no socket');
+    await P.request(port, 'POST', '/_test/sleep', { asleep: false });
+    const woken = await hs(me);
+    t.ok(woken.answer && woken.answer.kind === 'welcome', 'a woken PC welcomes again');
+
     await P.request(port, 'POST', '/_test/revoke', { device: me.device });
     const revoked = await hs(me);
     t.ok(revoked.answer && revoked.answer.reason === 'revoked', 'a revoked device is refused');

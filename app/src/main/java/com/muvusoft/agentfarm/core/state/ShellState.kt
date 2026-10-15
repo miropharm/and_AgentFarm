@@ -2,6 +2,7 @@ package com.muvusoft.agentfarm.core.state
 
 import com.muvusoft.agentfarm.core.away.Away
 import com.muvusoft.agentfarm.core.contract.FeatureAnswer
+import com.muvusoft.agentfarm.core.share.ShareTarget
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonObject
 
@@ -52,6 +53,8 @@ data class FarmStatus(
     val running: Int? = null,
     /** VS Code is closed and the farm's headless service answers (farm.away); null = Agent Farm runs or unknown. */
     val away: Away? = null,
+    /** The sessions console.sessions last listed, kept so a share made while the farm cannot be reached can still name one. */
+    val sessions: List<ShareTarget>? = null,
 )
 
 /** A call written while offline, sent when its farm is reachable; its id makes a resend harmless. */
@@ -63,6 +66,8 @@ data class OutboxItem(
     val args: JsonObject?,
     val createdAt: Long,
     val attempts: Int = 0,
+    /** Whom a share queued while offline goes to: its fate (delivered, refused, expired) is told in a notification. */
+    val receipt: String? = null,
 )
 
 data class ShellState(

@@ -8,12 +8,9 @@ import android.os.Looper
 import android.webkit.WebSettings
 import android.webkit.WebView
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -29,7 +26,6 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.muvusoft.agentfarm.AgentFarmApp
 import com.muvusoft.agentfarm.R
@@ -38,7 +34,6 @@ import com.muvusoft.agentfarm.core.contract.ViewClose
 import com.muvusoft.agentfarm.core.contract.ViewMsg
 import com.muvusoft.agentfarm.core.contract.ViewOpen
 import com.muvusoft.agentfarm.core.contract.ViewPost
-import com.muvusoft.agentfarm.core.link.LinkText
 import com.muvusoft.agentfarm.core.state.Link
 import com.muvusoft.agentfarm.core.view.PageRoute
 import com.muvusoft.agentfarm.core.view.PageStack
@@ -78,10 +73,7 @@ fun FarmPage(farmId: String, page: String, manager: ConnectionManager, onBack: (
                 )
             }
         } else {
-            Box(Modifier.fillMaxSize().padding(16.dp)) {
-                val text = link?.let { LinkText.of(it, System.currentTimeMillis()).long } ?: stringResource(R.string.farm_unpaired)
-                Text(text, Modifier.testTag("page-wait"), style = MaterialTheme.typography.bodyLarge)
-            }
+            WaitScreen(farmId = farmId, farmName = status?.farm?.name ?: farmId, link = link, manager = manager)
         }
     }
 }

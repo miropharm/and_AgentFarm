@@ -23,7 +23,11 @@ const OPS = {
     ],
     'needs.act': () => ({ done: true }),
     'console.interrupt': a => ({ id: a.id, interrupted: true, engine: 'claude', how: 'interrupted over the control channel — the process stays' }),
+    'workflows.answer': a => ({ answered: a.id, runId: 'r_fake', answer: a.answer || `option ${a.option}` }),
 };
+
+/** The farm's network card as welcome.wake carries it (a locally administered MAC, the emulator's subnet). */
+const WAKE = [{ mac: '02:00:5e:10:00:01', broadcast: '10.0.2.255' }];
 
 function createHost(opts = {}) {
     const c = opts.contract || K.load();
@@ -66,6 +70,7 @@ function createHost(opts = {}) {
         if (req.method === 'POST' && url === '/_test/event') { const b = await body(req); return reply(res, 200, { seq: h.emit(b.type, b.data) }); }
         if (req.method === 'POST' && url === '/_test/drop') { for (const conn of [...h.conns]) { conn.close(); } return reply(res, 200, { dropped: true }); }
         if (req.method === 'POST' && url === '/_test/away') { const b = await body(req); h.away = b.away === true; for (const conn of [...h.conns]) { conn.close(); } return reply(res, 200, { away: h.away }); }
+        if (req.method === 'POST' && url === '/_test/sleep') { const b = await body(req); h.asleep = b.asleep === true; if (h.asleep) { for (const conn of [...h.conns]) { conn.close(); } } return reply(res, 200, { asleep: h.asleep }); }
         if (req.method === 'POST' && url === '/_test/revoke') { const b = await body(req); const d = h.devices.get(b.device); if (d) { d.revoked = true; } return reply(res, 200, { revoked: !!d }); }
         if (req.method === 'GET' && url === '/_test/state') { return reply(res, 200, { lastSeq: h.seq, devices: [...h.devices.keys()], calls: h.calls, code: [...h.codes][0] || h.newCode() }); }
         reply(res, 404, { error: 'not found' });
@@ -91,7 +96,7 @@ function createHost(opts = {}) {
         conn.session = 's_' + crypto.randomBytes(12).toString('base64url');
         h.sessions.set(conn.session, f.device);
         const features = Object.fromEntries(c.features.map(x => [x, { allowed: true }]));
-        conn.send(JSON.stringify({ kind: 'welcome', farm, device: f.device, scope: d.scope, features, lastSeq: h.seq, session: conn.session }));
+        conn.send(JSON.stringify({ kind: 'welcome', farm, device: f.device, scope: d.scope, features, lastSeq: h.seq, session: conn.session, wake: WAKE }));
         if (typeof f.resumeAfter === 'number') {
             const oldest = h.events.length ? h.events[0].seq : h.seq + 1;
             if (oldest > f.resumeAfter + 1) { conn.send(JSON.stringify({ kind: 'gap', from: f.resumeAfter + 1, to: oldest - 1 })); }
@@ -151,7 +156,8 @@ function createHost(opts = {}) {
 
     const server = opts.tls ? https.createServer(opts.tls, onRequest) : http.createServer(onRequest);
     server.on('upgrade', (req, socket) => {
-        if (req.url.split('?')[0] !== '/ws') { socket.destroy(); return; }
+        // An asleep PC answers nothing (B-4: the phone offers to wake it).
+        if (req.url.split('?')[0] !== '/ws' || h.asleep) { socket.destroy(); return; }
         const conn = ws.accept(req, socket);
         if (!conn) { return; }
         conn.nonce = 'b64:' + crypto.randomBytes(16).toString('base64');

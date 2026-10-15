@@ -10,6 +10,7 @@ import kotlinx.serialization.json.Json
 /** The paired farms, kept in the app's private files. A farm is written once pairing succeeded, never before. */
 class FarmStore(context: Context) {
     private val file = File(context.filesDir, "farms.json")
+    private val prefs = ShellPrefs(context)
     private val json = Json { ignoreUnknownKeys = true }
     private val serializer = ListSerializer(PairedFarm.serializer())
 
@@ -37,6 +38,7 @@ class FarmStore(context: Context) {
         val old = load()
         write(old.filterNot { it.id == farmId })
         old.filter { it.id == farmId }.forEach { DeviceKeys.delete(it.key) }
+        prefs.setWake(farmId, emptyList())
         return load()
     }
 

@@ -5,6 +5,9 @@ object Reconnect {
     const val FIRST_MS = 1_000L
     const val MAX_MS = 60_000L
 
+    /** Delays between tries after a Wake-on-LAN: a PC takes seconds to a minute to come back on the network. */
+    val AFTER_WAKE_MS = listOf(8_000L, 12_000L, 20_000L, 30_000L)
+
     /** Exponential wait before attempt `attempt` (1 = first retry), capped, with up to +25% jitter from `random01`. */
     fun delayMs(attempt: Int, random01: Double): Long {
         if (attempt <= 0) return 0

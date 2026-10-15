@@ -46,7 +46,7 @@ object AlertPoster {
             .setStyle(NotificationCompat.BigTextStyle().bigText(alert.text))
             .setContentIntent(open)
             .setAutoCancel(true)
-            .setOnlyAlertOnce(true)
+            .setOnlyAlertOnce(!alert.renotify)
             .setSilent(alert.silent)
             .setCategory(if (alert.channel == Channel.ASK) NotificationCompat.CATEGORY_MESSAGE else NotificationCompat.CATEGORY_STATUS)
             .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)

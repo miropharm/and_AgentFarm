@@ -121,6 +121,9 @@ Tasarımın gerekçesi: vault projesi `10_Notes/A-PLN - Android Uygulaması Yeni
 | `session.ended` | Bir oturum kapandı |
 | `ask.closed` | Bir soru cevaplandı ya da geri çekildi — masada, Telegram'da ya da bir telefonda; o sorunun uyarısı her telefondan kalkar |
 | `permission.closed` | Bir izin cevaplandı ya da geri çekildi, nerede olursa olsun; o iznin uyarısı her telefondan kalkar |
+| `gate.opened` | Bir iş akışının yöneticisi bir insanı bekliyor (insan kapısı): `workflows.answer { id: gateId, option (1'den) \| answer }` ile cevaplanır, ilk cevap kazanır |
+| `gate.closed` | Kapı cevaplandı, nerede olursa olsun; uyarısı her telefondan kalkar. Pencere yeniden yüklenince açık kapı bu olay olmadan düşer: cevap `ok:false` döner, bildirim düğmeye basınca zaten kalkar |
+| `mission.ended` | Üst düzey bir görev (mission) bitti; `outcome` `done` ya da `failed` |
 
 ## 8. Kurallar
 
@@ -130,6 +133,10 @@ Tasarımın gerekçesi: vault projesi `10_Notes/A-PLN - Android Uygulaması Yeni
 - **Giden kutusu diskte durur, altı saatten eski çağrı atılır:** süreç ölse de bekleyen çağrı ilk `welcome`
   sonrasında gider; bekleyen bir soruya saatler sonra düşen cevap yeni bir istem gibi okunabileceği için
   `createdAt` üzerinden altı saati geçen çağrı gönderilmez (`core/state/Outbox.kt`).
+- **Bağlantı yokken paylaşım:** paylaşım ekranı cevap vermeyen bir çiftliği de sunar, yeter ki oturumları daha
+  önce okunmuş olsun (`console.sessions` her okunduğunda `FarmStatus.sessions` güncellenir). Gönderilen metin
+  giden kutusuna `receipt` (kime gittiği) ile girer; çiftlik cevap verince ya da altı saat dolunca sonucu bir
+  bildirimle söylenir (`Share.receipt`: teslim edildi · reddedildi · kapıda durdu · süresi doldu).
 - **Bekleyen sayısı 0'a inince** (`needs.changed`) o çiftliğin soru/izin bildirimleri, `session.ended` gelince
   o oturumunkiler telefondan kalkar.
 - **Olay numaraları yalnız artar.** `resumeAfter` sonrası olaylar verilir; tutulmayanlar için önce bir `gap`.
@@ -152,6 +159,14 @@ Tasarımın gerekçesi: vault projesi `10_Notes/A-PLN - Android Uygulaması Yeni
 
 - Bildirim düğmeleri, paylaşım, ses, widget, hızlı ayar **var olan köprü op'larını** `call` ile çağırır;
   telefon köprünün etrafından dolaşmaz. Eksik bir yetenek Agent Farm'a op olarak eklenir.
+- **Bildirim düğmeleri** (`core/notify/Alerts`): soru → seçenekler (1-3) ya da yazılı cevap; izin → Allow
+  (kilit açtırır) ve Deny; ikisinde de yer kaldıkça **Stop** (`console.interrupt`, oturum kalır, kilit açtırır;
+  Android en çok üç düğme gösterir). Kritik hata ayrı bir olay değildir: çiftlik onu seviye 3-4 notice olarak
+  yollar ve yüksek öncelikli "Important notices" kanalına düşer.
+- **Wake-on-LAN:** `welcome.wake` çiftliğin yerel ağdaki kartlarını (`mac`, `broadcast`) taşır; telefon son
+  değeri saklar (`ShellPrefs`, çiftlik unutulunca silinir). Çiftliğe ulaşılamazken bekleme ekranı
+  "Wake this PC" gösterir: sihirli paket (6×FF + 16×MAC) UDP 9'a kartın yayın adresine ve 255.255.255.255'e
+  gider, ardından bağlantı geri çekilme beklemeden birkaç kez dener (`Reconnect.AFTER_WAKE_MS`).
 - **Yerel "yeni oturum"** (paylaşım, ses, widget) Telegram `/new` ile aynı kararı kullanır ve son ayarları
   devralır (`seedLastLaunch`). Köprüdeki `sessions.start` devralmadığı için kullanılmaz.
 - Uzaktan açılan sayfalar yeni bir oturum kapısı değildir; masaüstündeki kapıların kendisidir.

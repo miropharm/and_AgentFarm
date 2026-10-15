@@ -89,6 +89,26 @@ data class AskClosed(val session: String, val askId: String) : FarmEventData
 @Serializable
 data class PermissionClosed(val session: String, val permId: String) : FarmEventData
 
+/** A workflow's supervisor waits on a person (its human gate): answered with workflows.answer { id, option | answer }. */
+@Serializable
+data class GateOpened(
+    val gateId: String,
+    val run: String,
+    val workflow: String,
+    val question: String,
+    val options: List<String>,
+    val spoken: Spoken? = null,
+    val quiet: Quiet? = null,
+) : FarmEventData
+
+/** A gate was answered, wherever that happened, or went with a reload: its alert leaves the phone. */
+@Serializable
+data class GateClosed(val gateId: String) : FarmEventData
+
+/** A mission ran to its end; `outcome` is done or failed. */
+@Serializable
+data class MissionEnded(val mission: String, val title: String, val outcome: String, val spoken: Spoken? = null, val quiet: Quiet? = null) : FarmEventData
+
 val EVENT_TYPES: Map<String, KSerializer<out FarmEventData>> = mapOf(
     "needs.changed" to NeedsChanged.serializer(),
     "ask.opened" to AskOpened.serializer(),
@@ -100,4 +120,7 @@ val EVENT_TYPES: Map<String, KSerializer<out FarmEventData>> = mapOf(
     "session.ended" to SessionEnded.serializer(),
     "ask.closed" to AskClosed.serializer(),
     "permission.closed" to PermissionClosed.serializer(),
+    "gate.opened" to GateOpened.serializer(),
+    "gate.closed" to GateClosed.serializer(),
+    "mission.ended" to MissionEnded.serializer(),
 )

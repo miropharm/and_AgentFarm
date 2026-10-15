@@ -3,6 +3,8 @@ package com.muvusoft.agentfarm.core.speech
 import com.muvusoft.agentfarm.core.contract.AskAnswersSoon
 import com.muvusoft.agentfarm.core.contract.AskOpened
 import com.muvusoft.agentfarm.core.contract.FarmEventData
+import com.muvusoft.agentfarm.core.contract.GateOpened
+import com.muvusoft.agentfarm.core.contract.MissionEnded
 import com.muvusoft.agentfarm.core.contract.NoticePosted
 import com.muvusoft.agentfarm.core.contract.PermissionOpened
 import com.muvusoft.agentfarm.core.contract.Spoken
@@ -60,6 +62,8 @@ object Speech {
         is PermissionOpened -> e.spoken
         is TurnFinished -> e.spoken
         is NoticePosted -> e.spoken
+        is GateOpened -> e.spoken
+        is MissionEnded -> e.spoken
         else -> null
     }
 

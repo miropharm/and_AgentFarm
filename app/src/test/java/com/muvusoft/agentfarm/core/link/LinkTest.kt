@@ -82,6 +82,16 @@ class LinkTest {
     }
 
     @Test
+    fun aNetworkThatComesCutsTheWaitAndASwitchedOneDropsTheDeadSocket() {
+        assertEquals(Reconnect.Nudge.RETRY_NOW, Reconnect.onNetwork(Reconnect.Net.AVAILABLE, online = false))
+        assertEquals(Reconnect.Nudge.RETRY_NOW, Reconnect.onNetwork(Reconnect.Net.SWITCHED, online = false))
+        assertEquals(Reconnect.Nudge.RECONNECT, Reconnect.onNetwork(Reconnect.Net.SWITCHED, online = true))
+        assertEquals(Reconnect.Nudge.NONE, Reconnect.onNetwork(Reconnect.Net.AVAILABLE, online = true))
+        assertEquals(Reconnect.Nudge.NONE, Reconnect.onNetwork(Reconnect.Net.LOST, online = true))
+        assertEquals(Reconnect.Nudge.NONE, Reconnect.onNetwork(Reconnect.Net.LOST, online = false))
+    }
+
+    @Test
     fun theSheetOpensWithTheLongFormAndListsTheAddresses() {
         val link = Link.Offline("unreachable", 0)
         val lines = LinkText.sheet(link, listOf("10.0.0.2:7443", "pc.local:7443"), 60_000)

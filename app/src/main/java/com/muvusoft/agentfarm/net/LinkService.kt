@@ -43,6 +43,7 @@ class LinkService : Service() {
     private var job: Job? = null
     private var alerts: Job? = null
     private var poll: Job? = null
+    private var network: NetworkWatch? = null
     private val book = AlertBook()
     private val prefs by lazy { ShellPrefs(this) }
     private val speaker: Speaker get() = AgentFarmApp.of(this).speaker
@@ -54,6 +55,7 @@ class LinkService : Service() {
         AlertPoster.channels(this)
         ServiceCompat.startForeground(this, NOTIFICATION_ID, build(StatusLine.of(app.manager.state.value, System.currentTimeMillis())), type())
         app.manager.setFarms(app.store.load())
+        if (network == null) network = NetworkWatch(this) { app.manager.onNetwork(it) }.also { it.start() }
         if (alerts == null) {
             alerts = app.scope.launch {
                 app.manager.frames.collect { f ->
@@ -106,6 +108,8 @@ class LinkService : Service() {
         alerts = null
         poll?.cancel()
         poll = null
+        network?.stop()
+        network = null
         speaker.shutdown()
         super.onDestroy()
     }

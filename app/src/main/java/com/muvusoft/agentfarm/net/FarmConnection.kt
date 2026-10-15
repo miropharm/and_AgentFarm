@@ -13,8 +13,9 @@ import com.muvusoft.agentfarm.core.state.PairedFarm
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -45,6 +46,7 @@ class FarmConnection(
     private var lastGood: String? = null
     @Volatile private var current: String? = null
     private var job: Job? = null
+    private val wake = Channel<Unit>(Channel.CONFLATED)
 
     val online: Boolean get() = welcomed
 
@@ -94,7 +96,18 @@ class FarmConnection(
                 if (end.welcomed) break
             }
             if (attempt > 0) link(Link.Offline("unreachable", clock()))
-            delay(Reconnect.delayMs(attempt.coerceAtLeast(1), Math.random()))
+            // A network that comes back cuts the wait short; the backoff starts over from there.
+            if (withTimeoutOrNull(Reconnect.delayMs(attempt.coerceAtLeast(1), Math.random())) { wake.receive() } != null) attempt = 0
+        }
+    }
+
+    /** The phone's default network changed: try now if waiting, or drop a socket whose route is gone. */
+    fun onNetwork(net: Reconnect.Net) {
+        if (stopped) return
+        when (Reconnect.onNetwork(net, welcomed)) {
+            Reconnect.Nudge.RETRY_NOW -> wake.trySend(Unit)
+            Reconnect.Nudge.RECONNECT -> socket?.cancel()
+            Reconnect.Nudge.NONE -> Unit
         }
     }
 

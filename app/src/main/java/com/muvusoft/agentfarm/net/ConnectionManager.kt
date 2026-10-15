@@ -4,6 +4,7 @@ import com.muvusoft.agentfarm.core.away.Away
 import com.muvusoft.agentfarm.core.contract.Call
 import com.muvusoft.agentfarm.core.contract.Frame
 import com.muvusoft.agentfarm.core.contract.Welcome
+import com.muvusoft.agentfarm.core.link.Reconnect
 import com.muvusoft.agentfarm.core.state.OutboxItem
 import com.muvusoft.agentfarm.core.state.PairedFarm
 import com.muvusoft.agentfarm.core.state.ShellReducer
@@ -89,6 +90,8 @@ class ConnectionManager(
 
     /** Sends a page frame (view.open / view.msg / view.close); false when the farm is not online. Not queued: a page reopens. */
     fun send(farmId: String, frame: Frame): Boolean = conns[farmId]?.send(frame) == true
+
+    fun onNetwork(net: Reconnect.Net) = conns.values.forEach { it.onNetwork(net) }
 
     @Synchronized
     fun stopAll() {

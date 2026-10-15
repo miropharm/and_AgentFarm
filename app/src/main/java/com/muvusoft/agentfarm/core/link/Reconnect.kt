@@ -16,6 +16,24 @@ object Reconnect {
     fun order(addresses: List<String>, lastGood: String?): List<String> =
         if (lastGood != null && lastGood in addresses) listOf(lastGood) + (addresses - lastGood) else addresses
 
+    /** What happened to the phone's default network. */
+    enum class Net { AVAILABLE, SWITCHED, LOST }
+
+    /** What a link does about it: nothing, try now instead of waiting out its backoff, or drop its socket. */
+    enum class Nudge { NONE, RETRY_NOW, RECONNECT }
+
+    /**
+     * A link waiting out its backoff tries at once when a network comes; a link that is up drops its socket
+     * when the default network changed under it (Wi-Fi to mobile and back): the old route is dead, and a ping
+     * would only notice that after its timeout. The replay of what was missed comes with the next hello.
+     */
+    fun onNetwork(net: Net, online: Boolean): Nudge = when {
+        net == Net.LOST -> Nudge.NONE
+        !online -> Nudge.RETRY_NOW
+        net == Net.SWITCHED -> Nudge.RECONNECT
+        else -> Nudge.NONE
+    }
+
     /** Whether a refusal is final (retrying cannot help) or the link should keep trying. */
     fun isFinal(refuseReason: String): Boolean = refuseReason in FINAL
 

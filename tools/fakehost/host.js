@@ -1,5 +1,5 @@
 // A fake Agent Farm Remote Host, driven by the contract copy, so the shell can be tested with no PC:
-// pairing, the signed handshake, numbered events with resume and gap, exactly-once calls, pages.
+// pairing, the signed handshake, numbered events with resume and gap, exactly-once calls, pages, live watches (live.js).
 // /_test/* lets a test (or the emulator script) push events, drop sockets and revoke devices; as the scripted
 // farm it also sets the network profile, runs turns over time and hands over the log of what was asked.
 'use strict';
@@ -12,6 +12,7 @@ const pages = require('./pages');
 const { createFarm } = require('./farm');
 const { createTurns } = require('./turns');
 const { audit, rowsOf } = require('./audit');
+const { createLive } = require('./live');
 
 /** One-way delay on everything the farm sends, so a round trip costs what it costs on that network. */
 const PROFILES = { none: 0, lan: 50, mobile: 300 };
@@ -51,6 +52,9 @@ function createHost(opts = {}) {
         if (ms) { setTimeout(() => conn.send(text), ms); } else { conn.send(text); }
     };
 
+    h.send = send;
+    const live = createLive(h);
+
     h.newCode = () => { const code = crypto.randomBytes(4).toString('hex').toUpperCase(); h.codes.add(code); return code; };
 
     h.emit = (type, data) => {
@@ -68,6 +72,7 @@ function createHost(opts = {}) {
         h.turns = createTurns(h.world, h.emit);
         h.profile = PROFILES[o.profile] !== undefined ? o.profile : 'none';
         h.calls = [];
+        live.clear();
         return { profile: h.profile, sessions: h.world.sessions.length, cards: h.world.rows.map(x => x.id) };
     };
     h.scenario();
@@ -99,7 +104,7 @@ function createHost(opts = {}) {
         if (req.method === 'GET' && url === '/_test/state') { return reply(res, 200, { lastSeq: h.seq, devices: [...h.devices.keys()], calls: h.calls, code: [...h.codes][0] || h.newCode() }); }
         if (req.method === 'POST' && url === '/_test/scenario') { return reply(res, 200, h.scenario(await body(req) || {})); }
         if (req.method === 'POST' && url === '/_test/turn') { const b = await body(req) || {}; return reply(res, 200, h.turns.start(String(b.id || ''), b)); }
-        if (req.method === 'GET' && url === '/_test/log') { return reply(res, 200, { profile: h.profile, calls: h.calls, findings: audit(h.calls) }); }
+        if (req.method === 'GET' && url === '/_test/log') { return reply(res, 200, { profile: h.profile, calls: h.calls, findings: audit(h.calls), live: live.stats() }); }
         reply(res, 404, { error: 'not found' });
     }
 
@@ -183,6 +188,8 @@ function createHost(opts = {}) {
         if (bad) { return f && f.kind === 'call' && f.id ? send(conn, { kind: 'result', id: String(f.id), ok: false, error: bad }) : undefined; }
         if (f.kind === 'call') { return call(conn, f); }
         if (f.kind === 'ping') { return send(conn, { kind: 'pong', ts: f.ts }); }
+        if (f.kind === 'watch') { return live.watch(conn, f); }
+        if (f.kind === 'unwatch') { return live.unwatch(conn, f.watch); }
         if (f.kind === 'view.open') { return send(conn, { kind: 'view.post', view: f.view, message: { type: 'state', page: f.page, ...(f.args ? { args: f.args } : {}) } }); }
         if (f.kind === 'view.msg') { return send(conn, { kind: 'view.post', view: f.view, message: { type: 'echo', message: f.message } }); }
     }
@@ -195,7 +202,7 @@ function createHost(opts = {}) {
         if (!conn) { return; }
         conn.nonce = 'b64:' + crypto.randomBytes(16).toString('base64');
         h.conns.add(conn);
-        conn.on('close', () => { h.conns.delete(conn); if (conn.session) { h.sessions.delete(conn.session); } });
+        conn.on('close', () => { h.conns.delete(conn); live.drop(conn); if (conn.session) { h.sessions.delete(conn.session); } });
         conn.on('message', t => onFrame(conn, t));
         conn.send(JSON.stringify({ kind: 'challenge', nonce: conn.nonce, farm, contract: c.version }));
     });

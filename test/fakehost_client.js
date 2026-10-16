@@ -35,12 +35,13 @@ async function pair(port, code, key = newKey()) {
 /** Connects to /ws and collects frames; `bad` gathers every host frame that fails the contract. */
 async function open(port, c) {
     const conn = await ws.connect({ host: '127.0.0.1', port });
-    const s = { conn, frames: [], bad: [], closed: false, waiters: [] };
+    const s = { conn, frames: [], at: [], bad: [], closed: false, waiters: [] };
     conn.on('message', t => {
         const f = JSON.parse(t);
         const problem = K.checkFrame(c, f);
         if (problem) { s.bad.push(problem); }
         s.frames.push(f);
+        s.at.push(Date.now());
         s.waiters = s.waiters.filter(w => !w());
     });
     conn.on('close', () => { s.closed = true; s.waiters = s.waiters.filter(w => !w()); });

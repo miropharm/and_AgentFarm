@@ -88,6 +88,21 @@
       "fields": { "view": "string", "reason": "string?" },
       "example": { "kind": "view.close", "view": "v1" }
     },
+    "watch": {
+      "from": "client",
+      "fields": { "watch": "string", "session": "string", "depth": "string" },
+      "example": { "kind": "watch", "watch": "w1", "session": "c_8f2a", "depth": "full" }
+    },
+    "unwatch": {
+      "from": "either",
+      "fields": { "watch": "string", "reason": "string?" },
+      "example": { "kind": "unwatch", "watch": "w1", "reason": "ended" }
+    },
+    "live": {
+      "from": "host",
+      "fields": { "watch": "string", "session": "string", "data": "object" },
+      "example": { "kind": "live", "watch": "w1", "session": "c_8f2a", "data": { "agent": "developer", "status": "working", "turnSince": 1790760000000, "cost": 0.42, "steerable": true, "step": { "tool": "Bash", "detail": "node test/run-all.js", "since": 1790760012000 }, "asking": null, "messages": [{ "key": "9b1f0c2e-1d2a-4c3b-8e4f-5a6b7c8d9e0f", "turn": 7, "role": "tool", "ts": 1790760012000, "tool": "Bash", "input": "node test/run-all.js" }] } }
+    },
     "ping": {
       "from": "either",
       "fields": { "ts": "number" },
@@ -167,6 +182,7 @@
     "gate.opened is a workflow supervisor waiting on a person: a client answers it with call workflows.answer { id: gateId, option (1-based) | answer } (scope answer); the first answer anywhere wins, and gate.closed then takes it off every client. A window reload drops an open gate without gate.closed: workflows.answer then answers ok:false, and the client lets the alert go. mission.ended says a top-level mission run ended, outcome done or failed.",
     "welcome.wake lists the farm's network cards on the local network as { mac, broadcast }, absent off the LAN. A client that keeps it may wake the sleeping PC with a Wake-on-LAN magic packet (six 0xFF bytes, then the MAC sixteen times) sent by UDP to port 9 of broadcast, then connect again.",
     "welcome.session authorizes /view and /res for that device only while its socket is open; the host forgets it when the socket closes, and a client never stores it.",
-    "spoken { text, lang } is what the host's own reader says for the event: text already cleaned for a voice and cut to the event's length, lang the BCP-47 primary tag of the language it is in. A client that reads aloud reads it as is and picks a voice for lang; it is absent when there is nothing to say, and a client falls back to its own reading then."
+    "spoken { text, lang } is what the host's own reader says for the event: text already cleaned for a voice and cut to the event's length, lang the BCP-47 primary tag of the language it is in. A client that reads aloud reads it as is and picks a voice for lang; it is absent when there is nothing to say, and a client falls back to its own reading then.",
+    "watch asks the host to push one Console session's changes as live frames. Depth full carries agent, status, turnSince, cost, steerable, step (the call in flight, null between calls), asking (as console.sessions says it) and, in messages, the rows new or changed since the last frame, in sessions.read's words (key, turn, role, ts, text?, tool?, input?, isError?, clipped?). Depth summary carries the same without messages, at most once a second per session; session \"*\" with depth summary watches every Console session. A live frame is not numbered and never replayed: after a reconnect the client watches again and reads what it missed with sessions.read, and a live row is provisional until the transcript read by sessions.read carries it. The host ends a watch with unwatch (reason ended when the session goes, unavailable when it cannot be watched); a socket's watches end with it."
   ]
 }

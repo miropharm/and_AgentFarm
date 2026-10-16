@@ -109,6 +109,9 @@ Tasarımın gerekçesi: vault projesi `10_Notes/A-PLN - Android Uygulaması Yeni
 | `view.post` | Agent Farm | Sayfaya host mesajı |
 | `view.msg` | telefon | Sayfadan host'a mesaj |
 | `view.close` | ikisi de | Görünümü kapatır |
+| `watch` | telefon | Bir Console oturumunu canlı izler (`watch` kimliği, `session`, `depth` `full` \| `summary`); `session` `"*"` + `summary` bütün kartlar |
+| `unwatch` | ikisi de | İzlemeyi bitirir; Agent Farm'dan gelirse `reason`: `ended` (oturum gitti) ya da `unavailable` (izlenemez) |
+| `live` | Agent Farm | İzlenen oturumun bir vuruşu (`watch`, `session`, `data`); numarasız, tekrar edilmez |
 | `ping` / `pong` | ikisi de | Canlılık |
 
 ## 7. Olaylar
@@ -149,6 +152,19 @@ Tasarımın gerekçesi: vault projesi `10_Notes/A-PLN - Android Uygulaması Yeni
 - **`spoken { text, lang }`** (`ask.opened`, `ask.answersSoon`, `permission.opened`, `turn.finished`,
   `notice.posted`): Agent Farm'ın kendi okuyucusunun o olay için söyleyeceği metin, sese göre temizlenmiş, ve
   dilinin BCP-47 ana etiketi. İsteğe bağlıdır; yoksa telefon kendi okumasına döner.
+- **Canlı kanal (`watch` / `live` / `unwatch`).** Şimdi ya da Konuşma açıkken telefon izlediğini söyler; ekran
+  kapanınca `unwatch` yollar, uygulama arka plandayken hiçbir şey izlenmez. `data`, Console kartının kendi
+  hali: `agent`, `status` (`starting` · `idle` · `working` · `ended` · `error`), `turnSince` (yalnız tur
+  sürerken), `cost`, `steerable`, `step` (sürmekte olan çağrı `{ tool, detail, since }`, iki çağrı arasında
+  `null`), `asking` (`console.sessions`'ın `asking`'iyle aynı) ve yalnız `full`'da `messages`: son vuruştan beri
+  yeni ya da büyümüş satırlar, `sessions.read`'in sözcükleriyle (`key`, `turn`, `role`, `ts`, `text?`, `tool?`,
+  `input?`, `isError?`, `clipped?`). Vuruş `full`'da en çok 250 ms'de, `summary`'de saniyede bir; ekranın
+  çizdiği bir şey değişmediyse hiç gelmez. İzlemenin ilk karesi satır taşımaz: o ana kadarı `sessions.read`
+  ile okunur. Canlı satır **geçicidir**: son okunan satırın arkasına eklenir ve tur bitince (ya da yeniden
+  bağlanınca) son onaylı `i`'den yapılan `sessions.read` onu yerine koyar (`core/live/LiveMerge.kt`; aynı
+  `key`'li ya da son okunan satırdan eski geçici satır düşer, yenisi kalır). Soket düşünce izlemeler biter;
+  telefon her `welcome`'da açık izlemelerini yeniden yollar ve ekrana "yeniden oku" der (`net/LiveWatch.kt`).
+  İzleme kimliğini telefon rastgele üretir: aynı cihazın eski soketi kapanırken yeni izlemeyi silemez.
 
 ## 9. Yetki ve özellikler
 

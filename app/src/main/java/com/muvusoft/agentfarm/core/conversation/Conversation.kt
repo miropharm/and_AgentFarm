@@ -32,6 +32,10 @@ data class Message(
     val isError: Boolean = false,
     /** The full length of a text the farm cut; null = it came whole. */
     val clipped: Int? = null,
+    /** sessions.read `key`: the step's name across reads and live frames. */
+    val key: String? = null,
+    /** Told by a live frame and not yet carried by a sessions.read page (core/live/LiveMerge). */
+    val provisional: Boolean = false,
 )
 
 /** Where a message sent from this phone is, until the farm shows it back as a user message. */

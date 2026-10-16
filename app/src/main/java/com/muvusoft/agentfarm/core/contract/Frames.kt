@@ -96,6 +96,21 @@ data class ViewMsg(val view: String, val message: JsonElement) : Frame()
 @SerialName("view.close")
 data class ViewClose(val view: String, val reason: String? = null) : Frame()
 
+/** Asks the farm to push one Console session's changes (`session` "*" with depth summary: every card). */
+@Serializable
+@SerialName("watch")
+data class Watch(val watch: String, val session: String, val depth: String) : Frame()
+
+/** Ends a watch: the phone closing its screen, or the farm ("ended", "unavailable"). */
+@Serializable
+@SerialName("unwatch")
+data class Unwatch(val watch: String, val reason: String? = null) : Frame()
+
+/** One beat of a watched session; never numbered, never replayed (core/live reads `data`). */
+@Serializable
+@SerialName("live")
+data class LiveFrame(val watch: String, val session: String, val data: JsonObject) : Frame()
+
 @Serializable
 @SerialName("ping")
 data class Ping(val ts: Long) : Frame()

@@ -129,7 +129,10 @@ private fun Shell(
     val scope = rememberCoroutineScope()
     val shell by manager.state.collectAsState()
     var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
-    var opened by rememberSaveable { mutableStateOf<String?>(null) }
+    val nowTarget = { shell.focused?.takeIf { f -> farms.any { it.id == f } } ?: farms.firstOrNull()?.id }
+    // Opened from the widget or the tile, the first frame is already Now: a farms list drawn for one frame first
+    // is a flicker on a phone and a whole extra frame before the copy shows.
+    var opened by rememberSaveable { mutableStateOf(if (openNow) nowTarget() else null) }
     var inSettings by rememberSaveable { mutableStateOf(false) }
     val confirm = rememberDestructiveConfirm()
 
@@ -149,7 +152,7 @@ private fun Shell(
 
     LaunchedEffect(openNow) {
         if (!openNow) return@LaunchedEffect
-        val target = shell.focused?.takeIf { f -> farms.any { it.id == f } } ?: farms.firstOrNull()?.id
+        val target = nowTarget()
         if (target != null) { manager.focus(target); inSettings = false; opened = target }
         onOpenNowDone()
     }

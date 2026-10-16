@@ -77,7 +77,9 @@ class ConversationSource(
             manager.state.map { it.farm(farmId)?.link }.distinctUntilChanged().collect { l ->
                 if (l == null) return@collect
                 _state.update { it.copy(link = l) }
-                if (l is Link.Online) fresh()
+                // The link back reads on from the last row read (the copy's, or the screen's); only a screen with
+                // nothing read, or one that missed more than a page, reads the last page.
+                if (l is Link.Online) reading.withLock { caughtUp() }
             }
         }
         val card = key.card
@@ -183,8 +185,8 @@ class ConversationSource(
 
     /** What the stream told, read from the record: after the last row read, or the last page when more was missed. */
     private suspend fun caughtUp() {
-        val t = named() ?: return
         if (_state.value.messages.none { !it.provisional }) return readTail()
+        val t = named() ?: return
         val p = page(manager.read(farmId, OP_READ, ConversationBuild.newArgs(_state.value, t))) ?: return
         if (p.next != null) return readTail()
         keep { s -> LiveMerge.confirm(s, p.messages.map(ConversationBuild::step)) }

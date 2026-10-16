@@ -26,6 +26,8 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.testTag
@@ -51,6 +53,7 @@ import com.muvusoft.agentfarm.ui.components.SkeletonRows
 import com.muvusoft.agentfarm.ui.components.StaleBanner
 import com.muvusoft.agentfarm.ui.components.StepsRow
 import com.muvusoft.agentfarm.ui.components.UserBubble
+import kotlinx.coroutines.flow.first
 
 class ConversationActions(
     val onBack: () -> Unit,
@@ -74,6 +77,7 @@ fun ConversationScreen(state: ConversationState, now: Long, draft: String, actio
     val stale = SessionText.stale(state.link, state.updatedAt, now)
     val lead = listOf(state.older, state.loading).count { it }
     val list = rememberLazyListState(initialFirstVisibleItemIndex = lead + Blocks.openAt(blocks))
+    ConversationPlacement(state, blocks, list, lead)
     val maxCard = (LocalConfiguration.current.screenHeightDp * 0.6f).dp
     Scaffold(
         topBar = {
@@ -137,9 +141,14 @@ private fun MessageList(
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
     ) {
         if (state.older) {
-            item(key = "older") {
+            item(key = OLDER_KEY) {
                 Gap { SkeletonRows(1) }
-                LaunchedEffect(state.messages.firstOrNull()?.i) { actions.onOlder() }
+                // Asked once the list was laid out with the last page and the loader is in view, never ahead of the scroll.
+                LaunchedEffect(state.messages.firstOrNull()?.i) {
+                    withFrameNanos { }
+                    snapshotFlow { list.layoutInfo.visibleItemsInfo.any { it.key == OLDER_KEY } }.first { it }
+                    actions.onOlder()
+                }
             }
         }
         if (state.loading) item(key = "loading") { Gap { SkeletonRows(3) } }

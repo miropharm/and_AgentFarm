@@ -156,6 +156,17 @@ async function main() {
     t.ok(Date.now() - t0 >= 280, 'events travel with the same delay');
     await P.request(port, 'POST', '/_test/scenario', {});
 
+    // ---- words into an idle card start its turn with them (vsc remoteSay -> ConsoleHost.send); the gate's question starts nothing
+    const psyOf = async () => (await call('console.sessions', { view: 'summary' })).result.find(r => r.id === 'c_psy');
+    const gated = (await call('console.send', { id: 'c_psy', text: 'rm -rf build' })).result;
+    t.ok(gated.sent === false && (await psyOf()).status === 'idle', 'a send the farm\'s gate stops starts no turn');
+    const took = (await call('console.send', { id: 'c_psy', text: 'Sürüm notunu yaz' })).result;
+    const sent = await psyOf();
+    const heard = (await call('sessions.read', { session: sent.sessionId, from: -1, roles: 'all' })).result.messages;
+    t.ok(typeof took.note === 'string' && sent.status === 'working' && heard[0].role === 'user' && heard[0].text === 'Sürüm notunu yaz',
+        'words sent into an idle card start its turn, their user step last in the record');
+    await P.request(port, 'POST', '/_test/scenario', {});
+
     // ---- a new session the phone's way (vsc phoneNew + openNew): the card it opens is in the Console list at once
     const listed = (await call('console.new')).result;
     t.ok(Array.isArray(listed.agents) && listed.agents.includes('developer'), 'console.new called bare lists the agents a session opens with');

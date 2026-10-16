@@ -11,6 +11,8 @@ import com.muvusoft.agentfarm.core.live.LiveEvent
 import com.muvusoft.agentfarm.core.live.LiveMerge
 import com.muvusoft.agentfarm.core.now.NowBuild
 import com.muvusoft.agentfarm.core.now.NowCopy
+import com.muvusoft.agentfarm.core.now.NowOpen
+import com.muvusoft.agentfarm.core.now.NowTarget
 import com.muvusoft.agentfarm.core.now.NowState
 import com.muvusoft.agentfarm.core.now.NowText
 import com.muvusoft.agentfarm.core.now.Waiting
@@ -40,6 +42,7 @@ class NowSource(
     private val manager: ConnectionManager,
     private val store: NowStore,
     private val farmId: String,
+    private val preload: ConversationPreload? = null,
     private val clock: () -> Long = System::currentTimeMillis,
 ) {
     private val _state = MutableStateFlow(initial())
@@ -133,6 +136,8 @@ class NowSource(
             val built = NowBuild.carry(old, copy.state(name(), link()))
             if (old.recent.isEmpty()) built else NowBuild.head(built.copy(recent = old.recent, cursor = old.cursor), first)
         }
+        val now = _state.value
+        preload?.ahead(now.running.mapNotNull { (NowOpen.of(now, it.session) as? NowTarget.Conversation)?.key })
     }
 
     private suspend fun head() {

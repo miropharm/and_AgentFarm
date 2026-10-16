@@ -1,5 +1,6 @@
 package com.muvusoft.agentfarm.ui.conversation
 
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -58,6 +59,7 @@ fun ConversationRoute(farmId: String, key: ConversationKey, manager: ConnectionM
     val stopTitle = stringResource(R.string.stop_confirm_title, state.agent)
     val stopDetail = stringResource(R.string.stop_confirm_detail)
     val stopVerb = stringResource(R.string.stop_go)
+    val unavailable = stringResource(R.string.voice_unavailable)
     val speech = rememberSpeech { heard ->
         heard?.firstOrNull { it.isNotBlank() }?.let { words -> draft = if (draft.isBlank()) words else "$draft $words" }
     }
@@ -106,7 +108,7 @@ fun ConversationRoute(farmId: String, key: ConversationKey, manager: ConnectionM
                     draft = ""
                 },
                 onAttach = { pick.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
-                onDictate = { speech.start() },
+                onDictate = { if (!speech.start()) Toast.makeText(context, unavailable, Toast.LENGTH_SHORT).show() },
             ),
         ),
     )

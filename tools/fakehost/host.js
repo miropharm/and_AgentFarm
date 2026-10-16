@@ -161,7 +161,13 @@ function createHost(opts = {}) {
         if (op === 'console.interrupt' && args.id) { h.turns.stop(String(args.id)); }
         const run = h.world.ops[op] || OPS[op];
         if (!run) { return { ok: false, error: `unknown op ${op}` }; }
-        try { return { ok: true, result: run(args) }; } catch (e) { return { ok: false, error: e.message }; }
+        try {
+            const result = run(args);
+            // Words the farm took into an idle card start its turn, the user's words first (vsc remoteSay -> ConsoleHost.send).
+            const card = op === 'console.send' && result.sent !== false ? h.world.card(String(args.id || '')) : null;
+            if (card && card.status === 'idle') { const text = String(args.text || ''); h.turns.start(card.id, { text, stepMs: 1000, answer: `Yaptım: ${text}` }); }
+            return { ok: true, result };
+        } catch (e) { return { ok: false, error: e.message }; }
     }
 
     function call(conn, f) {

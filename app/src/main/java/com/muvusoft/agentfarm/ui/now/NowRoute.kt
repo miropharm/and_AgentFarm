@@ -20,6 +20,7 @@ import com.muvusoft.agentfarm.core.state.Link
 import com.muvusoft.agentfarm.core.view.PageRoute
 import com.muvusoft.agentfarm.core.view.ShellRequest
 import com.muvusoft.agentfarm.net.ConnectionManager
+import com.muvusoft.agentfarm.net.ConversationPreload
 import com.muvusoft.agentfarm.net.ConversationStore
 import com.muvusoft.agentfarm.net.NowSource
 import com.muvusoft.agentfarm.net.NowStore
@@ -44,7 +45,7 @@ private val KeySaver = Saver<ConversationKey?, String>(
  */
 @Composable
 fun NowRoute(farmId: String, manager: ConnectionManager, store: NowStore, conversations: ConversationStore, onFarms: () -> Unit) {
-    val source = remember(farmId) { NowSource(manager, store, farmId) }
+    val source = remember(farmId) { NowSource(manager, store, farmId, preload = ConversationPreload(manager, conversations, farmId)) }
     val state by source.state.collectAsState()
     val refreshing by source.refreshing.collectAsState()
     var page by remember(farmId) { mutableStateOf<ShellRequest.Open?>(null) }

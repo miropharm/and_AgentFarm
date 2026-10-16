@@ -13,6 +13,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -95,7 +96,12 @@ fun NewSessionSheet(farmId: String, state: NowState, manager: ConnectionManager,
         !online -> stringResource(R.string.new_image_online)
         else -> null
     }
-    ModalBottomSheet(onDismissRequest = onDismiss, modifier = Modifier.testTag("new-session")) {
+    // Open all the way: half open, the keyboard covered the message box and what the send said.
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        modifier = Modifier.testTag("new-session"),
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+    ) {
         Column(Modifier.fillMaxWidth().imePadding().verticalScroll(rememberScrollState()).padding(start = 16.dp, end = 16.dp, bottom = 16.dp)) {
             Text(stringResource(R.string.new_session), Modifier.semantics { heading() }, style = MaterialTheme.typography.titleLarge)
             ChoiceSection(stringResource(R.string.new_agent))

@@ -2,6 +2,20 @@
 
 User-facing changes to the Agent Farm Android app, newest first. Each build's release notes on the phone are read from its own heading here.
 
+## 0.2.7 - Share pictures, save exports, wake the PC, and get woken by the farm (2026-10-16)
+
+- Share a picture to Agent Farm and pick a running session: it goes to the computer and into the message, so the agent sees it (up to 5 MB). A share can also open a new session with an agent, using the setup that agent last started with.
+- An export made on a farm page (Notices, Turns, a conversation, Tasks, Analytics, a workflow, setting sets) is saved on the phone where you choose. The Console's attach button and the imports pick files from the phone.
+- When the farm has something for you and the app is not connected, it can wake the app with a push that carries no content; the app then connects and shows it. Needs Google Play services on the phone.
+- A sleeping PC can be woken from the phone (Wake-on-LAN) when the phone is on the same network, and the farm opens as soon as it answers.
+- A farm whose address changed is found again on your network, with no new pairing. A network that comes back is used at once.
+- A notification can stop a running turn. Workflow questions show their options as buttons, and a mission that ends is announced.
+- A share made while the farm was unreachable waits up to 6 hours and tells you how it went.
+- A farm whose VS Code is closed says so, shows its last state and can open Agent Farm from there.
+- The app's frame and an open page follow the phone's light or dark theme live. Alerts follow a notice's importance and the farm's mute.
+- The privacy policy is published with the app (PRIVACY.md).
+- Some of these need Agent Farm 3.992.0 or newer on the computer.
+
 ## 0.2.6 - The speaker buttons on Agent Farm's pages read aloud on the phone (2026-10-07)
 
 - On a page opened on the phone (a conversation, the Console, Notices, Needs You, Now, the wiki), the speaker button now reads with the phone's own voice instead of making the computer speak in another room.

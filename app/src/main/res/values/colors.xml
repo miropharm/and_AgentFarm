@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Material 3's light background, the colour Compose paints behind the shell's screens. -->
-    <color name="shell_background">#FFFEF7FF</color>
+    <!-- The window behind the first frame: Tokens.LIGHT.background (core/theme/Tokens.kt). -->
+    <color name="shell_background">#FFF7F8FB</color>
 </resources>

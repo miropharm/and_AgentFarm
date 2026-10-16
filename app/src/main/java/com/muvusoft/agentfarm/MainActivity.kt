@@ -14,7 +14,7 @@ import com.muvusoft.agentfarm.core.view.ShellRequest
 import com.muvusoft.agentfarm.net.SharedImages
 import com.muvusoft.agentfarm.ui.page.dictationLanguage
 import com.muvusoft.agentfarm.ui.page.speechIntent
-import com.muvusoft.agentfarm.ui.AppTheme
+import com.muvusoft.agentfarm.ui.theme.AppTheme
 import com.muvusoft.agentfarm.ui.ShellApp
 
 /** A FragmentActivity because the system owner prompt (biometric or screen lock) needs one. */

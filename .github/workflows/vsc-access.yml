@@ -1,0 +1,34 @@
+name: vsc-access
+
+# The real-pages tests read vsc_AgentFarm (private) with VSC_READ_KEY, a read-only deploy key of that repo.
+# This proves the key still opens it: when this file changes, every Monday, and by hand. It prints nothing of
+# that repo (no file, no commit subject): this repo's logs are public.
+on:
+  push:
+    branches: [master]
+    paths: [".github/workflows/vsc-access.yml"]
+  schedule:
+    - cron: "17 3 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  read:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: VSC_READ_KEY reads vsc_AgentFarm
+        env:
+          KEY: ${{ secrets.VSC_READ_KEY }}
+        run: |
+          test -n "$KEY" || { echo "::error::VSC_READ_KEY is not set in this repo's secrets"; exit 1; }
+          umask 077
+          printf '%s\n' "$KEY" > "$RUNNER_TEMP/vsc_key"
+          export GIT_SSH_COMMAND="ssh -i $RUNNER_TEMP/vsc_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new"
+          git clone --quiet --depth 1 git@github.com:miropharm/vsc_AgentFarm.git "$RUNNER_TEMP/vsc"
+          rm -f "$RUNNER_TEMP/vsc_key"
+          test -f "$RUNNER_TEMP/vsc/package.json"
+          test -d "$RUNNER_TEMP/vsc/src/remote/contract"
+          echo "vsc_AgentFarm is readable with VSC_READ_KEY"

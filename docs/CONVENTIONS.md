@@ -14,6 +14,10 @@ phone: same names, same gates, same record. The human copies are in the vault pr
 Nothing is built, installed or emulated on the user's PC. GitHub Actions builds and runs
 the emulator; Firebase Test Lab runs real devices on `[testlab]`; App Distribution
 delivers on `[deliver]`. Local work is editing plus the node repo gate. Details: the SOP.
+The CI reads the private `vsc_AgentFarm` (real pages, the contract's owner) with the secret `VSC_READ_KEY`, a
+read-only deploy key of that repo; `.github/workflows/vsc-access.yml` proves every Monday that it still opens it.
+This repo's logs and artifacts are public: nothing of `vsc_AgentFarm` (a file, its code, a commit subject) is
+ever printed or uploaded — screenshots and reports only.
 
 ## 1. Code architecture
 

@@ -61,12 +61,13 @@ class JourneyNowTest {
         open().use { fresh() }
         // What only the fresh answer knows: a card that asks since the copy was saved.
         FakeHost.post("/_test/turn", """{"id":"c_psy","stepMs":10,"ask":{"question":"Hangi dal?","options":["master","yeni dal"]}}""")
-        var s: ActivityScenario<MainActivity>? = null
+        var s: Launched? = null
         try {
             val copy = j.step("reopen: the copy at once", taps = 0, targetMs = 500) {
-                s = open()
+                s = Launched.now()
                 until { shown(hasTestTag("running-c_dev")) }
             }
+            s?.let { j.note("reopen: Android made the app's screen ${it.createdMs} ms after the tap, the copy was on it ${copy - it.createdMs} ms later") }
             j.step("the fresh answer: what waits above what runs", taps = 0, targetMs = (freshMs - copy).coerceAtLeast(0)) {
                 until(15_000) { shown(hasTestTag("waiting-c_psy")) && shown(hasTestTag("running-c_dev")) }
                 val wait = rule.onNodeWithTag("waiting-c_psy", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
@@ -88,6 +89,8 @@ class JourneyNowTest {
             for (k in 1..3) {
                 j.step("scroll: 20 more", taps = 1, targetMs = 1_000) { more(k) }
             }
+            val asked = pages()
+            j.check("each scroll asks one page", asked == 3, "$asked pages for 3 scrolls")
             j.economy()
         } finally {
             s.close()
@@ -130,13 +133,21 @@ class JourneyNowTest {
             rule.onNodeWithTag("now-list").performScrollToIndex(0)
             j.step("the link drops: the copy and its age stay, the wake is offered", taps = 0, targetMs = 5_000) {
                 FakeHost.post("/_test/sleep", "{\"asleep\":true}")
-                until { shown(hasText("· updated", substring = true)) && shown(hasTestTag("running-c_dev")) && shown(hasTestTag("wake-go")) }
+                seen(
+                    10_000,
+                    "the copy's age" to { shown(hasText("· updated", substring = true)) },
+                    "the running card" to { shown(hasTestTag("running-c_dev")) },
+                    "the wake" to { shown(hasTestTag("wake-go")) },
+                )
             }
             val before = calls().size
-            j.step("a new session typed offline waits on this phone", taps = 2, targetMs = 1_000) {
+            j.step("+ New offline: the agents it last listed, one picked", taps = 1, targetMs = 1_000) {
                 rule.onNodeWithTag("now-new").performClick()
                 until { picked() }
-                rule.onNode(hasSetTextAction() and hasAnyAncestor(hasTestTag("new-session"))).performTextInput(OFFLINE_WORDS)
+            }
+            // The typing is the person's own time, not the app's.
+            rule.onNode(hasSetTextAction() and hasAnyAncestor(hasTestTag("new-session"))).performTextInput(OFFLINE_WORDS)
+            j.step("send offline: it waits on this phone", taps = 1, targetMs = 1_000) {
                 rule.onNodeWithTag("composer-send").performClick()
                 until(2_000) { shown(hasText("Waiting on this phone", substring = true)) }
             }
@@ -169,6 +180,12 @@ class JourneyNowTest {
         ActivityScenario.launch(Intent(ctx, MainActivity::class.java).putExtra(MainActivity.OPEN_NOW, true))
 
     private fun until(ms: Long = 10_000, what: () -> Boolean) = rule.waitUntil(ms, what)
+
+    /** Every named look on screen within [ms]; past it, the failure names the looks that were missing. */
+    private fun seen(ms: Long, vararg looks: Pair<String, () -> Boolean>) {
+        if (runCatching { rule.waitUntil(ms) { looks.all { it.second() } } }.isSuccess) return
+        throw AssertionError("not seen in $ms ms: " + looks.filterNot { it.second() }.joinToString { it.first })
+    }
 
     /** Placed on screen, the way the eye finds it; a row the list composed ahead of time is not. */
     private fun shown(m: SemanticsMatcher) =

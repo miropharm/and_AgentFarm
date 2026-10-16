@@ -33,11 +33,18 @@ class Journey(private val code: String, private val profile: String) {
         this.taps += taps
         ms += took
         val pass = error == null && took <= targetMs
-        Shots.take("journey-$code-$profile-$n-${name.replace(' ', '-')}")
+        // An artifact's file name takes no colon, quote or the like: the step's words keep letters and digits only.
+        Shots.take("journey-$code-$profile-$n-" + name.replace(Regex("[^A-Za-z0-9]+"), "-").trim('-'))
         val why = error?.let { " · " + (it.message ?: it.javaClass.simpleName).lineSequence().first().take(160) }.orEmpty()
         write("$code · $profile · $n $name · taps $taps · $took ms · target ≤ $targetMs ms · ${if (pass) "PASS" else "FAIL"}$why")
         if (!pass) failed += "$name: " + (error?.message ?: "$took ms past $targetMs ms")
         return took
+    }
+
+    /** A look that is no timed step (the farm's log, a count): its line, and a failure when it does not hold. */
+    fun check(name: String, ok: Boolean, detail: String) {
+        write("$code · $profile · check · $name · $detail · ${if (ok) "PASS" else "FAIL"}")
+        if (!ok) failed += "$name: $detail"
     }
 
     /** What the farm was asked during the journey; a call past a page is a finding and fails it. */

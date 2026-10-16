@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -24,6 +25,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -51,6 +54,7 @@ import com.muvusoft.agentfarm.ui.components.SkeletonRows
 import com.muvusoft.agentfarm.ui.components.StaleBanner
 import com.muvusoft.agentfarm.ui.components.WaitingRow
 import com.muvusoft.agentfarm.ui.theme.LocalStatusColors
+import kotlinx.coroutines.flow.first
 
 class NowActions(
     val onOpen: (String) -> Unit,
@@ -118,17 +122,22 @@ fun NowScreen(state: NowState, now: Long, refreshing: Boolean, actions: NowActio
 
 @Composable
 private fun NowList(state: NowState, now: Long, actions: NowActions, wake: @Composable () -> Unit) {
-    LazyColumn(Modifier.fillMaxSize().testTag("now-list"), contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 96.dp)) {
-        SessionText.stale(state.link, state.updatedAt, now)?.let {
-            item(key = "stale") {
-                Column(Modifier.padding(bottom = 8.dp)) {
-                    StaleBanner(it)
-                    wake()
+    val list = rememberLazyListState()
+    LazyColumn(Modifier.fillMaxSize().testTag("now-list"), state = list, contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 96.dp)) {
+        // Always the first row and never zero high: a list keeps its first visible row in place, so a banner or a
+        // section added above it would stay out of sight of someone looking at the top.
+        item(key = "top") {
+            Column(Modifier.padding(top = 4.dp)) {
+                SessionText.stale(state.link, state.updatedAt, now)?.let {
+                    Column(Modifier.padding(bottom = 8.dp)) {
+                        StaleBanner(it)
+                        wake()
+                    }
                 }
+                state.error?.let { Box(Modifier.padding(bottom = 8.dp)) { ErrorBanner(it, actions.onRetry) } }
+                if (state.loading) SkeletonRows(4, Modifier.padding(top = 12.dp))
             }
         }
-        state.error?.let { item(key = "error") { Box(Modifier.padding(bottom = 8.dp)) { ErrorBanner(it, actions.onRetry) } } }
-        if (state.loading) item(key = "loading") { SkeletonRows(4, Modifier.padding(top = 12.dp)) }
         if (state.waiting.isNotEmpty()) {
             item(key = "h-waiting") { SectionTitle(stringResource(R.string.now_waiting), state.waiting.size) }
             items(state.waiting, key = { "w-" + it.session }) { w ->
@@ -149,7 +158,13 @@ private fun NowList(state: NowState, now: Long, actions: NowActions, wake: @Comp
         if (state.moreRecent) {
             item(key = "more") {
                 SkeletonRows(2, Modifier.padding(top = 12.dp))
-                LaunchedEffect(state.recent.size) { actions.onMoreRecent() }
+                // A loader composed ahead of the scroll, or pushed down by the page that just came, asks nothing:
+                // the next page is asked once the list was laid out with this one and the loader is in view.
+                LaunchedEffect(state.recent.size) {
+                    withFrameNanos { }
+                    snapshotFlow { list.layoutInfo.visibleItemsInfo.any { it.key == "more" } }.first { it }
+                    actions.onMoreRecent()
+                }
             }
         }
     }

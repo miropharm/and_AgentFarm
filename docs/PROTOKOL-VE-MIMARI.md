@@ -15,17 +15,21 @@ Tasarımın gerekçesi: vault projesi `10_Notes/A-PLN - Android Uygulaması Yeni
    sayfalar (Şimdi, Bekleyenler, Konsol, ...) ── aynı kod ──> Panel Host
    köprü op'ları + olay yayını ──> Remote Host (src/remote)  HTTPS + WebSocket
                                         │ LAN doğrudan · Tailscale · (ileride relay)
- Telefon: Android kabuğu (bu repo)
-   WebView (Agent Farm sayfaları + mobil katman) ── yerel taşıma ──┐
-   bağlantı yöneticisi · eşleşme · Keystore anahtarı ──────────────┤── tek WebSocket
-   ön plan servisi · bildirimler · ses · paylaşım · widget ────────┘
+ Telefon: Android uygulaması (bu repo)
+   yerel ekranlar (Şimdi, Konuşma, soru/izin, yeni oturum, Menü) ── köprü op'ları + canlı akış ──┐
+   WebView (Menü'deki Agent Farm sayfaları + mobil katman) ── yerel taşıma ─────────────────────┤
+   bağlantı yöneticisi · eşleşme · Keystore anahtarı ───────────────────────────────────────────┤── tek WebSocket
+   ön plan servisi · bildirimler · ses · paylaşım · widget ─────────────────────────────────────┘
 ```
 
-- **Ekranları Agent Farm çizer.** Telefon hiçbir Agent Farm ekranını yeniden yazmaz; sayfaları
-  `vsc_AgentFarm/src/remote/` sunar, kabuk gösterir.
-- **Kotlin'in payı** telefonun yerel yapabildiği ve web'in yapamadığı işlerdir: eşleşme, bağlantı,
-  bildirim, ses, paylaşım, hızlı erişim, çevrimdışı giden kutusu, uygulama kilidi. `ui/` yalnız kabuk
-  ekranlarını tutar: eşleşme, bağlantı durumu, cihaz ayarları.
+- **Ana işlerin ekranı telefonun, gerisi Agent Farm'ın** (B yolu, kullanıcı kararı 2026-10-16; tasarım:
+  vault `10_Notes/A-PLN - Telefon Yeniden Tasarımı B Yolu - …- 261016`). Şimdi, Konuşma, soru/izin kartı,
+  yeni oturum ve Menü Compose ekranlarıdır; diğer her sayfayı `vsc_AgentFarm/src/remote/` sunar ve
+  Menü'den WebView çerçevesinde açılır. Yerel ekran yalnız çizer: veriyi köprü op'larından ve izlenen
+  oturumun canlı akışından alır, PC'nin hiçbir kuralını yeniden yazmaz.
+- **Kotlin'in payı** ana işlerin ekranları ile telefonun yerel yapabildiği ve web'in yapamadığı işlerdir:
+  eşleşme, bağlantı, bildirim, ses, paylaşım, hızlı erişim, çevrimdışı giden kutusu, uygulama kilidi,
+  telefondaki kopya ve parça parça yükleme.
 - **WebView ağa kendisi çıkmaz.** Sayfa ve kaynak istekleri `shouldInterceptRequest` ile, canlı mesajlar
   sayfadaki `afRemote.js`'in yerel köprüsüyle yerel koda gider; yerel kod sabitlenmiş sertifikayla
   bağlanır. Kendinden imzalı sertifikayı WebView'de "kabul et" diye geçiştirmek yoktur.

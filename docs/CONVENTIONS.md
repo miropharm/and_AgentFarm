@@ -22,7 +22,7 @@ delivers on `[deliver]`. Local work is editing plus the node repo gate. Details:
 | Entry | `MainActivity.kt` | composition and wiring only, never logic |
 | Core | `core/` | pure Kotlin: protocol models, state reducers, formatters, verdict functions. No `android.*`, `androidx.*` or other app layer (`test/test_core_purity.js`). Unit-tested on the JVM (`app/src/test`) |
 | Network | `net/` | WebSocket client, discovery, reconnect/replay |
-| UI | `ui/` | Compose screens; `ui/components/` holds each shared component once |
+| UI | `ui/` | Compose screens: the main work (Now, Conversation, question/permission card, new session, Menu) and the app's own screens (pairing, farms, settings), plus the WebView frame for every other Agent Farm page; `ui/components/` holds each shared component once. A screen only draws: data and actions come from bridge ops |
 | Surfaces | `widget/` | home-screen widget and quick settings tile: they draw `core/` texts (the StatusLine), never a second derivation |
 
 - **Size:** target under 300 lines, hard limit 500 (`test/test_file_size.js`). Extract before growing; never append to a file that is already long.
@@ -31,7 +31,8 @@ delivers on `[deliver]`. Local work is editing plus the node repo gate. Details:
 
 ## 2. Parity with Agent Farm
 
-- **The phone shows Agent Farm's own pages**, served by `vsc_AgentFarm/src/remote/`. It never re-implements a screen; `ui/` holds only the shell's screens (pairing, connection, device settings).
+- **The main work has native screens; everything else is Agent Farm's own page** (the B path, the user's decision of 2026-10-16; design: vault `10_Notes/A-PLN - Telefon Yeniden Tasarımı B Yolu - Yerel Ana Ekranlar ve Kullanıcı Yolculuğu Testleri - 261016`). Now, Conversation, the question/permission card, new session and the Menu are Compose screens; every other page is served by `vsc_AgentFarm/src/remote/` and opens from the Menu in the WebView frame, passing vsc's phone-fit gate. **A native screen only draws:** it reads bridge ops and the live session channel and never re-derives a rule the PC owns, so what doubles is drawing, never logic. A page moves to native only by a decision, one page at a time.
+- **No list is ever asked for whole.** A screen shows the phone's last copy at once, then the fresh one, then pages on scroll (20 rows, 30 messages); a reconnect catches up from where it stopped, never reloads. The journeys J8 and J9 check it from the scripted farm's request log.
 - **The contract is Agent Farm's.** Its owner is `vsc_AgentFarm/src/remote/contract`; this repo carries the versioned copy in `contract/`, refreshed with `node tools/sync_contract.js` in the same work item as the change. `docs/PROTOKOL-VE-MIMARI.md` describes it; `test/test_contract.js` holds the copy, the owner and the document together.
 - **Every phone capability that reads data or triggers an action is an existing bridge op**, called through a `call` frame. A missing one is added in `vsc_AgentFarm` under `_REF/agentfarm-dev.md` (the vsc parity gate) in the same work item. The phone never reaches around the bridge.
 - **No new launch door.** Remotely opened pages are the desktop's own doors. A native "new session" (share, voice, widget) uses the Telegram `/new` launch verdict and inherits the last launch (`seedLastLaunch`); `sessions.start` records without inheriting, so it is not used.
@@ -69,7 +70,8 @@ The rest of the house rules, as they apply here:
 
 ## 4. Looking at it
 
-- **A visual change is not done until its screenshots were looked at** (emulator job artifacts; SOP section 4). String and unit tests pass on layouts nobody drew.
+- **Work is done when the user's journey it serves passes** (`docs/test-plan.md`, J1–J10): the journey test does what the user does against the scripted farm, asserts what is ON SCREEN (never internal state), measures taps and milliseconds against the target on the LAN and mobile profiles, shoots every step, and checks from the farm's request log how much was asked for. CI writes `journeys.txt`; the commit body quotes it. A test against a placeholder page proves the plumbing, never the experience — the CI's old farm pages were blank placeholders and nothing caught that the real phone was unusable.
+- **A visual change is not done until its step shots were looked at** (emulator job artifacts; SOP section 4) — light and dark, portrait and landscape, font 200%. String and unit tests pass on layouts nobody drew. A visible milestone's shots go to the user (local `docs/Screenshots/` + a Notices line) without being asked. "To be tried on the user's phone" never finishes a work item.
 - **Shoot the scene, not the montage:** one capture per state, at its own size.
 - **Draw the arity the user actually gets:** empty · one · many · too-many are different layouts; add the smallest first.
 - **Light and dark, portrait and landscape**, with the app's English words, the user's own (Turkish) data and a real distribution of states in fixtures.
@@ -81,7 +83,8 @@ The rest of the house rules, as they apply here:
 ## 5. Tests and gates
 
 - **Local gate** — `.githooks/pre-commit` runs `node test/run-all.js` (encoding, tracked-file credentials, dev codes, file size, core purity, changelog/version, pipeline shape) and `tools/scan_staged.js` (staged credentials). Seconds, no Android build. Enable per clone: `git config core.hooksPath .githooks`. Never `--no-verify` without the user's say-so.
-- **Cloud gate** — every push: the same repo gate, unit tests, emulator instrumentation, screenshots. `[testlab]` real devices at milestones; `[deliver]` to the phone only after the emulator passes.
+- **Cloud gate** — every push: the same repo gate, unit tests, emulator instrumentation, the journey tests (`journeys.txt`), screenshots. `[testlab]` real devices at milestones; `[deliver]` to the phone only after the emulator passes, its release note naming at most three journeys to try.
+- **The scripted farm speaks the contract's real shapes.** `tools/fakehost/` answers with the shapes of the contract's real-output examples and `test/test_fake_host.js` holds it to them; a scenario that drifts from what Agent Farm really sends is a test of nothing.
 - **Derive the rule from the source**, never from a list written in the test: a list is right the day it is written and wrong the day the next field is added.
 - **A shape assertion is a shape:** compare positions, never a character budget; read files through `test/lib.js`, which normalises CRLF.
 - **Prove a guard bites:** break the thing on purpose, see the test fail, restore from your own copy (never `git checkout --`, which restores HEAD and takes uncommitted work with it). Name the mutation in the commit body.

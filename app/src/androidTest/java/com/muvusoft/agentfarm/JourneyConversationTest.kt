@@ -43,7 +43,7 @@ class JourneyConversationTest : JourneyBase() {
     }
 
     private fun j2(profile: String, freshMs: Long) {
-        val j = Journey("J2", profile).begin()
+        val j = Journey("J2", profile, rule).begin()
         val s = open()
         try {
             fresh()
@@ -75,7 +75,7 @@ class JourneyConversationTest : JourneyBase() {
     }
 
     private fun j3(profile: String, freshMs: Long, oneWayMs: Long) {
-        val j = Journey("J3", profile).begin()
+        val j = Journey("J3", profile, rule).begin()
         val s = open()
         try {
             fresh()
@@ -107,7 +107,7 @@ class JourneyConversationTest : JourneyBase() {
     }
 
     private fun j5(profile: String) {
-        val j = Journey("J5", profile).begin()
+        val j = Journey("J5", profile, rule).begin()
         val s = open()
         try {
             fresh()
@@ -130,7 +130,7 @@ class JourneyConversationTest : JourneyBase() {
     }
 
     private fun j9(profile: String) {
-        val j = Journey("J9", profile).begin()
+        val j = Journey("J9", profile, rule).begin()
         // The journey is a conversation the phone holds current when the link drops. The farm's world was just
         // drawn again, so a copy an earlier journey left is of a record that no longer exists (ConversationStore's
         // folder): it goes, and the link drops only once the open has read the record and kept it.

@@ -58,7 +58,7 @@ class JourneyStopTest {
         )
         FakeHost.requireLink()
         pair()
-        val j = Journey("J5", profile).begin()
+        val j = Journey("J5", profile, rule).begin()
         var scenario: ActivityScenario<MainActivity>? = null
         try {
             j.step("widget stop opens the running turns", taps = 1, targetMs = freshMs) {

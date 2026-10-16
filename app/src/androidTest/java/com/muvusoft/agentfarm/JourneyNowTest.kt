@@ -44,7 +44,7 @@ class JourneyNowTest : JourneyBase() {
     }
 
     private fun j1(profile: String, freshMs: Long) {
-        val j = Journey("J1", profile).begin()
+        val j = Journey("J1", profile, rule).begin()
         open().use { fresh() }
         // What only the fresh answer knows: a card that asks since the copy was saved.
         FakeHost.post("/_test/turn", """{"id":"c_psy","stepMs":10,"ask":{"question":"Hangi dal?","options":["master","yeni dal"]}}""")
@@ -69,7 +69,7 @@ class JourneyNowTest : JourneyBase() {
     }
 
     private fun j8(profile: String) {
-        val j = Journey("J8", profile).begin()
+        val j = Journey("J8", profile, rule).begin()
         val s = open()
         try {
             fresh()
@@ -86,7 +86,7 @@ class JourneyNowTest : JourneyBase() {
     }
 
     private fun j7(profile: String, freshMs: Long) {
-        val j = Journey("J7", profile).begin()
+        val j = Journey("J7", profile, rule).begin()
         val s = open()
         try {
             fresh()
@@ -112,7 +112,7 @@ class JourneyNowTest : JourneyBase() {
     }
 
     private fun j9(profile: String) {
-        val j = Journey("J9", profile).begin()
+        val j = Journey("J9", profile, rule).begin()
         val s = open()
         try {
             fresh()

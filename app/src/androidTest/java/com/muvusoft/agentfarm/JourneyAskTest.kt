@@ -37,7 +37,7 @@ class JourneyAskTest : JourneyBase() {
     }
 
     private fun j4(profile: String, freshMs: Long) {
-        val j = Journey("J4", profile).begin()
+        val j = Journey("J4", profile, rule).begin()
         val s = Launched.now()
         try {
             fresh()
@@ -84,7 +84,7 @@ class JourneyAskTest : JourneyBase() {
     }
 
     private fun j6(profile: String, freshMs: Long) {
-        val j = Journey("J6", profile).begin()
+        val j = Journey("J6", profile, rule).begin()
         val s = Launched.now()
         try {
             fresh()

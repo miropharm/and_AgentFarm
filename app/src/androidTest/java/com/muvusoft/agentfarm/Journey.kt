@@ -1,6 +1,8 @@
 package com.muvusoft.agentfarm
 
 import android.os.SystemClock
+import android.util.Log
+import androidx.compose.ui.test.junit4.ComposeTestRule
 import androidx.test.platform.app.InstrumentationRegistry
 import org.json.JSONObject
 import org.junit.Assert.assertTrue
@@ -12,7 +14,7 @@ import java.io.File
  * shot; journeys.txt gets a line per step, a total, and how much the farm was asked. A step past its target,
  * a failed look, or a call past a page fails the test after every line is written.
  */
-class Journey(private val code: String, private val profile: String) {
+class Journey(private val code: String, private val profile: String, private val rule: ComposeTestRule? = null) {
     private val failed = mutableListOf<String>()
     private var n = 0
     private var taps = 0
@@ -38,9 +40,12 @@ class Journey(private val code: String, private val profile: String) {
         // An artifact's file name takes no colon, quote or the like: the step's words keep letters and digits only.
         Shots.take("journey-$code-$profile-$n-" + name.replace(Regex("[^A-Za-z0-9]+"), "-").trim('-'))
         val floor = frames.line().also { frames.close() }
-        val why = error?.let { " · " + (it.message ?: it.javaClass.simpleName).lineSequence().first().take(160) }.orEmpty()
+        val hidden = error?.let { rule?.let(Hidden::of) }
+        hidden?.let { Log.e(TAG, "$code · $profile · $n: the composition's own error", it) }
+        val why = error?.let { " · " + (it.message ?: it.javaClass.simpleName).lineSequence().first().take(160) }.orEmpty() +
+            hidden?.let { " · hidden: " + told(it) }.orEmpty()
         write("$code · $profile · $n $name · taps $taps · $took ms · target ≤ $targetMs ms · $floor · ${if (pass) "PASS" else "FAIL"}$why")
-        if (!pass) failed += "$name: " + (error?.message ?: "$took ms past $targetMs ms")
+        if (!pass) failed += "$name: " + (error?.message ?: "$took ms past $targetMs ms") + hidden?.let { " · hidden: " + told(it) }.orEmpty()
         return took
     }
 
@@ -77,9 +82,20 @@ class Journey(private val code: String, private val profile: String) {
         assertTrue(failed.joinToString("\n"), failed.isEmpty())
     }
 
+    /** An error in one line: its kind, its words, and the app's own frame that threw it. */
+    private fun told(e: Throwable): String {
+        val at = e.stackTrace.firstOrNull { it.className.startsWith(APP_PACKAGE) } ?: e.stackTrace.firstOrNull()
+        return "${e.javaClass.simpleName}: ${e.message.orEmpty().lineSequence().first().take(120)} at $at"
+    }
+
     private fun write(line: String) {
         val ctx = InstrumentationRegistry.getInstrumentation().targetContext
         val dir = File(ctx.getExternalFilesDir(null), "shots").apply { mkdirs() }
         File(dir, "journeys.txt").appendText(line + "\n")
+    }
+
+    private companion object {
+        const val TAG = "AFJourney"
+        const val APP_PACKAGE = "com.muvusoft.agentfarm"
     }
 }

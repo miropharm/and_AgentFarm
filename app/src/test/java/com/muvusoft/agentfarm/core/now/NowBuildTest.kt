@@ -13,6 +13,7 @@ import com.muvusoft.agentfarm.core.session.AskKind
 import com.muvusoft.agentfarm.core.session.Quick
 import com.muvusoft.agentfarm.core.session.Step
 import com.muvusoft.agentfarm.core.state.Link
+import com.muvusoft.agentfarm.core.view.ShellRequest
 import java.io.File
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
@@ -206,13 +207,16 @@ class NowBuildTest {
             "Ev PC", online, 5, listOf(asking, working("c_a", "s-a")), RecentPage(listOf(row("s-old", 10)), null),
             NeedsList(listOf(needs.items.single(), need("browser-approval", null, "ba|1")), 2, 0),
         )
-        fun opened(id: String) = NowOpen.of(s, id).let { it.page to (it.args?.get("sessionId") as? JsonPrimitive)?.content }
-        assertEquals(NowOpen.SESSION_PAGE to asking.sessionId, opened(asking.id))
-        assertEquals(NowOpen.SESSION_PAGE to "s-a", opened("c_a"))
-        assertEquals(NowOpen.SESSION_PAGE to "s-old", opened("s-old"))
+        fun opened(id: String) = (NowOpen.of(s, id) as NowTarget.Conversation).key.let { it.card to it.transcript }
+        assertEquals("a card that asks: its card and its transcript", asking.id to asking.sessionId, opened(asking.id))
+        assertEquals("c_a" to "s-a", opened("c_a"))
+        assertEquals("a session no card hosts is read only", null to "s-old", opened("s-old"))
+        assertEquals("a session a card hosts writes through the card", "c_a" to "s-a", opened("s-a"))
         val elsewhere = (needs.items.single().ref.getValue("sessionId") as JsonPrimitive).content
-        assertEquals(NowOpen.SESSION_PAGE to elsewhere, opened(elsewhere))
-        assertEquals(NowOpen.NEEDS_PAGE to null, opened("ba|1"))
+        assertEquals(null to elsewhere, opened(elsewhere))
+        assertEquals(NowTarget.Page(ShellRequest.Open(NowOpen.NEEDS_PAGE)), NowOpen.of(s, "ba|1"))
+        val running = s.copy(running = s.running + Running("c_new", "developer", "", null, null, null))
+        assertEquals("a card the engine has not named yet", "c_new" to null, (NowOpen.of(running, "c_new") as NowTarget.Conversation).key.let { it.card to it.transcript })
     }
 
     @Test

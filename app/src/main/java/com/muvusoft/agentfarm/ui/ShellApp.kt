@@ -22,6 +22,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.saveable.rememberSaveable
 import com.muvusoft.agentfarm.core.link.LinkText
 import com.muvusoft.agentfarm.core.share.Shared
+import com.muvusoft.agentfarm.net.ConversationStore
 import com.muvusoft.agentfarm.net.NowStore
 import com.muvusoft.agentfarm.ui.now.NowRoute
 import com.muvusoft.agentfarm.core.pairing.PairingStep
@@ -134,6 +135,7 @@ private fun Shell(
 
     val context = LocalContext.current
     val nowStore = remember { NowStore(context) }
+    val conversationStore = remember { ConversationStore(context) }
     val askNotifications = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { }
     LaunchedEffect(farms) {
         manager.setFarms(farms)
@@ -177,7 +179,7 @@ private fun Shell(
 
     val open = opened
     if (open != null) {
-        NowRoute(farmId = open, manager = manager, store = nowStore, onFarms = { opened = null })
+        NowRoute(farmId = open, manager = manager, store = nowStore, conversations = conversationStore, onFarms = { opened = null })
         return
     }
 

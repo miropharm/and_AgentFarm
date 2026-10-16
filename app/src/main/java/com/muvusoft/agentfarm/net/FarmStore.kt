@@ -12,6 +12,7 @@ class FarmStore(context: Context) {
     private val file = File(context.filesDir, "farms.json")
     private val prefs = ShellPrefs(context)
     private val now = NowStore(context)
+    private val conversations = ConversationStore(context)
     private val json = Json { ignoreUnknownKeys = true }
     private val serializer = ListSerializer(PairedFarm.serializer())
 
@@ -41,6 +42,7 @@ class FarmStore(context: Context) {
         old.filter { it.id == farmId }.forEach { DeviceKeys.delete(it.key) }
         prefs.setWake(farmId, emptyList())
         now.forget(farmId)
+        conversations.forget(farmId)
         return load()
     }
 

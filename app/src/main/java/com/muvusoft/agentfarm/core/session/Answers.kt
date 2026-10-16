@@ -1,5 +1,6 @@
 package com.muvusoft.agentfarm.core.session
 
+import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
@@ -18,6 +19,35 @@ object Answers {
         buildJsonObject {
             put("id", JsonPrimitive(card))
             put("answers", JsonObject(mapOf(question to JsonPrimitive(label))))
+        },
+    )
+
+    /**
+     * A Console card's questions answered at once, in the order the card drew them (vsc console.answer `answers`:
+     * a label, or a list for a many-pick question). A question left unpicked is left out; none picked is null.
+     */
+    fun questions(card: String, ask: Ask, picked: List<List<String>>): AnswerCall? {
+        val answers = ask.questions.mapIndexedNotNull { k, q ->
+            val labels = picked.getOrNull(k).orEmpty().filter(String::isNotBlank)
+            when {
+                labels.isEmpty() -> null
+                q.multiSelect -> q.question to JsonArray(labels.map { JsonPrimitive(it) })
+                else -> q.question to JsonPrimitive(labels.first())
+            }
+        }.toMap()
+        if (answers.isEmpty()) return null
+        return AnswerCall("console.answer", buildJsonObject {
+            put("id", JsonPrimitive(card))
+            put("answers", JsonObject(answers))
+        })
+    }
+
+    /** Words typed when no option says it (vsc console.answer `response`). */
+    fun free(card: String, text: String) = AnswerCall(
+        "console.answer",
+        buildJsonObject {
+            put("id", JsonPrimitive(card))
+            put("response", JsonPrimitive(text))
         },
     )
 

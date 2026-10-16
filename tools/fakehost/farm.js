@@ -99,7 +99,9 @@ function createFarm(opts = {}) {
         });
     }
     const talks = new Map();
+    // A card whose session the engine has not named yet has no transcript, so nothing to read or tell.
     const steps = s => {
+        if (!s) { return []; }
         if (!talks.has(s.id)) {
             const k = sessions.indexOf(s);
             const n = k === 0 ? (opts.longest ?? 2000) : 6 + ((k * 7) % 40);
@@ -129,6 +131,8 @@ function createFarm(opts = {}) {
         actions: [{ id: 'permission-allow', label: 'Allow' }, { id: 'permission-deny', label: 'Deny' }],
     }];
 
+    // Two sessions opened in the same millisecond still have an order: the one opened last is the newest.
+    let opened = 0;
     const f = { now, sessions, rows, needs, steps };
     f.bySession = id => sessions.find(s => s.id === id || (id && id.length >= 8 && s.id.startsWith(id)));
     f.card = id => rows.find(x => x.id === id);
@@ -160,12 +164,23 @@ function createFarm(opts = {}) {
             return { items, blocking: items.length, hidden: 0 };
         },
         // vsc phoneNew + openNew: called bare, the agents a session can open with; with an agent, a Console card opens
-        // (its first turn running when words or a picture came) and the farm says so in its own words.
+        // (its first turn running when words or a picture came) and the farm says so in its own words. The engine
+        // names its session as it starts: the card carries it, and the history has it with the first message.
         'console.new': a => {
             if (!a.agent) { return { agents: AGENTS.slice() }; }
-            const first = String(a.prompt || '').trim() !== '' || (Array.isArray(a.attach) && a.attach.length > 0);
+            const prompt = String(a.prompt || '').trim();
+            const first = prompt !== '' || (Array.isArray(a.attach) && a.attach.length > 0);
+            const at = Math.max(Date.now(), opened + 1);
+            opened = at;
+            const s = {
+                ...sessions[0], id: uuid(r), agent: a.agent, title: prompt.slice(0, 40) || 'New session', lastTs: at, engine: 'claude',
+                producer: 'claude', storage: 'claude', origin: 'user', headless: false, launchedBy: null, turns: first ? 1 : 0, cost: 0, tokens: 0, wTokens: 0,
+            };
+            s.canonicalId = s.id;
+            sessions.push(s);
+            talks.set(s.id, first ? [{ role: 'user', text: prompt, turn: 1, ts: at }] : []);
             const id = `c_new${rows.length}`;
-            rows.push(consoleRow({ id, agent: a.agent, sessionId: null, engine: 'claude', status: first ? 'working' : 'idle', cost: 0, turns: first ? 1 : 0, end: Date.now() }));
+            rows.push(consoleRow({ id, agent: a.agent, sessionId: s.id, engine: 'claude', status: first ? 'working' : 'idle', cost: 0, turns: first ? 1 : 0, end: at }));
             return { id, agent: a.agent, note: `▶ ${a.agent} — a Console session is open${first ? '; its first turn is running' : '; it waits for its first message'}.` };
         },
     };

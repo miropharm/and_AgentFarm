@@ -165,6 +165,15 @@ async function main() {
     t.ok(opened.note === '▶ developer — a Console session is open; its first turn is running.', 'its note is openNew\'s own sentence: ' + opened.note);
     const waits = (await call('console.new', { agent: 'psikolog' })).result;
     t.ok(/; it waits for its first message\.$/.test(waits.note), 'with no first message the card waits for one: ' + waits.note);
+    const said = (await call('sessions.read', { session: card.sessionId, roles: 'all' })).result;
+    t.ok(said.messages.length === 1 && said.messages[0].role === 'user' && said.messages[0].text === 'Testleri çalıştır', 'the new card\'s session is named and holds its first message');
+    const lastCard = (await call('console.sessions', { view: 'summary' })).result.find(r => r.id === waits.id);
+    const top = (await call('sessions.recent', { view: 'page' })).result.rows[0];
+    t.ok(top.id === lastCard.sessionId, 'the session opened last is the newest in the history');
+    // The live channel ticks every card; one opened this way must never stop it (a card with no steps is quiet, not a crash).
+    const watched = await (async () => { s.send({ kind: 'watch', watch: 'wn', session: '*', depth: 'summary' }); return s.waitFor(f => f.kind === 'live' && f.watch === 'wn' && f.session === opened.id, 3000); })();
+    t.ok(watched.data.status === 'working', 'the live channel tells the new card');
+    s.send({ kind: 'unwatch', watch: 'wn' });
     await P.request(port, 'POST', '/_test/scenario', {});
     t.ok(!(await call('console.sessions')).result.some(r => r.id === opened.id), 'a new scenario takes the opened cards away');
 

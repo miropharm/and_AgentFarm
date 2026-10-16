@@ -5,8 +5,8 @@ import com.muvusoft.agentfarm.core.session.Step
 import com.muvusoft.agentfarm.core.state.Link
 
 /** sessions.read `role`: the same five words for every engine. */
-enum class Role {
-    USER, ASSISTANT, TOOL, TOOL_RESULT, SYSTEM;
+enum class Role(val wire: String) {
+    USER("user"), ASSISTANT("assistant"), TOOL("tool"), TOOL_RESULT("toolResult"), SYSTEM("system");
 
     companion object {
         /** A Console snapshot's agent/result are the same steps as assistant/toolResult. */
@@ -41,7 +41,8 @@ data class Message(
 /** Where a message sent from this phone is, until the farm shows it back as a user message. */
 enum class SendState { WAITING, SENDING, DELIVERED, AFTER_TURN }
 
-data class Outgoing(val id: String, val text: String, val state: SendState)
+/** `seen`: the user steps that already said these words when it was sent (ConversationBuild.echoed). */
+data class Outgoing(val id: String, val text: String, val state: SendState, val seen: Int = 0)
 
 /** How the bottom of the conversation takes input. */
 enum class ComposerMode { WRITE, AFTER_TURN, READ_ONLY }
@@ -68,6 +69,8 @@ data class ConversationState(
     val older: Boolean = false,
     val loading: Boolean = false,
     val error: String? = null,
+    /** A send the farm's gate stopped, until the owner says yes or writes something else. */
+    val gate: SendGate? = null,
 ) {
     val composer: ComposerMode get() = when {
         readOnly != null -> ComposerMode.READ_ONLY

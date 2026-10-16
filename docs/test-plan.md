@@ -15,7 +15,7 @@ Tasarım: vault `10_Notes/A-PLN - Telefon Yeniden Tasarımı B Yolu - Yerel Ana 
 | J2 | Çalışan oturumu takip et | 1 dokunuş; Konuşma son cevabın başında, kopya ≤ 0,5 sn / tazesi ≤ 1,5 sn; tur sürüyorsa akış canlı | U-19 | henüz yok |
 | J3 | Talimat ver | kendi mesajı ≤ 0,2 sn; ilk canlı adım PC'de oluştuktan ≤ 1 sn sonra; cevap tur bitince ≤ 1 sn; sonraki talimat aynı ekrandan | U-19, N-8 | henüz yok |
 | J4 | Soru / izni cevapla | bildirimden 1 dokunuş, kart açık; cevap 1 dokunuş; başka yerden cevaplanınca kart kapanır | U-20, B-7 | henüz yok |
-| J5 | Turu durdur | durdur + onay = 2 dokunuş; durdu bilgisi ≤ 1 sn | U-19 | widget kapısı: `JourneyStopTest` (LAN, mobil) — v1.110'da CI'da; Konuşma kapısı henüz yok |
+| J5 | Turu durdur | durdur + onay = 2 dokunuş; durdu bilgisi ≤ 1 sn | U-19 | widget kapısı: `JourneyStopTest` b74 (v1.110, CI 38884534545) GEÇTİ — LAN: açılış 931 ms, onay sorusu 331 ms, durdu 142 ms (toplam 3 dokunuş, 1404 ms); mobil: 1484 / 198 / 352 ms (2034 ms); 5 çağrı, sayfa aşan yok (ama `console.sessions` ×3: açılış, bağlantı servisi, durdurma sonrası yenileme). Konuşma kapısı henüz yok |
 | J6 | Bildirimden son cevabı oku | 1 dokunuş; son cevabın başı | B-7 | henüz yok |
 | J7 | Yeni oturum | en çok 4 dokunuş + yazı; yeni oturumun Konuşma'sı açılır | U-18 | henüz yok |
 | J8 | Geçmişe bak | 20'şer, her parti ≤ 1 sn; sunucu kaydında 20'den büyük istek yok | U-18, N-9, U-23 | henüz yok |

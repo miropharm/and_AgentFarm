@@ -10,6 +10,7 @@ import androidx.fragment.app.FragmentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.mutableStateOf
 import com.muvusoft.agentfarm.core.share.Shared
+import com.muvusoft.agentfarm.core.view.NowRequest
 import com.muvusoft.agentfarm.core.view.ShellRequest
 import com.muvusoft.agentfarm.net.SharedImages
 import com.muvusoft.agentfarm.ui.page.dictationLanguage
@@ -21,7 +22,7 @@ import com.muvusoft.agentfarm.ui.ShellApp
 class MainActivity : FragmentActivity() {
     private val incomingLink = mutableStateOf<String?>(null)
     private val incomingShare = mutableStateOf<Shared?>(null)
-    private val openNow = mutableStateOf(false)
+    private val openNow = mutableStateOf<NowRequest?>(null)
     private val openStop = mutableStateOf(false)
 
     // The widget's microphone: what the recogniser heard goes to the share screen, which says it into a session.
@@ -42,7 +43,7 @@ class MainActivity : FragmentActivity() {
                     incomingShare = incomingShare.value,
                     onShareDone = { incomingShare.value = null },
                     openNow = openNow.value,
-                    onOpenNowDone = { openNow.value = false },
+                    onOpenNowDone = { openNow.value = null },
                     openStop = openStop.value,
                     onStopDone = { openStop.value = false },
                 )
@@ -60,7 +61,7 @@ class MainActivity : FragmentActivity() {
             intent.removeExtra(OPEN_VOICE)
             runCatching { dictate.launch(speechIntent(getString(R.string.voice_prompt), dictationLanguage(AgentFarmApp.of(this).prefs))) }
         } else if (intent?.getBooleanExtra(OPEN_NOW, false) == true) {
-            openNow.value = true
+            openNow.value = NowRequest(intent.getStringExtra(OPEN_FARM), intent.getStringExtra(OPEN_SESSION))
         } else if (intent?.getBooleanExtra(OPEN_STOP, false) == true) {
             intent.removeExtra(OPEN_STOP)
             openStop.value = true
@@ -77,6 +78,10 @@ class MainActivity : FragmentActivity() {
     companion object {
         /** An intent extra: open the focused farm's Now page (the widget and the quick settings tile). */
         const val OPEN_NOW = "openNow"
+
+        /** With OPEN_NOW, from a notification: the farm whose Now opens, and the Console card whose Conversation opens over it. */
+        const val OPEN_FARM = "openFarm"
+        const val OPEN_SESSION = "openSession"
 
         /** An intent extra: dictate, then offer the words to a session (the widget's microphone). */
         const val OPEN_VOICE = "openVoice"

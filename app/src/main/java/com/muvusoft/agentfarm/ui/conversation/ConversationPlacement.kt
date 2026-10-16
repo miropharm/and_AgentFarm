@@ -16,9 +16,9 @@ import com.muvusoft.agentfarm.core.conversation.ConversationState
 const val OLDER_KEY = "older"
 
 /**
- * Where the list stands. It follows the conversation until the person drags it: at the last answer's start
- * whenever that changes (the farm's page after the copy, a turn's answer), at their own message when they send
- * one. A list keeps its first visible row in place, so older messages coming in under the loader at the top
+ * Where the list stands. It follows the conversation until the person drags it, and again once they send: at the
+ * last answer's start (the farm's page after the copy, a turn's answer), at their own message while it is on its
+ * way. A list keeps its first visible row in place, so older messages coming in under the loader at the top
  * would leave the loader in view and ask again: the message that was first stays first instead. [lead] is the
  * number of rows above the first message.
  */
@@ -28,10 +28,14 @@ fun ConversationPlacement(state: ConversationState, blocks: List<Block>, list: L
     LaunchedEffect(list) {
         list.interactionSource.interactions.collect { if (it is DragInteraction.Start) follow = false }
     }
-    val open = Blocks.openAt(blocks)
-    val openKey = blocks.getOrNull(open)?.first
-    LaunchedEffect(openKey) {
-        if (follow && openKey != null) list.scrollToItem(lead + open)
+    // What is followed: the person's own newest words while they are on their way, else the last answer's start
+    // (the last thing asked while a turn has no answer yet). Placed again whenever a row comes or goes: a target
+    // that cannot reach the top leaves the list at its end, so what was added below it (the live line, the steps
+    // of the running turn) is in view rather than under the fold.
+    val target = if (state.outgoing.isNotEmpty()) lead + blocks.size + state.outgoing.size - 1 else lead + Blocks.openAt(blocks)
+    val rows = lead + blocks.size + state.outgoing.size + if (state.running) 1 else 0
+    LaunchedEffect(target, rows, follow) {
+        if (follow && rows > lead) list.scrollToItem(target)
     }
     val sent = state.outgoing.lastOrNull()?.id
     var lastSent by remember { mutableStateOf(sent) }
@@ -39,7 +43,6 @@ fun ConversationPlacement(state: ConversationState, blocks: List<Block>, list: L
         if (sent == null || sent == lastSent) return@LaunchedEffect
         lastSent = sent
         follow = true
-        list.scrollToItem(lead + blocks.size + state.outgoing.size - 1)
     }
     val firstKey = blocks.firstOrNull()?.first
     var lastFirst by remember { mutableStateOf(firstKey) }

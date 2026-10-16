@@ -187,8 +187,11 @@ class ConversationSource(
     private suspend fun caughtUp() {
         if (_state.value.messages.none { !it.provisional }) return readTail()
         val t = named() ?: return
+        val held = LiveMerge.readFrom(_state.value) - 1
         val p = page(manager.read(farmId, OP_READ, ConversationBuild.newArgs(_state.value, t))) ?: return
-        if (p.next != null) return readTail()
+        // More than a page missed, or a record shorter than the rows held (the copy is of a record set back since):
+        // the last page is read and the build starts again from it.
+        if (p.next != null || p.total < held) return readTail()
         keep { s -> LiveMerge.confirm(s, p.messages.map(ConversationBuild::step)) }
     }
 

@@ -167,6 +167,28 @@ async function main() {
         'words sent into an idle card start its turn, their user step last in the record');
     await P.request(port, 'POST', '/_test/scenario', {});
 
+    // ---- a card's permission is a Needs row of its session (vsc needs.ts), needs.act answers it; the PC answering closes a question
+    const pause = ms => new Promise(r => setTimeout(r, ms));
+    await P.request(port, 'POST', '/_test/turn', { id: 'c_psy', stepMs: 20, permission: { tool: 'Bash', summary: 'rm -rf build' } });
+    await pause(160);
+    const parkedSid = (await psyOf()).sessionId;
+    const listedNeeds = (await call('needs.list')).result;
+    const permRow = listedNeeds.items.find(i => i.key === `permission|${parkedSid}`);
+    t.ok(permRow && permRow.kind === 'permission' && permRow.agentName === 'psikolog' && permRow.detail === 'rm -rf build' && K.checkOp(c, 'needs.list', listedNeeds) === null,
+        'a card parked on a permission is a permission row of its session in needs.list');
+    const permKey = permRow ? permRow.key : 'none';
+    await call('needs.act', { key: permKey, action: 'permission-allow' });
+    await pause(80);
+    const allowed = await psyOf();
+    t.ok(allowed.status === 'idle' && !allowed.asking && !(await call('needs.list')).result.items.some(i => i.key === permKey), 'needs.act on that row lets the turn go on, and the row goes');
+    await P.request(port, 'POST', '/_test/turn', { id: 'c_psy', stepMs: 20, ask: { question: 'Hangi dal?', options: ['master', 'yeni dal'] } });
+    await pause(160);
+    const asking = (await psyOf()).asking;
+    const settled = await P.request(port, 'POST', '/_test/answer', { id: 'c_psy', answer: 'master' });
+    await pause(80);
+    t.ok(asking && asking.kind === 'question' && settled.body.settled === true && !(await psyOf()).asking, 'the PC answering a question closes it on the card');
+    await P.request(port, 'POST', '/_test/scenario', {});
+
     // ---- a new session the phone's way (vsc phoneNew + openNew): the card it opens is in the Console list at once
     const listed = (await call('console.new')).result;
     t.ok(Array.isArray(listed.agents) && listed.agents.includes('developer'), 'console.new called bare lists the agents a session opens with');

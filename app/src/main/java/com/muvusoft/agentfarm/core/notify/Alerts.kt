@@ -56,6 +56,8 @@ data class Alert(
     val actions: List<AlertAction>,
     val silent: Boolean = false,
     val renotify: Boolean = false,
+    /** The Console card it is about: a tap opens its Conversation, the card open when it asks. */
+    val session: String? = null,
 )
 
 object Alerts {
@@ -75,6 +77,7 @@ object Alerts {
                 e.session,
             ),
             silenced(e.quiet),
+            session = e.session,
         )
         is PermissionOpened -> Alert(
             Channel.ASK, "perm:${e.permId}", "${e.agent} asks permission: ${e.tool} · $farmName", e.summary,
@@ -86,8 +89,9 @@ object Alerts {
                 e.session,
             ),
             silenced(e.quiet),
+            session = e.session,
         )
-        is TurnFinished -> Alert(Channel.TURN, "turn:${e.session}", "${e.agent}: turn finished · $farmName", e.title, emptyList(), silenced(e.quiet))
+        is TurnFinished -> Alert(Channel.TURN, "turn:${e.session}", "${e.agent}: turn finished · $farmName", e.title, emptyList(), silenced(e.quiet), session = e.session)
         is NoticePosted -> Alert(noticeChannel(e.level), "notice:${e.id}", "${e.agent} · $farmName", e.title, emptyList(), silenced(e.quiet))
         is GateOpened -> Alert(
             Channel.ASK, "gate:${e.gateId}", "Workflow \"${e.workflow}\" asks · $farmName", e.question,

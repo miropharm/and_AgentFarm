@@ -35,10 +35,12 @@ object AlertPoster {
     }
 
     fun post(context: Context, farmId: String, alert: Alert) {
-        val open = PendingIntent.getActivity(
-            context, alert.tag.hashCode(), Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
-            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
-        )
+        val tap = Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+        // About a session: the tap opens its farm's Now with that Conversation over it, no page in between.
+        alert.session?.let {
+            tap.putExtra(MainActivity.OPEN_NOW, true).putExtra(MainActivity.OPEN_FARM, farmId).putExtra(MainActivity.OPEN_SESSION, it)
+        }
+        val open = PendingIntent.getActivity(context, alert.tag.hashCode(), tap, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
         val b = NotificationCompat.Builder(context, alert.channel.id)
             .setSmallIcon(R.drawable.ic_stat_farm)
             .setContentTitle(alert.title)

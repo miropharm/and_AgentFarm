@@ -37,6 +37,14 @@ class AlertsTest {
     }
 
     @Test
+    fun aQuestionAPermissionAndAFinishedTurnNameTheirCardSoATapOpensItsConversation() {
+        assertEquals("s1", Alerts.of("x", ask(2))!!.session)
+        assertEquals("s1", Alerts.of("x", PermissionOpened("s1", "developer", "p1", "Bash", "git status", "permission|t1"))!!.session)
+        assertEquals("s1", Alerts.of("x", TurnFinished("s1", "developer", "Test kapısı", "bitti"))!!.session)
+        assertNull(Alerts.of("x", NoticePosted("n1", "Rapor hazır", 2, "developer"))!!.session)
+    }
+
+    @Test
     fun aQuestionWithTooManyOptionsTakesATypedReply() {
         val a = Alerts.of("Masaüstü", ask(Alerts.MAX_BUTTONS + 1))!!
         assertEquals(listOf("Reply", "Stop"), a.actions.map { it.label })

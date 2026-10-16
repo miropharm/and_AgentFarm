@@ -22,6 +22,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.saveable.rememberSaveable
 import com.muvusoft.agentfarm.core.link.LinkText
 import com.muvusoft.agentfarm.core.share.Shared
+import com.muvusoft.agentfarm.core.view.NowRequest
 import com.muvusoft.agentfarm.net.ConversationStore
 import com.muvusoft.agentfarm.net.NowStore
 import com.muvusoft.agentfarm.ui.now.NowRoute
@@ -52,8 +53,8 @@ fun ShellApp(
     /** Words or a picture another app shared to Agent Farm; `onShareDone` once it was sent or given up. */
     incomingShare: Shared?,
     onShareDone: () -> Unit,
-    /** The widget or the tile was tapped: open the focused farm's Now page; `onOpenNowDone` once it is. */
-    openNow: Boolean,
+    /** The widget or the tile (the focused farm's Now), or a notification (its farm's Now, its session's Conversation over it). */
+    openNow: NowRequest?,
     onOpenNowDone: () -> Unit,
     /** The widget's stop was tapped: offer the running turns; `onStopDone` once the screen is left. */
     openStop: Boolean,
@@ -120,7 +121,7 @@ private fun Shell(
     store: FarmStore,
     manager: ConnectionManager,
     incomingLink: String?,
-    openNow: Boolean,
+    openNow: NowRequest?,
     onOpenNowDone: () -> Unit,
     settings: SettingsUi,
 ) {
@@ -129,10 +130,14 @@ private fun Shell(
     val scope = rememberCoroutineScope()
     val shell by manager.state.collectAsState()
     var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
-    val nowTarget = { shell.focused?.takeIf { f -> farms.any { it.id == f } } ?: farms.firstOrNull()?.id }
-    // Opened from the widget or the tile, the first frame is already Now: a farms list drawn for one frame first
+    val nowTarget = { want: String? ->
+        want?.takeIf { w -> farms.any { it.id == w } } ?: shell.focused?.takeIf { f -> farms.any { it.id == f } } ?: farms.firstOrNull()?.id
+    }
+    // Opened from the widget, the tile or a notification, the first frame is already Now: a farms list drawn for one frame first
     // is a flicker on a phone and a whole extra frame before the copy shows.
-    var opened by rememberSaveable { mutableStateOf(if (openNow) nowTarget() else null) }
+    var opened by rememberSaveable { mutableStateOf(openNow?.let { nowTarget(it.farm) }) }
+    // Held until Now has opened its Conversation: the request itself is spent at once.
+    var talk by rememberSaveable { mutableStateOf(openNow?.session) }
     var inSettings by rememberSaveable { mutableStateOf(false) }
     val confirm = rememberDestructiveConfirm()
 
@@ -151,9 +156,9 @@ private fun Shell(
     }
 
     LaunchedEffect(openNow) {
-        if (!openNow) return@LaunchedEffect
-        val target = nowTarget()
-        if (target != null) { manager.focus(target); inSettings = false; opened = target }
+        val want = openNow ?: return@LaunchedEffect
+        val target = nowTarget(want.farm)
+        if (target != null) { manager.focus(target); inSettings = false; opened = target; talk = want.session }
         onOpenNowDone()
     }
 
@@ -182,7 +187,10 @@ private fun Shell(
 
     val open = opened
     if (open != null) {
-        NowRoute(farmId = open, manager = manager, store = nowStore, conversations = conversationStore, onFarms = { opened = null })
+        NowRoute(
+            farmId = open, manager = manager, store = nowStore, conversations = conversationStore,
+            talk = talk, onTalkOpened = { talk = null }, onFarms = { opened = null },
+        )
         return
     }
 

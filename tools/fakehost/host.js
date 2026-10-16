@@ -99,6 +99,8 @@ function createHost(opts = {}) {
         if (req.method === 'POST' && url === '/_test/revoke') { const b = await body(req); const d = h.devices.get(b.device); if (d) { d.revoked = true; } return reply(res, 200, { revoked: !!d }); }
         if (req.method === 'GET' && url === '/_test/state') { return reply(res, 200, { lastSeq: h.seq, devices: [...h.devices.keys()], calls: h.calls, code: [...h.codes][0] || h.newCode() }); }
         if (req.method === 'POST' && url === '/_test/scenario') { return reply(res, 200, h.scenario(await body(req) || {})); }
+        // The PC answers a parked turn itself (the Console, another phone): the card's question or permission closes.
+        if (req.method === 'POST' && url === '/_test/answer') { const b = await body(req) || {}; return reply(res, 200, { settled: h.turns.settle(String(b.id || ''), b.answer) }); }
         if (req.method === 'POST' && url === '/_test/turn') { const b = await body(req) || {}; return reply(res, 200, h.turns.start(String(b.id || ''), b)); }
         if (req.method === 'GET' && url === '/_test/log') { return reply(res, 200, { profile: h.profile, calls: h.calls, findings: audit(h.calls), live: live.stats() }); }
         reply(res, 404, { error: 'not found' });
@@ -159,6 +161,8 @@ function createHost(opts = {}) {
         if (op === 'farm.open') { return { ok: true, result: { opening: false, already: true, farm: farm.name } }; }
         if (op === 'console.answer' && args.id) { h.turns.settle(String(args.id), args.answer ?? args.response); }
         if (op === 'console.interrupt' && args.id) { h.turns.stop(String(args.id)); }
+        const asks = op === 'needs.act' && /^permission\|/.test(String(args.key || '')) ? h.world.rows.find(r => `permission|${r.sessionId}` === args.key) : null;
+        if (asks) { h.turns.settle(asks.id, args.action === 'permission-allow' ? 'allowed' : 'denied'); }
         const run = h.world.ops[op] || OPS[op];
         if (!run) { return { ok: false, error: `unknown op ${op}` }; }
         try {

@@ -44,12 +44,30 @@ private val KeySaver = Saver<ConversationKey?, String>(
  * (Back returns to where they were opened).
  */
 @Composable
-fun NowRoute(farmId: String, manager: ConnectionManager, store: NowStore, conversations: ConversationStore, onFarms: () -> Unit) {
+fun NowRoute(
+    farmId: String,
+    manager: ConnectionManager,
+    store: NowStore,
+    conversations: ConversationStore,
+    talk: String?,
+    onTalkOpened: () -> Unit,
+    onFarms: () -> Unit,
+) {
     val source = remember(farmId) { NowSource(manager, store, farmId, preload = ConversationPreload(manager, conversations, farmId)) }
     val state by source.state.collectAsState()
     val refreshing by source.refreshing.collectAsState()
     var page by remember(farmId) { mutableStateOf<ShellRequest.Open?>(null) }
-    var conversation by rememberSaveable(farmId, stateSaver = KeySaver) { mutableStateOf<ConversationKey?>(null) }
+    // A notification's session: its Conversation is the first frame, over Now, so Back is Now.
+    val talking = { id: String -> (NowOpen.of(source.state.value, id) as? NowTarget.Conversation)?.key }
+    var conversation by rememberSaveable(farmId, stateSaver = KeySaver) { mutableStateOf(talk?.let(talking)) }
+    LaunchedEffect(talk) {
+        val id = talk ?: return@LaunchedEffect
+        talking(id)?.let {
+            page = null
+            conversation = it
+        }
+        onTalkOpened()
+    }
     val open = page
     if (open != null) {
         FarmPage(farmId = farmId, page = open.page, manager = manager, onBack = { page = null }, args = open.args)

@@ -2,7 +2,6 @@ package com.muvusoft.agentfarm
 
 import android.os.SystemClock
 import android.view.KeyEvent
-import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasTestTag
@@ -182,18 +181,6 @@ class JourneyConversationTest : JourneyBase() {
 
     /** What is left of a second after the PC did something: a step's target from the moment it starts. */
     private fun due(pcAt: Long) = (pcAt + 1_000 - SystemClock.elapsedRealtime()).coerceAtLeast(0)
-
-    private fun said(words: String) = hasText(words, substring = true) and (hasAnyAncestor(tagStarts("out-")) or hasAnyAncestor(tagStarts("user-")))
-
-    private fun answered(words: String) = hasText(words, substring = true) and hasAnyAncestor(tagStarts("answer-"))
-
-    /** Where it starts can be read: its top, unclipped, lies inside the conversation list. */
-    private fun startsInView(m: SemanticsMatcher): Boolean {
-        val area = rule.onAllNodes(hasTestTag("conv-list"), useUnmergedTree = true).fetchSemanticsNodes().firstOrNull()?.boundsInRoot ?: return false
-        return rule.onAllNodes(m, useUnmergedTree = true).fetchSemanticsNodes().any { n ->
-            n.layoutInfo.isPlaced && n.positionInRoot.y >= area.top - 1 && n.positionInRoot.y < area.bottom - 8
-        }
-    }
 
     private companion object {
         const val J2_STEP_MS = 3_000L

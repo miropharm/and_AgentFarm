@@ -1,10 +1,14 @@
 package com.muvusoft.agentfarm
 
+import android.app.NotificationManager
 import android.content.Intent
 import android.net.Uri
+import android.os.SystemClock
+import android.service.notification.StatusBarNotification
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
@@ -52,6 +56,35 @@ abstract class JourneyBase {
 
     /** The farm's answer on Now: its card, and no stale copy's banner above it. */
     protected fun fresh() = until(15_000) { shown(hasTestTag("running-c_dev")) && !shown(hasTestTag("stale")) }
+
+    /** The user's words in a Conversation: the phone's own bubble, or the record's. */
+    protected fun said(words: String) = hasText(words, substring = true) and (hasAnyAncestor(tagStarts("out-")) or hasAnyAncestor(tagStarts("user-")))
+
+    protected fun answered(words: String) = hasText(words, substring = true) and hasAnyAncestor(tagStarts("answer-"))
+
+    /** Where it starts can be read: its top, unclipped, lies inside the conversation list. */
+    protected fun startsInView(m: SemanticsMatcher): Boolean {
+        val area = rule.onAllNodes(hasTestTag("conv-list"), useUnmergedTree = true).fetchSemanticsNodes().firstOrNull()?.boundsInRoot ?: return false
+        return rule.onAllNodes(m, useUnmergedTree = true).fetchSemanticsNodes().any { n ->
+            n.layoutInfo.isPlaced && n.positionInRoot.y >= area.top - 1 && n.positionInRoot.y < area.bottom - 8
+        }
+    }
+
+    /** This app's notifications gone: a journey's notification is its own, never one an earlier test left. */
+    protected fun clearNotifications() = ctx.getSystemService(NotificationManager::class.java).cancelAll()
+
+    /** A notification of this app whose tag starts so (and whose text holds [text]), once it is posted; null past [ms]. */
+    protected fun notification(tagPrefix: String, text: String? = null, ms: Long = 10_000): StatusBarNotification? {
+        val nm = ctx.getSystemService(NotificationManager::class.java)
+        val end = SystemClock.elapsedRealtime() + ms
+        while (SystemClock.elapsedRealtime() < end) {
+            nm.activeNotifications.firstOrNull { n ->
+                n.tag?.startsWith(tagPrefix) == true && (text == null || n.notification.extras.getCharSequence("android.text")?.contains(text) == true)
+            }?.let { return it }
+            Thread.sleep(100)
+        }
+        return null
+    }
 
     protected fun tagStarts(prefix: String) =
         SemanticsMatcher("testTag starts with $prefix") { it.config.getOrNull(SemanticsProperties.TestTag)?.startsWith(prefix) == true }

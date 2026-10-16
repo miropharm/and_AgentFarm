@@ -160,7 +160,13 @@ function createFarm(opts = {}) {
             return { id: s.id, file: `C:\\Users\\me\\.claude\\projects\\farm\\${s.id}.jsonl`, engine: s.engine, title: s.title, agent: s.agent, ...page };
         },
         'needs.list': () => {
-            const items = needs.map(i => ({ ...i, key: `${i.kind}|${i.ref.sessionId}`, clearable: false }));
+            // A Console card's turn parked on a permission is a permission row of its session (vsc needs.ts), answered by needs.act.
+            const parked = rows.filter(r => r.asking && r.asking.kind === 'permission').map(r => ({
+                urgency: 0, kind: 'permission', agentName: r.agent, title: `${r.asking.tool}: ${r.asking.detail}`, detail: r.asking.detail,
+                ts: r.asking.waitingSince, ref: { sessionId: r.sessionId },
+                actions: [{ id: 'permission-allow', label: 'Allow' }, { id: 'permission-deny', label: 'Deny' }],
+            }));
+            const items = [...parked, ...needs].map(i => ({ ...i, key: `${i.kind}|${i.ref.sessionId}`, clearable: false }));
             return { items, blocking: items.length, hidden: 0 };
         },
         // vsc phoneNew + openNew: called bare, the agents a session can open with; with an agent, a Console card opens

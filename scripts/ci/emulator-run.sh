@@ -45,6 +45,15 @@ set -e
 # Scenes the UI tests reached by pressing (androidTest Shots.kt), kept in the app's external files.
 adb pull "/sdcard/Android/data/$PKG/files/shots" "$OUT/" > /dev/null 2>&1 || echo "::warning::no test scene shots were pulled"
 
+# The user journeys (androidTest Journey.kt): one line per step, total and economy, quoted by the commit body.
+if [ -f "$OUT/shots/journeys.txt" ]; then
+  cp "$OUT/shots/journeys.txt" "$OUT/journeys.txt"
+  echo "== journeys"; cat "$OUT/journeys.txt"
+  { echo "### Journeys"; echo; echo '```'; cat "$OUT/journeys.txt"; echo '```'; } >> "${GITHUB_STEP_SUMMARY:-/dev/null}"
+else
+  echo "::warning::no journeys.txt was written"
+fi
+
 # Each screenshot is logged with the rotation and night mode actually in effect, so a capture can be trusted.
 # shot NAME ROTATION: the rotation is applied after the app is on screen (launching it reset an earlier one).
 shot() {

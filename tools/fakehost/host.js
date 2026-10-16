@@ -1,6 +1,7 @@
 // A fake Agent Farm Remote Host, driven by the contract copy, so the shell can be tested with no PC:
 // pairing, the signed handshake, numbered events with resume and gap, exactly-once calls, pages.
-// /_test/* lets a test (or the emulator script) push events, drop sockets and revoke devices.
+// /_test/* lets a test (or the emulator script) push events, drop sockets and revoke devices; as the scripted
+// farm it also sets the network profile, runs turns over time and hands over the log of what was asked.
 'use strict';
 const crypto = require('crypto');
 const http = require('http');
@@ -8,6 +9,12 @@ const https = require('https');
 const ws = require('./ws');
 const K = require('./contract');
 const pages = require('./pages');
+const { createFarm } = require('./farm');
+const { createTurns } = require('./turns');
+const { audit, rowsOf } = require('./audit');
+
+/** One-way delay on everything the farm sends, so a round trip costs what it costs on that network. */
+const PROFILES = { none: 0, lan: 50, mobile: 300 };
 
 const OPS = {
     'farm.ping': () => ({ pong: true }),
@@ -16,11 +23,6 @@ const OPS = {
     'console.send': a => /\brm\s+-[a-zA-Z]*[rf]/.test(String(a.text || '')) && a.confirm !== 'risk'
         ? { sent: false, confirm: 'risk', note: '⚠️ This asks for rm -rf on developer, which cannot be undone.\nRun it?\nNot sent yet — confirm it, or send it from the PC.' }
         : { note: '→ developer' },
-    'console.sessions': () => [
-        { id: 'c_dev', agent: 'developer', status: 'working', steerable: true, asking: null },
-        { id: 'c_psy', agent: 'psikolog', status: 'idle', steerable: true, asking: null },
-        { id: 'c_old', agent: 'yazar', status: 'ended', steerable: false, asking: null },
-    ],
     // A shared picture goes up first (vsc console.stage): the farm says where it put it.
     'console.stage': a => ({ path: 'C:\\Temp\\agentfarm-attachments\\' + String(a.name || 'shared.png'), bytes: Buffer.from(String(a.data || ''), 'base64').length }),
     // A new session the phone's way (vsc console.new): called bare it lists the agents it can open with.
@@ -39,10 +41,15 @@ function createHost(opts = {}) {
     const c = opts.contract || K.load();
     const farm = opts.farm || { id: 'farm_fake', name: 'Fake Farm' };
     const keep = opts.keep || 100;
-    const h = { c, farm, codes: new Set([opts.code || 'FAKE-CODE']), devices: new Map(), events: [], seq: 0, results: new Map(), calls: [], conns: new Set(), sessions: new Map() };
+    const h = { c, farm, codes: new Set([opts.code || 'FAKE-CODE']), devices: new Map(), events: [], seq: 0, results: new Map(), calls: [], conns: new Set(), sessions: new Map(), profile: 'none' };
 
     const reply = (res, status, body) => { res.writeHead(status, { 'content-type': 'application/json' }); res.end(JSON.stringify(body)); };
     const body = req => new Promise(r => { let s = ''; req.on('data', d => { s += d; }); req.on('end', () => { try { r(JSON.parse(s || '{}')); } catch { r(null); } }); });
+    const send = (conn, frame) => {
+        const text = JSON.stringify(frame);
+        const ms = PROFILES[h.profile] || 0;
+        if (ms) { setTimeout(() => conn.send(text), ms); } else { conn.send(text); }
+    };
 
     h.newCode = () => { const code = crypto.randomBytes(4).toString('hex').toUpperCase(); h.codes.add(code); return code; };
 
@@ -50,9 +57,20 @@ function createHost(opts = {}) {
         const ev = { kind: 'event', seq: ++h.seq, type, ts: Date.now(), data: data || (c.events[type] && c.events[type].example) || {} };
         h.events.push(ev);
         if (h.events.length > keep) { h.events.shift(); }
-        for (const conn of h.conns) { if (conn.welcomed) { conn.send(JSON.stringify(ev)); } }
+        for (const conn of h.conns) { if (conn.welcomed) { send(conn, ev); } }
         return ev.seq;
     };
+
+    /** A fresh world: the farm redrawn, its turns stopped, the log emptied, the network profile set. */
+    h.scenario = (o = {}) => {
+        if (h.turns) { h.turns.clear(); }
+        h.world = createFarm({ history: o.history, longest: o.longest, seed: o.seed });
+        h.turns = createTurns(h.world, h.emit);
+        h.profile = PROFILES[o.profile] !== undefined ? o.profile : 'none';
+        h.calls = [];
+        return { profile: h.profile, sessions: h.world.sessions.length, cards: h.world.rows.map(x => x.id) };
+    };
+    h.scenario();
 
     async function onRequest(req, res) {
         const url = req.url.split('?')[0];
@@ -79,6 +97,9 @@ function createHost(opts = {}) {
         if (req.method === 'POST' && url === '/_test/sleep') { const b = await body(req); h.asleep = b.asleep === true; if (h.asleep) { for (const conn of [...h.conns]) { conn.close(); } } return reply(res, 200, { asleep: h.asleep }); }
         if (req.method === 'POST' && url === '/_test/revoke') { const b = await body(req); const d = h.devices.get(b.device); if (d) { d.revoked = true; } return reply(res, 200, { revoked: !!d }); }
         if (req.method === 'GET' && url === '/_test/state') { return reply(res, 200, { lastSeq: h.seq, devices: [...h.devices.keys()], calls: h.calls, code: [...h.codes][0] || h.newCode() }); }
+        if (req.method === 'POST' && url === '/_test/scenario') { return reply(res, 200, h.scenario(await body(req) || {})); }
+        if (req.method === 'POST' && url === '/_test/turn') { const b = await body(req) || {}; return reply(res, 200, h.turns.start(String(b.id || ''), b)); }
+        if (req.method === 'GET' && url === '/_test/log') { return reply(res, 200, { profile: h.profile, calls: h.calls, findings: audit(h.calls) }); }
         reply(res, 404, { error: 'not found' });
     }
 
@@ -102,11 +123,11 @@ function createHost(opts = {}) {
         conn.session = 's_' + crypto.randomBytes(12).toString('base64url');
         h.sessions.set(conn.session, f.device);
         const features = Object.fromEntries(c.features.map(x => [x, { allowed: true }]));
-        conn.send(JSON.stringify({ kind: 'welcome', farm, device: f.device, scope: d.scope, features, lastSeq: h.seq, session: conn.session, wake: WAKE }));
+        send(conn, { kind: 'welcome', farm, device: f.device, scope: d.scope, features, lastSeq: h.seq, session: conn.session, wake: WAKE });
         if (typeof f.resumeAfter === 'number') {
             const oldest = h.events.length ? h.events[0].seq : h.seq + 1;
-            if (oldest > f.resumeAfter + 1) { conn.send(JSON.stringify({ kind: 'gap', from: f.resumeAfter + 1, to: oldest - 1 })); }
-            for (const ev of h.events) { if (ev.seq > f.resumeAfter) { conn.send(JSON.stringify(ev)); } }
+            if (oldest > f.resumeAfter + 1) { send(conn, { kind: 'gap', from: f.resumeAfter + 1, to: oldest - 1 }); }
+            for (const ev of h.events) { if (ev.seq > f.resumeAfter) { send(conn, ev); } }
         }
     }
 
@@ -135,17 +156,23 @@ function createHost(opts = {}) {
         if (h.away) { return awayAnswer(op); }
         if (op === 'farm.away') { return { ok: true, result: { away: false, farm: farm.name } }; }
         if (op === 'farm.open') { return { ok: true, result: { opening: false, already: true, farm: farm.name } }; }
-        const run = OPS[op];
-        return run ? { ok: true, result: run(args) } : { ok: false, error: `unknown op ${op}` };
+        if (op === 'console.answer' && args.id) { h.turns.settle(String(args.id), args.answer ?? args.response); }
+        if (op === 'console.interrupt' && args.id) { h.turns.stop(String(args.id)); }
+        const run = h.world.ops[op] || OPS[op];
+        if (!run) { return { ok: false, error: `unknown op ${op}` }; }
+        try { return { ok: true, result: run(args) }; } catch (e) { return { ok: false, error: e.message }; }
     }
 
     function call(conn, f) {
         const done = h.results.get(f.id);
-        if (done) { return conn.send(JSON.stringify({ ...done, duplicate: true })); }
-        h.calls.push({ id: f.id, op: f.op, args: f.args || null, device: conn.device });
+        if (done) { return send(conn, { ...done, duplicate: true }); }
+        const entry = { id: f.id, op: f.op, args: f.args || null, device: conn.device, ts: Date.now(), profile: h.profile };
+        h.calls.push(entry);
         const r = { kind: 'result', id: f.id, ...answer(f.op, f.args || {}) };
+        entry.rows = rowsOf(r.result);
+        entry.bytes = Buffer.byteLength(JSON.stringify(r));
         h.results.set(f.id, r);
-        conn.send(JSON.stringify(r));
+        send(conn, r);
     }
 
     function onFrame(conn, text) {
@@ -153,11 +180,11 @@ function createHost(opts = {}) {
         try { f = JSON.parse(text); } catch { return; }
         const bad = K.checkFrame(c, f);
         if (!conn.welcomed) { return bad || f.kind !== 'hello' ? refuse(conn, 'not-allowed', { detail: bad || 'hello first' }) : hello(conn, f); }
-        if (bad) { return f && f.kind === 'call' && f.id ? conn.send(JSON.stringify({ kind: 'result', id: String(f.id), ok: false, error: bad })) : undefined; }
+        if (bad) { return f && f.kind === 'call' && f.id ? send(conn, { kind: 'result', id: String(f.id), ok: false, error: bad }) : undefined; }
         if (f.kind === 'call') { return call(conn, f); }
-        if (f.kind === 'ping') { return conn.send(JSON.stringify({ kind: 'pong', ts: f.ts })); }
-        if (f.kind === 'view.open') { return conn.send(JSON.stringify({ kind: 'view.post', view: f.view, message: { type: 'state', page: f.page, ...(f.args ? { args: f.args } : {}) } })); }
-        if (f.kind === 'view.msg') { return conn.send(JSON.stringify({ kind: 'view.post', view: f.view, message: { type: 'echo', message: f.message } })); }
+        if (f.kind === 'ping') { return send(conn, { kind: 'pong', ts: f.ts }); }
+        if (f.kind === 'view.open') { return send(conn, { kind: 'view.post', view: f.view, message: { type: 'state', page: f.page, ...(f.args ? { args: f.args } : {}) } }); }
+        if (f.kind === 'view.msg') { return send(conn, { kind: 'view.post', view: f.view, message: { type: 'echo', message: f.message } }); }
     }
 
     const server = opts.tls ? https.createServer(opts.tls, onRequest) : http.createServer(onRequest);

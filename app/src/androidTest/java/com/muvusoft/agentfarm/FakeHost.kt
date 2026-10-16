@@ -27,6 +27,9 @@ object FakeHost {
         return base.replace(Regex("code=[^&]+"), "code=$code")
     }
 
+    /** GETs a test path (the scripted farm's /_test/log, /_test/state). */
+    fun get(path: String): String = get(Pairing.parse(requireLink())!!, path)
+
     fun get(info: PairingInfo, path: String): String =
         PinnedTls.client(info.fp).newCall(Request.Builder().url("https://${info.addresses.first()}$path").build())
             .execute().use { it.body!!.string() }

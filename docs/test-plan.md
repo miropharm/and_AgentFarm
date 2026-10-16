@@ -5,7 +5,7 @@ Her senaryo: ön koşul · eylem · beklenen · otomasyon · son sonuç.
 
 ## Kullanıcı yolculukları (B yolu) — her işin ölçüsü
 
-Tasarım: vault `10_Notes/A-PLN - Telefon Yeniden Tasarımı B Yolu - Yerel Ana Ekranlar ve Kullanıcı Yolculuğu Testleri - 261016` (§3 hedefler, §7 çerçeve, §8 "bitti"). Her yolculuk bir emülatör testidir: senaryolu çiftliğe (sahte sunucunun yeni hali: gerçek çıktı biçiminde veri, zamanla ilerleyen turlar, büyük geçmiş, LAN 50 ms / mobil 300 ms gecikme, istek kaydı) karşı kullanıcının yaptığını yapar, **ekranda görüneni** doğrular, dokunuş ve süreyi ölçer, her adımı çeker; CI `journeys.txt` üretir. Bir iş, hizmet ettiği yolculuk GEÇTİ olmadan bitmez.
+Tasarım: vault `10_Notes/A-PLN - Telefon Yeniden Tasarımı B Yolu - Yerel Ana Ekranlar ve Kullanıcı Yolculuğu Testleri - 261016` (§3 hedefler, §7 çerçeve, §8 "bitti"). Çerçeve: senaryolu çiftlik `tools/fakehost/` (`/_test/scenario`, `/_test/turn`, `/_test/log`; biçimler `examples.json`, denetim `test/test_scripted_farm.js`) ve emülatörde `androidTest/Journey.kt` (adım · dokunuş · ms · hedef · görüntü · veri ekonomisi → `journeys.txt`). Her yolculuk bir emülatör testidir: senaryolu çiftliğe (sahte sunucunun yeni hali: gerçek çıktı biçiminde veri, zamanla ilerleyen turlar, büyük geçmiş, LAN 50 ms / mobil 300 ms gecikme, istek kaydı) karşı kullanıcının yaptığını yapar, **ekranda görüneni** doğrular, dokunuş ve süreyi ölçer, her adımı çeker; CI `journeys.txt` üretir. Bir iş, hizmet ettiği yolculuk GEÇTİ olmadan bitmez.
 
 ‼️ Aşağıdaki TC'lerden çiftlik sayfasına dokunanlar (TC-012, TC-026, TC-027, TC-033, TC-037, TC-048) sahte sunucunun boş yer tutucu sayfasıyla ("Fake page: now") koştu: kabuğun tesisatını kanıtlarlar, gerçek Agent Farm sayfasının telefonda nasıl göründüğünü ve kullanılabildiğini kanıtlamazlar.
 
@@ -15,7 +15,7 @@ Tasarım: vault `10_Notes/A-PLN - Telefon Yeniden Tasarımı B Yolu - Yerel Ana 
 | J2 | Çalışan oturumu takip et | 1 dokunuş; Konuşma son cevabın başında, kopya ≤ 0,5 sn / tazesi ≤ 1,5 sn; tur sürüyorsa akış canlı | U-19 | henüz yok |
 | J3 | Talimat ver | kendi mesajı ≤ 0,2 sn; ilk canlı adım PC'de oluştuktan ≤ 1 sn sonra; cevap tur bitince ≤ 1 sn; sonraki talimat aynı ekrandan | U-19, N-8 | henüz yok |
 | J4 | Soru / izni cevapla | bildirimden 1 dokunuş, kart açık; cevap 1 dokunuş; başka yerden cevaplanınca kart kapanır | U-20, B-7 | henüz yok |
-| J5 | Turu durdur | durdur + onay = 2 dokunuş; durdu bilgisi ≤ 1 sn | U-19 | henüz yok |
+| J5 | Turu durdur | durdur + onay = 2 dokunuş; durdu bilgisi ≤ 1 sn | U-19 | widget kapısı: `JourneyStopTest` (LAN, mobil) — v1.110'da CI'da; Konuşma kapısı henüz yok |
 | J6 | Bildirimden son cevabı oku | 1 dokunuş; son cevabın başı | B-7 | henüz yok |
 | J7 | Yeni oturum | en çok 4 dokunuş + yazı; yeni oturumun Konuşma'sı açılır | U-18 | henüz yok |
 | J8 | Geçmişe bak | 20'şer, her parti ≤ 1 sn; sunucu kaydında 20'den büyük istek yok | U-18, N-9, U-23 | henüz yok |

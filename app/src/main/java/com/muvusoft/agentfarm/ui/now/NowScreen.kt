@@ -72,10 +72,13 @@ fun linkColor(link: Link): Color = when (link) {
     is Link.Refused -> MaterialTheme.colorScheme.error
 }
 
-/** The main screen: what waits for you, what runs, what finished. It only draws; NowState is the farm's. */
+/**
+ * The main screen: what waits for you, what runs, what finished. It only draws; NowState is the farm's. [wake] is
+ * drawn under the stale copy's banner: the way to wake a sleeping PC, which the copy alone would hide.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun NowScreen(state: NowState, now: Long, refreshing: Boolean, actions: NowActions) {
+fun NowScreen(state: NowState, now: Long, refreshing: Boolean, actions: NowActions, wake: @Composable () -> Unit) {
     Scaffold(
         topBar = {
             ScreenBar {
@@ -108,15 +111,22 @@ fun NowScreen(state: NowState, now: Long, refreshing: Boolean, actions: NowActio
         },
     ) { pad ->
         PullToRefreshBox(isRefreshing = refreshing, onRefresh = actions.onRefresh, modifier = Modifier.padding(pad).fillMaxSize()) {
-            if (state.empty) EmptyNow(state, now, actions.onNew) else NowList(state, now, actions)
+            if (state.empty) EmptyNow(state, now, actions.onNew, wake) else NowList(state, now, actions, wake)
         }
     }
 }
 
 @Composable
-private fun NowList(state: NowState, now: Long, actions: NowActions) {
+private fun NowList(state: NowState, now: Long, actions: NowActions, wake: @Composable () -> Unit) {
     LazyColumn(Modifier.fillMaxSize().testTag("now-list"), contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 96.dp)) {
-        SessionText.stale(state.link, state.updatedAt, now)?.let { item(key = "stale") { Box(Modifier.padding(bottom = 8.dp)) { StaleBanner(it) } } }
+        SessionText.stale(state.link, state.updatedAt, now)?.let {
+            item(key = "stale") {
+                Column(Modifier.padding(bottom = 8.dp)) {
+                    StaleBanner(it)
+                    wake()
+                }
+            }
+        }
         state.error?.let { item(key = "error") { Box(Modifier.padding(bottom = 8.dp)) { ErrorBanner(it, actions.onRetry) } } }
         if (state.loading) item(key = "loading") { SkeletonRows(4, Modifier.padding(top = 12.dp)) }
         if (state.waiting.isNotEmpty()) {
@@ -146,9 +156,12 @@ private fun NowList(state: NowState, now: Long, actions: NowActions) {
 }
 
 @Composable
-private fun EmptyNow(state: NowState, now: Long, onNew: () -> Unit) {
+private fun EmptyNow(state: NowState, now: Long, onNew: () -> Unit, wake: @Composable () -> Unit) {
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp).testTag("now-empty"), horizontalAlignment = Alignment.CenterHorizontally) {
-        SessionText.stale(state.link, state.updatedAt, now)?.let { StaleBanner(it) }
+        SessionText.stale(state.link, state.updatedAt, now)?.let {
+            StaleBanner(it)
+            wake()
+        }
         Column(Modifier.padding(top = 96.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Text(stringResource(R.string.now_empty), style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
             Button(onClick = onNew) {

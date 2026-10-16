@@ -9,6 +9,7 @@ import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import com.muvusoft.agentfarm.core.now.NowOpen
 import com.muvusoft.agentfarm.core.state.Link
@@ -20,12 +21,13 @@ import com.muvusoft.agentfarm.net.NowStore
 import com.muvusoft.agentfarm.ui.page.AwayScreen
 import com.muvusoft.agentfarm.ui.page.FarmPage
 import com.muvusoft.agentfarm.ui.page.WaitScreen
+import com.muvusoft.agentfarm.ui.page.WakeOffer
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
- * A farm's Now, fed by its NowSource while it is in view. A row, the Menu and + open the farm's own pages over
- * it (Back returns here) until their native screens take those places.
+ * A farm's Now, fed by its NowSource while it is in view. + opens the new-session sheet; a row and the Menu open
+ * the farm's own pages over it (Back returns here) until their native screens take those places.
  */
 @Composable
 fun NowRoute(farmId: String, manager: ConnectionManager, store: NowStore, onFarms: () -> Unit) {
@@ -64,6 +66,19 @@ fun NowRoute(farmId: String, manager: ConnectionManager, store: NowStore, onFarm
     }
     LaunchedEffect(source) { source.run() }
     BackHandler(onBack = onFarms)
+    var creating by rememberSaveable(farmId) { mutableStateOf(false) }
+    if (creating) {
+        NewSessionSheet(
+            farmId = farmId,
+            state = state,
+            manager = manager,
+            onOpened = {
+                creating = false
+                scope.launch { source.refresh() }
+            },
+            onDismiss = { creating = false },
+        )
+    }
     NowScreen(
         state = state,
         now = now,
@@ -71,12 +86,13 @@ fun NowRoute(farmId: String, manager: ConnectionManager, store: NowStore, onFarm
         actions = NowActions(
             onOpen = { page = NowOpen.of(state, it) },
             onQuick = { w, q -> source.quick(w, q) },
-            onNew = { page = ShellRequest.Open(PageRoute.HOME_PAGE) },
+            onNew = { creating = true },
             onRefresh = { scope.launch { source.refresh() } },
             onMoreRecent = { scope.launch { source.more() } },
             onRetry = { scope.launch { source.refresh() } },
             onFarm = onFarms,
             onMenu = { page = ShellRequest.Open(PageRoute.HOME_PAGE) },
         ),
+        wake = { WakeOffer(farmId = farmId, farmName = name, link = link, manager = manager, overCopy = true) },
     )
 }

@@ -61,7 +61,7 @@ class VisualLanguageTest {
         composer = ComposerActions(onText = {}, onSend = {}, onAttach = {}, onDictate = {}),
     )
 
-    private fun now(s: NowState): @Composable () -> Unit = { NowScreen(s, NOW, refreshing = false, actions = nowActions) }
+    private fun now(s: NowState): @Composable () -> Unit = { NowScreen(s, NOW, refreshing = false, actions = nowActions, wake = {}) }
     private fun conv(s: ConversationState, draft: String = ""): @Composable () -> Unit =
         { ConversationScreen(s, NOW, draft, convActions) }
 

@@ -20,10 +20,8 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
@@ -34,18 +32,11 @@ import com.muvusoft.agentfarm.core.share.Share
 import com.muvusoft.agentfarm.core.share.ShareTarget
 import com.muvusoft.agentfarm.core.share.Shared
 import com.muvusoft.agentfarm.core.state.Link
-import com.muvusoft.agentfarm.core.state.Outbox
 import com.muvusoft.agentfarm.net.ConnectionManager
-import com.muvusoft.agentfarm.net.ShareSend
 import com.muvusoft.agentfarm.net.request
 import com.muvusoft.agentfarm.ui.components.ChoiceSection
 import com.muvusoft.agentfarm.ui.components.Choices
-import com.muvusoft.agentfarm.ui.lock.Destructive
-import com.muvusoft.agentfarm.ui.lock.rememberDestructiveConfirm
-import kotlinx.coroutines.launch
-
-/** A send the farm stopped at a gate: the yes goes back to the same farm and session, never to a new pick. */
-private data class Asked(val farm: String, val target: String, val gate: String)
+import com.muvusoft.agentfarm.ui.components.rememberSendFlow
 
 /**
  * Words or a picture shared from another app, said into a running Console session (`console.send`) or
@@ -59,7 +50,6 @@ private data class Asked(val farm: String, val target: String, val gate: String)
 @Composable
 fun ShareScreen(shared: Shared, manager: ConnectionManager, onDone: () -> Unit) {
     BackHandler(onBack = onDone)
-    val context = LocalContext.current
     val shell by manager.state.collectAsState()
     val image = shared.image
     val offered = shell.farms.filter { it.link is Link.Online || (image == null && it.sessions != null) }
@@ -71,39 +61,13 @@ fun ShareScreen(shared: Shared, manager: ConnectionManager, onDone: () -> Unit) 
     var targets by remember { mutableStateOf<List<ShareTarget>?>(null) }
     var agents by remember { mutableStateOf<List<String>>(emptyList()) }
     var target by remember { mutableStateOf<String?>(null) }
-    var outcome by remember { mutableStateOf<String?>(null) }
-    var asked by remember { mutableStateOf<Asked?>(null) }
-    var busy by remember { mutableStateOf(false) }
-    val scope = rememberCoroutineScope()
-    val confirm = rememberDestructiveConfirm()
-    val confirmTitle = stringResource(R.string.share_confirm_title)
-    val confirmVerb = stringResource(R.string.share_confirm)
+    val flow = rememberSendFlow(manager)
+    val outcome = flow.outcome
+    val asked = flow.asked
 
-    // Each send is a new call; a yes is the same text again with the gate the farm named.
-    fun send(farm: String, to: String, gate: String?) {
-        if (farm !in online) {
-            val (op, args) = Share.call(to, shared.text, null, gate)
-            val whom = Share.newAgent(to) ?: targets?.firstOrNull { it.id == to }?.agent ?: to
-            manager.call(farm, op, args, receipt = whom)
-            outcome = Share.queued(whom, shell.farm(farm)?.farm?.name ?: farm, Outbox.MAX_AGE_HOURS)
-            return
-        }
-        busy = true
-        scope.launch {
-            val r = ShareSend.send(context, manager, farm, to, shared, gate)
-            outcome = Share.outcome(r?.ok == true, r?.result, r?.error)
-            asked = Share.asks(r?.ok == true, r?.result)?.let { Asked(farm, to, it) }
-            busy = false
-        }
-    }
+    fun send(farm: String, to: String) = flow.send(farm, to, shared, Share.newAgent(to) ?: targets?.firstOrNull { it.id == to }?.agent ?: to)
 
-    // A different pick starts over: a yes given for one session is never spent on another.
-    fun startOver() {
-        if (asked != null) {
-            asked = null
-            outcome = null
-        }
-    }
+    fun startOver() = flow.startOver()
 
     // A farm that does not answer offers what it last listed; once it answers, sessions and agents are read again.
     LaunchedEffect(farmId, farmOnline) {
@@ -171,19 +135,12 @@ fun ShareScreen(shared: Shared, manager: ConnectionManager, onDone: () -> Unit) 
                 Button(
                     onClick = {
                         when {
-                            a != null -> confirm(
-                                Destructive(
-                                    title = confirmTitle,
-                                    detail = outcome.orEmpty(),
-                                    verb = confirmVerb,
-                                    run = { send(a.farm, a.target, a.gate) },
-                                ),
-                            )
-                            f != null && t != null -> send(f, t, null)
+                            a != null -> flow.again()
+                            f != null && t != null -> send(f, t)
                             else -> Unit
                         }
                     },
-                    enabled = !busy && image?.tooBig != true && (a != null || (f != null && t != null && outcome == null)),
+                    enabled = !flow.busy && image?.tooBig != true && (a != null || (f != null && t != null && outcome == null)),
                     modifier = Modifier.padding(start = 8.dp).testTag("share-send"),
                 ) { Text(stringResource(if (a != null) R.string.share_confirm else R.string.share_send)) }
             }

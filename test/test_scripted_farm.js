@@ -156,6 +156,18 @@ async function main() {
     t.ok(Date.now() - t0 >= 280, 'events travel with the same delay');
     await P.request(port, 'POST', '/_test/scenario', {});
 
+    // ---- a new session the phone's way (vsc phoneNew + openNew): the card it opens is in the Console list at once
+    const listed = (await call('console.new')).result;
+    t.ok(Array.isArray(listed.agents) && listed.agents.includes('developer'), 'console.new called bare lists the agents a session opens with');
+    const opened = (await call('console.new', { agent: 'developer', prompt: 'Testleri çalıştır' })).result;
+    const card = (await call('console.sessions', { view: 'summary' })).result.find(r => r.id === opened.id);
+    t.ok(card && card.status === 'working' && card.agent === 'developer', 'with an agent and words it opens a Console card whose first turn runs');
+    t.ok(opened.note === '▶ developer — a Console session is open; its first turn is running.', 'its note is openNew\'s own sentence: ' + opened.note);
+    const waits = (await call('console.new', { agent: 'psikolog' })).result;
+    t.ok(/; it waits for its first message\.$/.test(waits.note), 'with no first message the card waits for one: ' + waits.note);
+    await P.request(port, 'POST', '/_test/scenario', {});
+    t.ok(!(await call('console.sessions')).result.some(r => r.id === opened.id), 'a new scenario takes the opened cards away');
+
     t.ok(s.bad.length === 0, 'every frame the scripted farm sent passes the contract checker: ' + s.bad.join('; '));
     await host.close();
 }

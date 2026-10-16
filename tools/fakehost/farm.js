@@ -159,6 +159,15 @@ function createFarm(opts = {}) {
             const items = needs.map(i => ({ ...i, key: `${i.kind}|${i.ref.sessionId}`, clearable: false }));
             return { items, blocking: items.length, hidden: 0 };
         },
+        // vsc phoneNew + openNew: called bare, the agents a session can open with; with an agent, a Console card opens
+        // (its first turn running when words or a picture came) and the farm says so in its own words.
+        'console.new': a => {
+            if (!a.agent) { return { agents: AGENTS.slice() }; }
+            const first = String(a.prompt || '').trim() !== '' || (Array.isArray(a.attach) && a.attach.length > 0);
+            const id = `c_new${rows.length}`;
+            rows.push(consoleRow({ id, agent: a.agent, sessionId: null, engine: 'claude', status: first ? 'working' : 'idle', cost: 0, turns: first ? 1 : 0, end: Date.now() }));
+            return { id, agent: a.agent, note: `▶ ${a.agent} — a Console session is open${first ? '; its first turn is running' : '; it waits for its first message'}.` };
+        },
     };
     f.ops = ops;
     return f;

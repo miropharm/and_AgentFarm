@@ -45,4 +45,14 @@ class WakeTest {
         assertFalse(Wake.offered(Link.Offline("unreachable", 1), listOf(WakeNic("00:00:00:00:00:00", "x"))))
         assertFalse(Wake.offered(null, nic))
     }
+
+    @Test
+    fun overTheSavedCopyItWaitsUntilTheLinkHasFailedOnce() {
+        val nic = listOf(WakeNic("a4:bb:6d:12:34:56", "192.168.1.255"))
+        assertFalse("the tries of an opening", Wake.offeredOverCopy(Link.Connecting("192.168.1.5:7443", 2, 1), nic, failed = false))
+        assertTrue(Wake.offeredOverCopy(Link.Offline("closed", 1), nic, failed = false))
+        assertTrue("a retry after the link failed", Wake.offeredOverCopy(Link.Connecting("192.168.1.5:7443", 1, 1), nic, failed = true))
+        assertFalse(Wake.offeredOverCopy(Link.Online("192.168.1.5:7443", "manage", emptyMap(), 1), nic, failed = true))
+        assertFalse(Wake.offeredOverCopy(Link.Offline("unreachable", 1), emptyList(), failed = true))
+    }
 }

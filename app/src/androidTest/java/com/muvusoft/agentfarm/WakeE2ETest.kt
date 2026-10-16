@@ -66,8 +66,10 @@ class WakeE2ETest {
         rule.waitForIdle()
         Shots.take("wake-sent")
 
-        // The PC is up: the tries after the wake reach it before the backoff would have, and its Now opens.
+        // The PC is up: the tries after the wake reach it before the backoff would have, and its Now is fresh
+        // (a farm opened before shows its saved copy all along, under a stale banner until the farm answers).
         FakeHost.post("/_test/sleep", "{\"asleep\":false}")
         shows("now-farm", timeoutMs = 45_000)
+        rule.waitUntil(45_000) { rule.onAllNodes(hasTestTag("stale"), useUnmergedTree = true).fetchSemanticsNodes().isEmpty() }
     }
 }

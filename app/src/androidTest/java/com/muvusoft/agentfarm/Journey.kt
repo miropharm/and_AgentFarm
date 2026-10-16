@@ -21,7 +21,11 @@ class Journey(private val code: String, private val profile: String) {
     /** A fresh farm world on this journey's network; the farm's log starts empty. */
     fun begin(): Journey = apply { FakeHost.post("/_test/scenario", """{"profile":"$profile"}""") }
 
-    fun step(name: String, taps: Int, targetMs: Long, act: () -> Unit) {
+    /** A note in journeys.txt that is no step: what the journey leaves to a later piece of work. */
+    fun note(text: String) = write("$code · $profile · note · $text")
+
+    /** Returns how long the step took, for a target that runs on from it. */
+    fun step(name: String, taps: Int, targetMs: Long, act: () -> Unit): Long {
         n++
         val t0 = SystemClock.elapsedRealtime()
         val error = runCatching(act).exceptionOrNull()
@@ -33,6 +37,7 @@ class Journey(private val code: String, private val profile: String) {
         val why = error?.let { " · " + (it.message ?: it.javaClass.simpleName).lineSequence().first().take(160) }.orEmpty()
         write("$code · $profile · $n $name · taps $taps · $took ms · target ≤ $targetMs ms · ${if (pass) "PASS" else "FAIL"}$why")
         if (!pass) failed += "$name: " + (error?.message ?: "$took ms past $targetMs ms")
+        return took
     }
 
     /** What the farm was asked during the journey; a call past a page is a finding and fails it. */

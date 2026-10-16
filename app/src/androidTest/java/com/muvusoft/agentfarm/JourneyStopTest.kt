@@ -66,7 +66,8 @@ class JourneyStopTest {
                 seen("stop-to-c_dev")
                 rule.onNodeWithTag("stop-to-c_dev").assertIsSelected()
             }
-            j.step("stop asks for the yes", taps = 1, targetMs = 500) {
+            // The design gives every answer of this journey 1 s (test-plan J5); the question is the phone's own.
+            j.step("stop asks for the yes", taps = 1, targetMs = 1_000) {
                 rule.onNodeWithTag("stop-go").performClick()
                 seen("destructive-dialog", ms = 5_000)
             }

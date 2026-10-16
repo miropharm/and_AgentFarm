@@ -34,36 +34,59 @@ class Dictation internal constructor(val available: Boolean, private val launch:
     fun start(token: JsonElement) = launch(token)
 }
 
+/** The system's speech recogniser, started from a native screen; [start] is false when the phone has none after all. */
+class Speech internal constructor(val available: Boolean, private val launch: () -> Boolean) {
+    fun start(): Boolean = launch()
+}
+
 /**
  * Dictation through the system's speech recogniser (RECOGNIZE_SPEECH, in [dictationLanguage]): whichever app the phone
- * answers it with — Google's, or TalkScribe once it takes that action — hears the words, and the page's
- * `afVoiceDone` carries the first real result. A cancel answers with no text; a phone with no recogniser
- * answers with the reason. One dictation at a time: a second request answers the first with nothing.
+ * answers it with — Google's, or TalkScribe once it takes that action — hears the words. [heard] gets its results,
+ * null on a cancel.
  */
 @Composable
-fun rememberDictation(deliver: (String) -> Unit): Dictation {
+fun rememberSpeech(heard: (List<String>?) -> Unit): Speech {
     val context = LocalContext.current
-    val send by rememberUpdatedState(deliver)
-    val unavailable = stringResource(R.string.voice_unavailable)
+    val send by rememberUpdatedState(heard)
     val prompt = stringResource(R.string.voice_prompt)
-    val waiting = remember { arrayOfNulls<JsonElement>(1) }
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { r ->
-        val token = waiting[0] ?: return@rememberLauncherForActivityResult
-        waiting[0] = null
-        val results = if (r.resultCode == Activity.RESULT_OK) r.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS) else null
-        send(ShellRequest.voiceDone(token, results).toString())
+        send(if (r.resultCode == Activity.RESULT_OK) r.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS) else null)
     }
-    // Read on every composition: a language changed in Settings reaches the page's next dictation.
+    // Read on every composition: a language changed in Settings reaches the next dictation.
     val language = dictationLanguage(AgentFarmApp.of(context).prefs)
     val intent = remember(prompt, language) { speechIntent(prompt, language) }
     val available = remember(intent) { intent.resolveActivity(context.packageManager) != null }
     return remember(launcher, intent, available) {
-        Dictation(available) { token ->
-            waiting[0]?.let { send(ShellRequest.voiceDone(it, null).toString()) }
-            waiting[0] = token
+        Speech(available) {
             try {
                 launcher.launch(intent)
+                true
             } catch (e: ActivityNotFoundException) {
+                false
+            }
+        }
+    }
+}
+
+/**
+ * A page's dictation: its `afVoiceDone` carries the first real result. A cancel answers with no text; a phone with
+ * no recogniser answers with the reason. One dictation at a time: a second request answers the first with nothing.
+ */
+@Composable
+fun rememberDictation(deliver: (String) -> Unit): Dictation {
+    val send by rememberUpdatedState(deliver)
+    val unavailable = stringResource(R.string.voice_unavailable)
+    val waiting = remember { arrayOfNulls<JsonElement>(1) }
+    val speech = rememberSpeech { results ->
+        val token = waiting[0] ?: return@rememberSpeech
+        waiting[0] = null
+        send(ShellRequest.voiceDone(token, results).toString())
+    }
+    return remember(speech) {
+        Dictation(speech.available) { token ->
+            waiting[0]?.let { send(ShellRequest.voiceDone(it, null).toString()) }
+            waiting[0] = token
+            if (!speech.start()) {
                 waiting[0] = null
                 send(ShellRequest.voiceDone(token, null, unavailable).toString())
             }

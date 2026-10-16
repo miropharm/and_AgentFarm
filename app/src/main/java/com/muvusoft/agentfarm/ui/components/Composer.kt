@@ -45,7 +45,7 @@ class ComposerActions(
  * goes when the turn ends; a session this phone cannot write to says why in its place.
  */
 @Composable
-fun Composer(mode: ComposerMode, readOnly: String?, text: String, actions: ComposerActions) {
+fun Composer(mode: ComposerMode, readOnly: String?, text: String, actions: ComposerActions, canSend: Boolean = true) {
     if (mode == ComposerMode.READ_ONLY) {
         Surface(Modifier.fillMaxWidth().testTag("read-only"), color = MaterialTheme.colorScheme.surfaceContainerHigh) {
             Row(Modifier.padding(horizontal = 16.dp, vertical = 14.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -75,7 +75,7 @@ fun Composer(mode: ComposerMode, readOnly: String?, text: String, actions: Compo
                     colors = OutlinedTextFieldDefaults.colors(unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant),
                 )
                 IconButton(onClick = actions.onDictate) { Icon(painterResource(R.drawable.ic_mic), stringResource(R.string.dictate)) }
-                FilledIconButton(onClick = actions.onSend, enabled = text.isNotBlank()) {
+                FilledIconButton(onClick = actions.onSend, enabled = canSend && text.isNotBlank(), modifier = Modifier.testTag("composer-send")) {
                     Icon(Icons.AutoMirrored.Filled.Send, stringResource(R.string.send))
                 }
             }

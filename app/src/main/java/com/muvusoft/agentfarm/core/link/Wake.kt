@@ -31,4 +31,12 @@ object Wake {
     /** The wake is offered while the farm cannot be reached and a card to wake is known; never while it answers. */
     fun offered(link: Link?, nics: List<WakeNic>): Boolean =
         (link is Link.Offline || link is Link.Connecting) && nics.any { packet(it.mac) != null }
+
+    /**
+     * Over the farm's saved copy the wake waits until the link has failed once ([failed]: it was seen offline since
+     * the screen opened): every opening starts with a try, and a button that shows for that second only to vanish
+     * when the farm answers is noise. Once failed it stays through the retries.
+     */
+    fun offeredOverCopy(link: Link?, nics: List<WakeNic>, failed: Boolean): Boolean =
+        offered(link, nics) && (failed || link is Link.Offline)
 }

@@ -153,6 +153,8 @@ class ShareTest {
             val state = farmState()
             assertTrue(state, Regex("\"op\"\\s*:\\s*\"console.new\"").containsMatchIn(state) && state.contains("psikolog"))
         }
+        // The farm opened a card; the tests after this one meet the plain world.
+        FakeHost.post("/_test/scenario", "{}")
     }
 
     private fun receiptTitle(prefix: String, timeoutMs: Long): String? {

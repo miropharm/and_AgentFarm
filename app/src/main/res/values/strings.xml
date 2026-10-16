@@ -126,6 +126,10 @@
     <string name="now_recent">Recent sessions</string>
     <string name="now_empty">Nothing is running right now</string>
     <string name="new_session">New session</string>
+    <string name="new_agent">Agent</string>
+    <string name="new_no_agent">No agents yet: the list comes when the farm answers.</string>
+    <string name="new_image_online">A picture goes only while the farm answers.</string>
+    <string name="new_drop_image">Remove picture</string>
     <string name="loading">Loading</string>
     <string name="retry">Retry</string>
     <string name="failed">Failed</string>

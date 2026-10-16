@@ -163,7 +163,8 @@ Tasarımın gerekçesi: vault projesi `10_Notes/A-PLN - Android Uygulaması Yeni
   ile okunur. Canlı satır **geçicidir**: son okunan satırın arkasına eklenir ve tur bitince (ya da yeniden
   bağlanınca) son onaylı `i`'den yapılan `sessions.read` onu yerine koyar (`core/live/LiveMerge.kt`; aynı
   `key`'li ya da son okunan satırdan eski geçici satır düşer, yenisi kalır). Soket düşünce izlemeler biter;
-  telefon her `welcome`'da açık izlemelerini yeniden yollar ve ekrana "yeniden oku" der (`net/LiveWatch.kt`).
+  telefon her yeni soketin `welcome`'unda açık izlemelerini yeniden yollar ve ekrana "yeniden oku" der; izlemenin
+  zaten sorulduğu soketin `welcome`'u (ekran bağlantı kurulurken açıldıysa) yeniden bağlanma sayılmaz (`net/LiveWatch.kt`).
   İzleme kimliğini telefon rastgele üretir: aynı cihazın eski soketi kapanırken yeni izlemeyi silemez.
 
 ## 9. Yetki ve özellikler

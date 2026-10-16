@@ -25,14 +25,19 @@ import kotlinx.coroutines.flow.transformWhile
 fun ConnectionManager.watch(farmId: String, session: String, depth: LiveDepth): Flow<LiveEvent> = flow {
     val ask = Watch("w_" + UUID.randomUUID(), session, depth.wire)
     var endedByFarm = false
+    // The socket the watch was asked on: its own welcome, still on its way through `frames`, is not a reconnect.
+    var askedOn: String? = null
     emitAll(
-        frames.onSubscription { send(farmId, ask) }
+        frames.onSubscription { if (send(farmId, ask)) askedOn = pageAccess(farmId)?.session }
             .filter { it.farm == farmId }
             .transformWhile { f ->
                 when (val frame = f.frame) {
                     is Welcome -> {
-                        send(farmId, ask)
-                        emit(LiveEvent.Resumed)
+                        if (frame.session == null || frame.session != askedOn) {
+                            askedOn = frame.session
+                            send(farmId, ask)
+                            emit(LiveEvent.Resumed)
+                        }
                         true
                     }
                     is LiveFrame -> {

@@ -185,15 +185,7 @@ private fun Shell(
         Unit
     }
 
-    val open = opened
-    if (open != null) {
-        NowRoute(
-            farmId = open, manager = manager, store = nowStore, conversations = conversationStore,
-            talk = talk, onTalkOpened = { talk = null }, onFarms = { opened = null },
-        )
-        return
-    }
-
+    // Over the farm too: the Menu opens the phone's settings, and Back returns to the farm.
     if (inSettings) {
         SettingsScreen(
             versionName = versionName,
@@ -205,6 +197,15 @@ private fun Shell(
             voiceLanguage = settings.voiceLanguage,
             onVoiceLanguage = settings.onVoiceLanguage,
             onBack = { inSettings = false },
+        )
+        return
+    }
+
+    val open = opened
+    if (open != null) {
+        NowRoute(
+            farmId = open, manager = manager, store = nowStore, conversations = conversationStore,
+            talk = talk, onTalkOpened = { talk = null }, onFarms = { opened = null }, onSettings = { inSettings = true },
         )
         return
     }

@@ -18,7 +18,6 @@ import com.muvusoft.agentfarm.core.now.NowOpen
 import com.muvusoft.agentfarm.core.now.PageLink
 import com.muvusoft.agentfarm.core.now.NowTarget
 import com.muvusoft.agentfarm.core.state.Link
-import com.muvusoft.agentfarm.core.view.PageRoute
 import com.muvusoft.agentfarm.core.view.ShellRequest
 import com.muvusoft.agentfarm.net.ConnectionManager
 import com.muvusoft.agentfarm.net.ConversationPreload
@@ -26,6 +25,7 @@ import com.muvusoft.agentfarm.net.ConversationStore
 import com.muvusoft.agentfarm.net.NowSource
 import com.muvusoft.agentfarm.net.NowStore
 import com.muvusoft.agentfarm.ui.conversation.ConversationRoute
+import com.muvusoft.agentfarm.ui.menu.MenuRoute
 import com.muvusoft.agentfarm.ui.page.AwayScreen
 import com.muvusoft.agentfarm.ui.page.FarmPage
 import com.muvusoft.agentfarm.ui.page.WaitScreen
@@ -53,11 +53,14 @@ fun NowRoute(
     talk: String?,
     onTalkOpened: () -> Unit,
     onFarms: () -> Unit,
+    onSettings: () -> Unit,
 ) {
     val source = remember(farmId) { NowSource(manager, store, farmId, preload = ConversationPreload(manager, conversations, farmId)) }
     val state by source.state.collectAsState()
     val refreshing by source.refreshing.collectAsState()
     var page by remember(farmId) { mutableStateOf<ShellRequest.Open?>(null) }
+    // The Menu, under the pages opened from it: Back from such a page is the Menu.
+    var menu by rememberSaveable(farmId) { mutableStateOf(false) }
     // A notification's session: its Conversation is the first frame, over Now, so Back is Now.
     val talking = { id: String -> (NowOpen.of(source.state.value, id) as? NowTarget.Conversation)?.key }
     var conversation by rememberSaveable(farmId, stateSaver = KeySaver) { mutableStateOf(talk?.let(talking)) }
@@ -65,6 +68,7 @@ fun NowRoute(
         val id = talk ?: return@LaunchedEffect
         talking(id)?.let {
             page = null
+            menu = false
             conversation = it
         }
         onTalkOpened()
@@ -79,7 +83,10 @@ fun NowRoute(
             onLink = { from, to ->
                 val target = NowOpen.link(state, to)
                 when (target) {
-                    PageLink.Now -> page = null
+                    PageLink.Now -> {
+                        page = null
+                        menu = false
+                    }
                     is PageLink.Conversation -> {
                         under = from
                         page = null
@@ -105,6 +112,16 @@ fun NowRoute(
                 under = null
             },
             onFarmPage = { page = NowOpen.page(talk) },
+        )
+        return
+    }
+    if (menu) {
+        MenuRoute(
+            farmId = farmId, manager = manager,
+            onNow = { menu = false },
+            onPage = { page = ShellRequest.Open(it) },
+            onFarms = onFarms,
+            onSettings = onSettings,
         )
         return
     }
@@ -164,7 +181,7 @@ fun NowRoute(
             onMoreRecent = { scope.launch { source.more() } },
             onRetry = { scope.launch { source.refresh() } },
             onFarm = onFarms,
-            onMenu = { page = ShellRequest.Open(PageRoute.HOME_PAGE) },
+            onMenu = { menu = true },
         ),
         wake = { WakeOffer(farmId = farmId, farmName = name, link = link, manager = manager, overCopy = true) },
     )

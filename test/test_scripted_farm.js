@@ -88,6 +88,8 @@ async function main() {
     const needs = (await call('needs.list')).result;
     t.ok(K.checkOp(c, 'needs.list', needs) === null, 'needs.list and its items carry the contract\'s fields: ' + K.checkOp(c, 'needs.list', needs));
     t.ok(needs.items[0].key === `permission|${needs.items[0].ref.sessionId}`, 'a permission need is keyed the way vsc needKey keys it');
+    const menu = (await call('pages.list')).result;
+    t.ok(K.checkOp(c, 'pages.list', menu) === null && menu.pages.length > 0, 'pages.list and its rows carry the contract\'s fields: ' + K.checkOp(c, 'pages.list', menu));
 
     // ---- a 2,000-message conversation, paged like sessions.read
     const sid = dev.sessionId;

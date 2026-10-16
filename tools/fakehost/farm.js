@@ -169,6 +169,8 @@ function createFarm(opts = {}) {
             const items = [...parked, ...needs].map(i => ({ ...i, key: `${i.kind}|${i.ref.sessionId}`, clearable: false }));
             return { items, blocking: items.length, hidden: 0 };
         },
+        // vsc core/phoneMenu.ts: the phone's Menu. The contract's example rows are real Menu rows (vsc test_phone_menu.js).
+        'pages.list': () => ({ pages: (opts.contract ? opts.contract.ops['pages.list'].example.pages : []).map(p => ({ ...p })) }),
         // vsc phoneNew + openNew: called bare, the agents a session can open with; with an agent, a Console card opens
         // (its first turn running when words or a picture came) and the farm says so in its own words. The engine
         // names its session as it starts: the card carries it, and the history has it with the first message.

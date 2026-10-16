@@ -184,7 +184,10 @@ Tasarımın gerekçesi: vault projesi `10_Notes/A-PLN - Android Uygulaması Yeni
   `sessions.recent` ve `needs.list` için sözleşme telefonun okuduğu alanları gerçek bir örnekle bildirir:
   `answer` (`array` ya da `object`), `fields` (nesne cevabın kendi alanları), `list` (satırları taşıyan alan),
   `row`. Agent Farm fazlasını verebilir, eksiğini ya da başka adla vermez; vsc bunu cevabı kuran koda karşı
-  sınar. `console.sessions { view: "summary" }` yalnız bildirilen satır alanlarını verir.
+  sınar. `console.sessions { view: "summary" }` yalnız bildirilen satır alanlarını verir. `pages.list`
+  telefonun yerel Menü'sünün listesidir (`{ pages: [{ id, label, group }] }`, grup `work` · `info` ·
+  `settings` · `more`): listeyi PC tutar (vsc `core/phoneMenu.ts`) ve PC'nin sunmadığı sayfayı vermez;
+  telefon onu çizer, son kopyasını saklar ve satırı o sayfa olarak açar (`view.open`).
   `sessions.recent { view: "page", cursor?, limit? }` → `{ rows, next }`: son etkinliği en yeni önce, `cursor`'dan
   sonra (imleç bir satırı adlar — etkinlik zamanı ve kimliği; üste yeni oturum düşse de sayfa kaymaz);
   `next` sonraki sayfanın imleci, son sayfada `null`; `limit` en çok 50, varsayılan 20. Satır hafiftir: `id`,

@@ -105,11 +105,19 @@ data class ReadStep(
     val clipped: Int? = null,
 )
 
+/** `pages.list`: the farm pages the phone's Menu lists, in its order and groups (the PC owns the list). */
+@Serializable
+data class PagesList(val pages: List<MenuPage>)
+
+@Serializable
+data class MenuPage(val id: String, val label: String, val group: String)
+
 /** The model of each op's object answer (an array answer has none: its rows are the answer). */
 val OP_ANSWERS: Map<String, KSerializer<*>> = mapOf(
     "sessions.read" to ReadPage.serializer(),
     "sessions.recent" to RecentPage.serializer(),
     "needs.list" to NeedsList.serializer(),
+    "pages.list" to PagesList.serializer(),
 )
 
 /** The model of each op's rows. */
@@ -118,6 +126,7 @@ val OP_ROWS: Map<String, KSerializer<*>> = mapOf(
     "sessions.read" to ReadStep.serializer(),
     "sessions.recent" to RecentRow.serializer(),
     "needs.list" to NeedRow.serializer(),
+    "pages.list" to MenuPage.serializer(),
 )
 
 object Ops {

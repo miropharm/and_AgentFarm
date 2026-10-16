@@ -96,4 +96,8 @@ class PageBridge(private val canDictate: Boolean, private val onMessage: (String
     /** This shell keeps a file a page saves (afSave) where the person chooses; media/afAsk.js asks before sending one. */
     @JavascriptInterface
     fun saves(): Boolean = true
+
+    /** This shell has its own Menu and Back above the page; media/afMobile.js asks before drawing a tab bar of its own. */
+    @JavascriptInterface
+    fun navigates(): Boolean = true
 }

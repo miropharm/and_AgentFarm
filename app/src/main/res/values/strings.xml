@@ -121,6 +121,12 @@
     <!-- Now and Conversation -->
     <string name="nav_now">Now</string>
     <string name="nav_menu">Menu</string>
+    <string name="menu_work">Work</string>
+    <string name="menu_info">Info</string>
+    <string name="menu_more">More</string>
+    <string name="menu_phone">Phone</string>
+    <string name="menu_phone_settings">Phone settings</string>
+    <string name="menu_farm_pages">The farm\'s pages</string>
     <string name="now_waiting">Waiting for you</string>
     <string name="now_running">Running</string>
     <string name="now_recent">Recent sessions</string>

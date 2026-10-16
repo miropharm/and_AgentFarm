@@ -198,6 +198,14 @@
       "list": "items",
       "row": { "kind": "string", "agentName": "string", "title": "string", "detail": "string", "ts": "number", "ref": "object", "actions": "array", "key": "string", "options": "array?" },
       "example": { "items": [{ "kind": "permission", "agentName": "psikolog", "title": "Bash: git status", "detail": "git status", "ts": 1792141917129, "ref": { "sessionId": "8a2e4f10-3b7c-4d2a-8e1f-5c9b0a6d2e02" }, "actions": [{ "id": "permission-allow", "label": "Allow" }, { "id": "permission-deny", "label": "Deny" }], "key": "permission|8a2e4f10-3b7c-4d2a-8e1f-5c9b0a6d2e02" }], "blocking": 1, "hidden": 0 }
+    },
+    "pages.list": {
+      "args": {},
+      "answer": "object",
+      "fields": { "pages": "array" },
+      "list": "pages",
+      "row": { "id": "string", "label": "string", "group": "string" },
+      "example": { "pages": [{ "id": "tasks", "label": "Tasks", "group": "work" }, { "id": "notices", "label": "Notices", "group": "info" }, { "id": "settings", "label": "Settings", "group": "settings" }, { "id": "wiki", "label": "Wiki", "group": "more" }] }
     }
   },
   "rules": [

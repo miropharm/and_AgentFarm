@@ -13,6 +13,7 @@ class FarmStore(context: Context) {
     private val prefs = ShellPrefs(context)
     private val now = NowStore(context)
     private val conversations = ConversationStore(context)
+    private val menu = MenuStore(context)
     private val json = Json { ignoreUnknownKeys = true }
     private val serializer = ListSerializer(PairedFarm.serializer())
 
@@ -43,6 +44,7 @@ class FarmStore(context: Context) {
         prefs.setWake(farmId, emptyList())
         now.forget(farmId)
         conversations.forget(farmId)
+        menu.forget(farmId)
         return load()
     }
 

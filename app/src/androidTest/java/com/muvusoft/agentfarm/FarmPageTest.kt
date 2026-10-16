@@ -129,7 +129,14 @@ class FarmPageTest {
         rule.onNodeWithTag("farm-$farmId").performClick()
         // A farm opens on the native Now; the farm's own pages are behind the Menu.
         rule.waitUntil(20_000) { rule.onAllNodes(hasTestTag("nav-menu")).fetchSemanticsNodes().isNotEmpty() }
+        openFromMenu()
+    }
+
+    /** The Menu lists the farm's pages (pages.list): Tasks opens the farm's own page. */
+    private fun openFromMenu() {
         rule.onNodeWithTag("nav-menu").performClick()
+        rule.waitUntil(20_000) { rule.onAllNodes(hasTestTag("menu-tasks")).fetchSemanticsNodes().isNotEmpty() }
+        rule.onNodeWithTag("menu-tasks").performClick()
     }
 
     private fun titleUntil(want: String): String =
@@ -138,29 +145,44 @@ class FarmPageTest {
     @Test
     fun aPageLinkOpensTheNextPageInTheShellAndBackReturns() {
         openFarm()
-        assertEquals(diagnosis(), "Fake page: now", titleUntil("Fake page: now"))
+        assertEquals(diagnosis(), "Fake page: tasks", titleUntil("Fake page: tasks"))
         // X-443: afnav is the shell's, not the farm's; the next page opens here, in a view of its own.
         js("acquireVsCodeApi().postMessage({type:'afnav',to:'needs'})")
         assertEquals(diagnosis(), "Fake page: needs", titleUntil("Fake page: needs"))
         rule.activityRule.scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }
-        assertEquals(diagnosis(), "Fake page: now", titleUntil("Fake page: now"))
+        assertEquals(diagnosis(), "Fake page: tasks", titleUntil("Fake page: tasks"))
         // A link to something that is not a page opens nothing.
         js("acquireVsCodeApi().postMessage({type:'afnav',to:'../x'})")
         Thread.sleep(500)
-        assertEquals("Fake page: now", titleUntil("Fake page: now"))
+        assertEquals("Fake page: tasks", titleUntil("Fake page: tasks"))
     }
 
     @Test
     fun aPageLinkCarriesWhatTheNextPageIsToShow() {
         openFarm()
-        assertEquals(diagnosis(), "Fake page: now", titleUntil("Fake page: now"))
+        assertEquals(diagnosis(), "Fake page: tasks", titleUntil("Fake page: tasks"))
         // X-456: a transcript opened on the phone is afnav to "session" with the session; view.open carries it.
         js("acquireVsCodeApi().postMessage({type:'afnav',to:'session',args:{sessionId:'sid-2',ts:5}})")
         assertEquals(diagnosis(), "Fake page: session", titleUntil("Fake page: session"))
         val args = jsUntil("document.body.getAttribute('data-args') || ''") { it.contains("sid-2") }
         assertEquals(diagnosis(), true, args.contains("sid-2"))
         rule.activityRule.scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }
-        assertEquals(diagnosis(), "Fake page: now", titleUntil("Fake page: now"))
+        assertEquals(diagnosis(), "Fake page: tasks", titleUntil("Fake page: tasks"))
+    }
+
+    @Test
+    fun theMenuListsTheFarmsPagesAndBackFromOneIsTheMenu() {
+        openFarm()
+        assertEquals(diagnosis(), "Fake page: tasks", titleUntil("Fake page: tasks"))
+        rule.onNodeWithTag("page-back").performClick()
+        rule.waitUntil(10_000) { rule.onAllNodes(hasTestTag("menu-list")).fetchSemanticsNodes().isNotEmpty() }
+        Shots.take("menu")
+        // The farm's list (pages.list) in its groups, then the phone's own.
+        for (tag in listOf("menu-notices", "menu-settings", "menu-wiki", "menu-farms", "menu-phone-settings")) {
+            assertEquals(tag, true, rule.onAllNodes(hasTestTag(tag)).fetchSemanticsNodes().isNotEmpty())
+        }
+        rule.activityRule.scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }
+        rule.waitUntil(10_000) { rule.onAllNodes(hasTestTag("now-list")).fetchSemanticsNodes().isNotEmpty() }
     }
 
     @Test
@@ -173,15 +195,15 @@ class FarmPageTest {
         val recent = SemanticsMatcher("a history row") { it.config.getOrNull(SemanticsProperties.TestTag)?.startsWith("recent-") == true }
         rule.waitUntil(20_000) { rule.onAllNodes(recent, useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty() }
         val session = rule.onAllNodes(recent, useUnmergedTree = true).fetchSemanticsNodes().first().config[SemanticsProperties.TestTag].removePrefix("recent-")
-        rule.onNodeWithTag("nav-menu").performClick()
-        assertEquals(diagnosis(), "Fake page: now", titleUntil("Fake page: now"))
+        openFromMenu()
+        assertEquals(diagnosis(), "Fake page: tasks", titleUntil("Fake page: tasks"))
         // The phone's own bar names the page by the page's own title.
-        rule.waitUntil(10_000) { rule.onAllNodes(hasTestTag("page-title") and hasText("Fake page: now")).fetchSemanticsNodes().isNotEmpty() }
+        rule.waitUntil(10_000) { rule.onAllNodes(hasTestTag("page-title") and hasText("Fake page: tasks")).fetchSemanticsNodes().isNotEmpty() }
         js("acquireVsCodeApi().postMessage({type:'afnav',to:'session',args:{sessionId:'$session'}})")
         rule.waitUntil(10_000) { rule.onAllNodes(hasTestTag("conv-title")).fetchSemanticsNodes().isNotEmpty() }
         // Back from the Conversation is the page it was opened from.
         rule.activityRule.scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }
-        assertEquals(diagnosis(), "Fake page: now", titleUntil("Fake page: now"))
+        assertEquals(diagnosis(), "Fake page: tasks", titleUntil("Fake page: tasks"))
         js("acquireVsCodeApi().postMessage({type:'afnav',to:'console'})")
         rule.waitUntil(10_000) {
             rule.onAllNodes(hasTestTag("now-list")).fetchSemanticsNodes().isNotEmpty() && rule.onAllNodes(hasTestTag("farm-page")).fetchSemanticsNodes().isEmpty()
@@ -191,7 +213,7 @@ class FarmPageTest {
     @Test
     fun aCopyFromAPageLandsOnThePhonesClipboard() {
         openFarm()
-        assertEquals(diagnosis(), "Fake page: now", titleUntil("Fake page: now"))
+        assertEquals(diagnosis(), "Fake page: tasks", titleUntil("Fake page: tasks"))
         js("acquireVsCodeApi().postMessage({type:'afClipboard',token:'t1',text:'kopya metni'})")
         assertEquals(true, jsUntil("document.body.getAttribute('data-seen') || ''") { it.contains("afClipboardDone") }.contains("afClipboardDone"))
         var clip = ""
@@ -204,7 +226,7 @@ class FarmPageTest {
     @Test
     fun aFileAPageSavesIsWrittenWhereThePersonChoseOnThePhone() {
         openFarm()
-        assertEquals(diagnosis(), "Fake page: now", titleUntil("Fake page: now"))
+        assertEquals(diagnosis(), "Fake page: tasks", titleUntil("Fake page: tasks"))
         val inst = InstrumentationRegistry.getInstrumentation()
         val target = File(inst.targetContext.cacheDir, "saved-export.md").apply { delete() }
         // The system's save picker answered as a person would: here is the file to write.
@@ -232,7 +254,7 @@ class FarmPageTest {
         nightMode(false)
         try {
             openFarm()
-            assertEquals(diagnosis(), "Fake page: now", titleUntil("Fake page: now"))
+            assertEquals(diagnosis(), "Fake page: tasks", titleUntil("Fake page: tasks"))
             js("window.afLoaded = 'first'")
             assertEquals("true", jsUntil("String(matchMedia('(prefers-color-scheme: light)').matches)") { it == "true" })
             assertEquals("true", jsUntil("String(document.body.classList.contains('vscode-light'))") { it == "true" })
@@ -258,7 +280,7 @@ class FarmPageTest {
         openFarm()
 
         val title = jsUntil("document.getElementById('title') ? document.getElementById('title').textContent : ''") { it.startsWith("Fake") }
-        assertEquals(diagnosis(), "Fake page: now", title)
+        assertEquals(diagnosis(), "Fake page: tasks", title)
         assertEquals("function", js("typeof acquireVsCodeApi"))
         assertEquals("16px", js("getComputedStyle(document.body).marginTop"))
 

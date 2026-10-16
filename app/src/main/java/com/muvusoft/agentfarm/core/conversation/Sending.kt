@@ -51,9 +51,14 @@ object ConversationText {
     const val NO_ANSWER = "The farm did not answer."
     const val PICTURE_ONLINE = "A picture goes only while the farm answers."
 
-    /** Why a page is not on screen: the farm's own sentence, else silence, else a shape this build does not read. */
-    fun notRead(r: CallResult?): String =
-        r?.takeIf { !it.ok }?.error?.takeIf(String::isNotBlank) ?: if (r == null) NO_ANSWER else NowText.NOT_READ
+    /**
+     * Why a page is not on screen: the farm's own sentence, else silence, else a shape this build does not read.
+     * Silence while the link is down is no line of its own: the copy's age already says it.
+     */
+    fun notRead(r: CallResult?, online: Boolean): String? = when {
+        r == null -> if (online) NO_ANSWER else null
+        else -> r.takeIf { !it.ok }?.error?.takeIf(String::isNotBlank) ?: NowText.NOT_READ
+    }
 
     /** The farm ended the live watch: the card left the Console ("ended"), or it cannot be followed here. */
     fun ended(reason: String?): String =

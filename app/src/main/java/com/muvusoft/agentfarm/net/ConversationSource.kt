@@ -204,7 +204,7 @@ class ConversationSource(
         val r = manager.read(farmId, OP_READ, ConversationBuild.tailArgs(t))
         val p = page(r)
         if (p == null) {
-            _state.update { it.copy(loading = false, error = ConversationText.notRead(r)) }
+            _state.update { it.copy(loading = false, error = ConversationText.notRead(r, online = link() is Link.Online)) }
             return
         }
         keep { s -> ConversationBuild.tail(s, p).copy(engineLabel = p.engine) }

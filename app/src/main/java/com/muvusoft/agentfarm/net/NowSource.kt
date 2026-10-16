@@ -127,7 +127,7 @@ class NowSource(
         val first = page(p)
         val waits = n?.takeIf { it.ok }?.let { Ops.read(NeedsList.serializer(), it.result) }
         if (rows == null || first == null || waits == null) {
-            _state.update { it.copy(loading = false, error = NowText.notRead(c, p, n)) }
+            _state.update { it.copy(loading = false, error = NowText.notRead(c, p, n, online = link() is Link.Online)) }
             return
         }
         val copy = NowCopy(clock(), rows, first, waits)

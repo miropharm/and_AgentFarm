@@ -27,16 +27,19 @@ class Journey(private val code: String, private val profile: String) {
     /** Returns how long the step took, for a target that runs on from it. */
     fun step(name: String, taps: Int, targetMs: Long, act: () -> Unit): Long {
         n++
+        val frames = Frames.watch()
         val t0 = SystemClock.elapsedRealtime()
         val error = runCatching(act).exceptionOrNull()
         val took = SystemClock.elapsedRealtime() - t0
+        frames.stop()
         this.taps += taps
         ms += took
         val pass = error == null && took <= targetMs
         // An artifact's file name takes no colon, quote or the like: the step's words keep letters and digits only.
         Shots.take("journey-$code-$profile-$n-" + name.replace(Regex("[^A-Za-z0-9]+"), "-").trim('-'))
+        val floor = frames.line().also { frames.close() }
         val why = error?.let { " · " + (it.message ?: it.javaClass.simpleName).lineSequence().first().take(160) }.orEmpty()
-        write("$code · $profile · $n $name · taps $taps · $took ms · target ≤ $targetMs ms · ${if (pass) "PASS" else "FAIL"}$why")
+        write("$code · $profile · $n $name · taps $taps · $took ms · target ≤ $targetMs ms · $floor · ${if (pass) "PASS" else "FAIL"}$why")
         if (!pass) failed += "$name: " + (error?.message ?: "$took ms past $targetMs ms")
         return took
     }

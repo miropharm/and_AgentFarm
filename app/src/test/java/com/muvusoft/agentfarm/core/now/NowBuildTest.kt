@@ -6,6 +6,7 @@ import com.muvusoft.agentfarm.core.contract.NeedsList
 import com.muvusoft.agentfarm.core.contract.Ops
 import com.muvusoft.agentfarm.core.contract.RecentPage
 import com.muvusoft.agentfarm.core.contract.RecentRow
+import com.muvusoft.agentfarm.core.conversation.ConversationText
 import com.muvusoft.agentfarm.core.live.LiveCard
 import com.muvusoft.agentfarm.core.live.LiveMerge
 import com.muvusoft.agentfarm.core.session.Answers
@@ -223,9 +224,20 @@ class NowBuildTest {
     fun aFailedReadSaysTheFarmsOwnSentenceFirst() {
         val ok = CallResult("a", true, JsonPrimitive(1))
         val refused = CallResult("b", false, error = "Unknown op: sessions.recent")
-        assertEquals("Unknown op: sessions.recent", NowText.notRead(ok, refused, null))
-        assertEquals(NowText.NO_ANSWER, NowText.notRead(ok, null))
-        assertEquals(NowText.NOT_READ, NowText.notRead(ok, ok))
+        assertEquals("Unknown op: sessions.recent", NowText.notRead(ok, refused, null, online = true))
+        assertEquals(NowText.NO_ANSWER, NowText.notRead(ok, null, online = true))
+        assertEquals(NowText.NOT_READ, NowText.notRead(ok, ok, online = true))
+    }
+
+    @Test
+    fun aReadTheLinkCutSaysNothingOfItsOwn() {
+        val ok = CallResult("a", true, JsonPrimitive(1))
+        val refused = CallResult("b", false, error = "Unknown op: sessions.recent")
+        assertEquals("the copy's age says the link is down", null, NowText.notRead(ok, null, online = false))
+        assertEquals("the farm's own sentence still stands", "Unknown op: sessions.recent", NowText.notRead(refused, null, online = false))
+        assertEquals(null, ConversationText.notRead(null, online = false))
+        assertEquals(ConversationText.NO_ANSWER, ConversationText.notRead(null, online = true))
+        assertEquals("Unknown op: sessions.read", ConversationText.notRead(CallResult("c", false, error = "Unknown op: sessions.read"), online = false))
     }
 
     @Test

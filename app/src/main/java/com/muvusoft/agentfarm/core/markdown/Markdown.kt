@@ -39,13 +39,6 @@ object Markdown {
     /** What an item is drawn behind: its number, else a bullet that changes with depth. */
     fun marker(item: Item): String = item.number?.let { "$it." } ?: BULLETS[item.depth % BULLETS.size]
 
-    /** A table column's width in characters: its longest cell, so every row lines up. */
-    fun columnChars(table: MdBlock.Table): List<Int> {
-        val rows = listOf(table.header) + table.rows
-        val count = rows.maxOf { it.size }
-        return (0 until count).map { c -> rows.maxOf { r -> r.getOrNull(c)?.sumOf { it.text.length } ?: 0 } }
-    }
-
     fun parse(source: String): List<MdBlock> {
         val lines = source.replace("\r\n", "\n").replace('\r', '\n').split('\n')
         val out = mutableListOf<MdBlock>()

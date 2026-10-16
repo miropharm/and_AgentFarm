@@ -21,7 +21,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -46,6 +45,7 @@ import com.muvusoft.agentfarm.ui.components.MainNav
 import com.muvusoft.agentfarm.ui.components.MainTab
 import com.muvusoft.agentfarm.ui.components.RecentRow
 import com.muvusoft.agentfarm.ui.components.RunningCard
+import com.muvusoft.agentfarm.ui.components.ScreenBar
 import com.muvusoft.agentfarm.ui.components.SectionTitle
 import com.muvusoft.agentfarm.ui.components.SkeletonRows
 import com.muvusoft.agentfarm.ui.components.StaleBanner
@@ -78,7 +78,7 @@ fun linkColor(link: Link): Color = when (link) {
 fun NowScreen(state: NowState, now: Long, refreshing: Boolean, actions: NowActions) {
     Scaffold(
         topBar = {
-            TopAppBar(title = {
+            ScreenBar {
                 Column(Modifier.clickable(onClickLabel = stringResource(R.string.farm_link_detail), onClick = actions.onFarm).testTag("now-farm")) {
                     Text(state.farm, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -93,7 +93,7 @@ fun NowScreen(state: NowState, now: Long, refreshing: Boolean, actions: NowActio
                         )
                     }
                 }
-            })
+            }
         },
         bottomBar = { MainNav(MainTab.NOW, onNow = actions.onRefresh, onMenu = actions.onMenu) },
         floatingActionButton = {

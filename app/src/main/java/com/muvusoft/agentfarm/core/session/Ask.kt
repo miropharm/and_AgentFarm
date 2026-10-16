@@ -37,11 +37,11 @@ object Asks {
     private const val QUICK_OPTIONS_MAX = 3
 
     /**
-     * What the Now row can answer itself: a permission is Allow / Deny; a single one-pick question with a
+     * What the Now row can answer itself: a permission is Deny / Allow (the yes at the end, as on the card); a single one-pick question with a
      * few short options is its options. Anything longer opens the conversation with the card.
      */
     fun quick(ask: Ask): List<Quick> = when (ask.kind) {
-        AskKind.PERMISSION -> listOf(Quick.Allow, Quick.Deny)
+        AskKind.PERMISSION -> listOf(Quick.Deny, Quick.Allow)
         AskKind.APPROVAL -> emptyList()
         AskKind.QUESTION -> ask.questions.singleOrNull()
             ?.takeIf { q -> !q.multiSelect && q.options.size in 2..QUICK_OPTIONS_MAX && q.options.all { it.label.length <= QUICK_LABEL_MAX } }

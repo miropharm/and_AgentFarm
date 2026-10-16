@@ -20,8 +20,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
@@ -29,6 +31,7 @@ import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
@@ -88,18 +91,33 @@ private fun MdBlockView(b: MdBlock) {
 
 @Composable
 private fun TableView(t: MdBlock.Table) {
-    val widths = Markdown.columnChars(t).map { (it * 8 + 20).coerceIn(56, 240).dp }
+    val rows = listOf(t.header) + t.rows
+    val count = rows.maxOf { it.size }
+    val cells = rows.map { row -> (0 until count).map { c -> annotated(row.getOrNull(c).orEmpty()) } }
+    val body = MaterialTheme.typography.bodyMedium
+    val measurer = rememberTextMeasurer()
+    val density = LocalDensity.current
+    // A column is as wide as its widest cell in the font really drawn (the font scale included), so a short
+    // value never breaks inside itself; only a cell past the cap wraps.
+    val widths = remember(cells, body, density) {
+        (0 until count).map { c ->
+            val px = cells.withIndex().maxOf { (r, row) ->
+                measurer.measure(row[c], if (r == 0) body.copy(fontWeight = FontWeight.SemiBold) else body, softWrap = false).size.width
+            }
+            with(density) { px.toDp() + 20.dp + 1.dp }.coerceIn(56.dp, 240.dp)
+        }
+    }
     val line = MaterialTheme.colorScheme.outlineVariant
     Surface(shape = RoundedCornerShape(10.dp), color = MaterialTheme.colorScheme.surfaceContainerLow) {
         Column(Modifier.horizontalScroll(rememberScrollState())) {
-            (listOf(t.header) + t.rows).forEachIndexed { r, row ->
-                if (r > 0) HorizontalDivider(Modifier.width(widths.sumOf { it.value.toDouble() }.dp), color = line)
+            cells.forEachIndexed { r, row ->
+                if (r > 0) HorizontalDivider(Modifier.width(widths.fold(0.dp) { a, w -> a + w }), color = line)
                 Row {
                     widths.forEachIndexed { c, w ->
                         Text(
-                            annotated(row.getOrNull(c).orEmpty()),
+                            row[c],
                             Modifier.widthIn(min = w, max = w).padding(horizontal = 10.dp, vertical = 8.dp),
-                            style = MaterialTheme.typography.bodyMedium,
+                            style = body,
                             fontWeight = if (r == 0) FontWeight.SemiBold else null,
                         )
                     }

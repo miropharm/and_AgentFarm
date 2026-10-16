@@ -48,10 +48,8 @@ class MarkdownTest {
     }
 
     @Test
-    fun markersAndColumnWidths() {
+    fun markers() {
         assertEquals(listOf("3.", "•", "◦", "▪", "•"), listOf(Item(0, 3, emptyList())).plus((0..3).map { Item(it, null, emptyList()) }).map(Markdown::marker))
-        val t = Markdown.parse("| a | uzun başlık |\n|---|---|\n| çok uzun hücre | b |\n| x |").single() as MdBlock.Table
-        assertEquals(listOf(14, 11), Markdown.columnChars(t))
     }
 
     @Test

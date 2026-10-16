@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
@@ -16,14 +17,12 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
@@ -47,6 +46,7 @@ import com.muvusoft.agentfarm.ui.components.ComposerActions
 import com.muvusoft.agentfarm.ui.components.ErrorBanner
 import com.muvusoft.agentfarm.ui.components.LiveLine
 import com.muvusoft.agentfarm.ui.components.NoteRow
+import com.muvusoft.agentfarm.ui.components.ScreenBar
 import com.muvusoft.agentfarm.ui.components.SkeletonRows
 import com.muvusoft.agentfarm.ui.components.StaleBanner
 import com.muvusoft.agentfarm.ui.components.StepsRow
@@ -68,24 +68,17 @@ class ConversationActions(
  * One session's conversation. It opens at the START of the last answer; a running turn's live step is
  * below the last row; a question or permission waits above the composer. It only draws.
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ConversationScreen(state: ConversationState, now: Long, draft: String, actions: ConversationActions) {
     val blocks = remember(state.messages) { Blocks.of(state.messages) }
     val stale = SessionText.stale(state.link, state.updatedAt, now)
-    val lead = listOf(stale != null, state.error != null, state.older, state.loading).count { it }
+    val lead = listOf(state.older, state.loading).count { it }
     val list = rememberLazyListState(initialFirstVisibleItemIndex = lead + Blocks.openAt(blocks))
     val maxCard = (LocalConfiguration.current.screenHeightDp * 0.6f).dp
     Scaffold(
         topBar = {
-            TopAppBar(
-                navigationIcon = { IconButton(onClick = actions.onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.back)) } },
-                title = {
-                    Column(Modifier.clickable(onClickLabel = stringResource(R.string.show_details), onClick = actions.onDetails).testTag("conv-title")) {
-                        Text(state.agent, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary, maxLines = 1)
-                        Text(state.title, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    }
-                },
+            ScreenBar(
+                navigation = { IconButton(onClick = actions.onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.back)) } },
                 actions = {
                     if (state.running) {
                         TextButton(onClick = actions.onStop, Modifier.testTag("conv-stop")) {
@@ -94,7 +87,12 @@ fun ConversationScreen(state: ConversationState, now: Long, draft: String, actio
                     }
                     IconButton(onClick = actions.onOverflow) { Icon(Icons.Filled.MoreVert, stringResource(R.string.more)) }
                 },
-            )
+            ) {
+                Column(Modifier.clickable(onClickLabel = stringResource(R.string.show_details), onClick = actions.onDetails).testTag("conv-title")) {
+                    Text(state.agent, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary, maxLines = 1)
+                    Text(state.title, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
+            }
         },
         bottomBar = {
             // While the turn waits on the user, the card is the bottom: it has its own typed answer, and a
@@ -111,38 +109,57 @@ fun ConversationScreen(state: ConversationState, now: Long, draft: String, actio
             }
         },
     ) { pad ->
-        LazyColumn(
-            Modifier.padding(pad).fillMaxSize().testTag("conv-list"),
-            state = list,
-            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
-        ) {
-            stale?.let { item(key = "stale") { Gap { StaleBanner(it) } } }
-            state.error?.let { item(key = "error") { Gap { ErrorBanner(it, actions.onRetry) } } }
-            if (state.older) {
-                item(key = "older") {
-                    Gap { SkeletonRows(1) }
-                    LaunchedEffect(state.messages.firstOrNull()?.i) { actions.onOlder() }
+        Column(Modifier.padding(pad).fillMaxSize()) {
+            // The list opens at the last answer, far below its top: a stale copy or a failure stays above it, seen.
+            if (stale != null || state.error != null) {
+                Column(Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 12.dp)) {
+                    stale?.let { StaleBanner(it) }
+                    state.error?.let { ErrorBanner(it, actions.onRetry) }
                 }
             }
-            if (state.loading) item(key = "loading") { Gap { SkeletonRows(3) } }
-            items(blocks, key = { "b-" + it.first }) { b ->
-                Gap {
-                    when (b) {
-                        is Block.User -> UserBubble(
-                            text = b.message.text.orEmpty(), state = null, clipped = b.message.clipped != null,
-                            onShowAll = { actions.onShowAll(b.message) }, tag = "user-${b.message.i}",
-                        )
-                        is Block.Answer -> AnswerBlock(b.message, onShowAll = { actions.onShowAll(b.message) })
-                        is Block.Steps -> StepsRow(b)
-                        is Block.Note -> NoteRow(b.message)
-                    }
-                }
-            }
-            items(state.outgoing, key = { "o-" + it.id }) { o ->
-                Gap { UserBubble(text = o.text, state = o.state, clipped = false, onShowAll = {}, tag = "out-${o.id}") }
-            }
-            if (state.running) item(key = "live") { LiveLine(state.live, now) }
+            MessageList(state, blocks, list, now, actions, Modifier.weight(1f))
         }
+    }
+}
+
+@Composable
+private fun MessageList(
+    state: ConversationState,
+    blocks: List<Block>,
+    list: LazyListState,
+    now: Long,
+    actions: ConversationActions,
+    modifier: Modifier,
+) {
+    LazyColumn(
+        modifier.fillMaxWidth().testTag("conv-list"),
+        state = list,
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+    ) {
+        if (state.older) {
+            item(key = "older") {
+                Gap { SkeletonRows(1) }
+                LaunchedEffect(state.messages.firstOrNull()?.i) { actions.onOlder() }
+            }
+        }
+        if (state.loading) item(key = "loading") { Gap { SkeletonRows(3) } }
+        items(blocks, key = { "b-" + it.first }) { b ->
+            Gap {
+                when (b) {
+                    is Block.User -> UserBubble(
+                        text = b.message.text.orEmpty(), state = null, clipped = b.message.clipped != null,
+                        onShowAll = { actions.onShowAll(b.message) }, tag = "user-${b.message.i}",
+                    )
+                    is Block.Answer -> AnswerBlock(b.message, onShowAll = { actions.onShowAll(b.message) })
+                    is Block.Steps -> StepsRow(b)
+                    is Block.Note -> NoteRow(b.message)
+                }
+            }
+        }
+        items(state.outgoing, key = { "o-" + it.id }) { o ->
+            Gap { UserBubble(text = o.text, state = o.state, clipped = false, onShowAll = {}, tag = "out-${o.id}") }
+        }
+        if (state.running) item(key = "live") { LiveLine(state.live, now) }
     }
 }
 

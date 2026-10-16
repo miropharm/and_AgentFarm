@@ -15,7 +15,7 @@ class SessionTest {
 
     @Test
     fun aPermissionAndAShortOnePickQuestionAreAnsweredFromTheRow() {
-        assertEquals(listOf(Quick.Allow, Quick.Deny), Asks.quick(Ask(AskKind.PERMISSION, "rm -rf build", "Bash", since = 0)))
+        assertEquals(listOf(Quick.Deny, Quick.Allow), Asks.quick(Ask(AskKind.PERMISSION, "rm -rf build", "Bash", since = 0)))
         assertEquals(
             listOf(Quick.Option("Evet"), Quick.Option("Hayır")),
             Asks.quick(Ask(AskKind.QUESTION, "", questions = listOf(q("Evet", "Hayır")), since = 0)),

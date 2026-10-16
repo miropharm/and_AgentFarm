@@ -58,7 +58,8 @@ fun rememberPageSave(deliver: (String) -> Unit): PageSave {
         }
         scope.launch {
             val answer = withContext(Dispatchers.IO) { writeSaved(context, uri, bytes, ask, notWritten) }
-            send(answer.toString())
+            // The WebView takes calls on the main thread only, whatever the composition's scope resumes on.
+            withContext(Dispatchers.Main.immediate) { send(answer.toString()) }
         }
     }
     return remember(launcher) {

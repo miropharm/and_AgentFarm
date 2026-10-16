@@ -30,3 +30,4 @@
 - **Kurallar:** [`docs/CONVENTIONS.md`](docs/CONVENTIONS.md) (bağlayıcı; Agent Farm kurallarının telefon uyarlaması) · çalışma yöntemi: vault `10_Notes/A-SOP - Android Otonom Geliştirme ve Test Çalışma Yöntemi - 260930`.
 - **Commit öncesi kapı:** `.githooks/pre-commit` → `node test/run-all.js` + `tools/scan_staged.js`. Klon başına bir kez: `git config core.hooksPath .githooks`.
 - **Kayıt:** sürüm notları [`CHANGELOG.md`](CHANGELOG.md) · test senaryoları [`docs/test-plan.md`](docs/test-plan.md) · protokol [`docs/PROTOKOL-VE-MIMARI.md`](docs/PROTOKOL-VE-MIMARI.md).
+- **Gizlilik:** yayımlanan politika [`PRIVACY.md`](PRIVACY.md) (İngilizce, mağaza bağlantısı bu dosya) · Play veri güvenliği formunun cevapları [`docs/play-data-safety.md`](docs/play-data-safety.md); bir bağımlılık ya da veri akışı değişince ikisi birlikte güncellenir.

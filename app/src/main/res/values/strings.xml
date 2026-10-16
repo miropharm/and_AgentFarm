@@ -96,6 +96,10 @@
     <string name="clipboard_refused">The clipboard did not accept it.</string>
     <string name="voice_prompt">Speak…</string>
     <string name="voice_unavailable">This phone has no speech recognition.</string>
+    <!-- Read on the farm's page after "… was not saved —" -->
+    <string name="save_damaged">the file arrived damaged</string>
+    <string name="save_unavailable">no app on this phone can save files</string>
+    <string name="save_failed">it could not be written there</string>
     <string name="page_blocked">This address does not open in the app.</string>
     <string name="page_offline">The farm is not connected right now.</string>
     <string name="away_open">Open Agent Farm</string>

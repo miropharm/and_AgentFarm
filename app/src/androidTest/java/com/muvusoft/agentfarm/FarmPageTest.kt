@@ -1,6 +1,11 @@
 package com.muvusoft.agentfarm
 
+import android.app.Activity
+import android.app.Instrumentation
 import android.content.ClipboardManager
+import android.content.Intent
+import android.content.IntentFilter
+import android.net.Uri
 import android.view.View
 import android.view.ViewGroup
 import android.webkit.WebView
@@ -18,6 +23,7 @@ import com.muvusoft.agentfarm.core.pairing.PairingVerdict
 import com.muvusoft.agentfarm.net.DeviceIdentity
 import com.muvusoft.agentfarm.net.FarmStore
 import com.muvusoft.agentfarm.net.PairClient
+import java.io.File
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.runBlocking
@@ -164,6 +170,27 @@ class FarmPageTest {
             clip = a.getSystemService(ClipboardManager::class.java)?.primaryClip?.getItemAt(0)?.text?.toString().orEmpty()
         }
         assertEquals("kopya metni", clip)
+    }
+
+    @Test
+    fun aFileAPageSavesIsWrittenWhereThePersonChoseOnThePhone() {
+        openFarm()
+        assertEquals(diagnosis(), "Fake page: now", titleUntil("Fake page: now"))
+        val inst = InstrumentationRegistry.getInstrumentation()
+        val target = File(inst.targetContext.cacheDir, "saved-export.md").apply { delete() }
+        // The system's save picker answered as a person would: here is the file to write.
+        val filter = IntentFilter(Intent.ACTION_CREATE_DOCUMENT).apply { addCategory(Intent.CATEGORY_OPENABLE); addDataType("text/markdown") }
+        val picker = inst.addMonitor(filter, Instrumentation.ActivityResult(Activity.RESULT_OK, Intent().setData(Uri.fromFile(target))), true)
+        try {
+            assertEquals("true", js("String(window.afShell.saves())"))
+            js("acquireVsCodeApi().postMessage({type:'afSave',token:'s1',name:'notes.md',mime:'text/markdown',data:'aGVsbG8gZnJvbSB0aGUgZmFybQ=='})")
+            assertEquals(diagnosis(), true, jsUntil("document.body.getAttribute('data-seen') || ''") { it.contains("afSaveDone") }.contains("afSaveDone"))
+            assertEquals(1, picker.hits)
+            assertEquals("hello from the farm", target.readText())
+        } finally {
+            inst.removeMonitor(picker)
+            target.delete()
+        }
     }
 
     private fun nightMode(on: Boolean) {

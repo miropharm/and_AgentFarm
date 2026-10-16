@@ -42,6 +42,12 @@ sealed interface ShellRequest {
     /** Steer the page's reading: stop, pause, resume, toggle, next, prev, or a new rate. */
     data class SpeakControl(val control: ReadingControl) : ShellRequest
 
+    /**
+     * Keep a file the farm made (an export) where the person chooses on the phone: [data] is its
+     * bytes in base64; the page waits for `afSaveDone` with its token.
+     */
+    data class Save(val token: JsonElement, val name: String, val mime: String, val data: String) : ShellRequest
+
     /** A shell request the shell refuses (a malformed page id): it goes nowhere. */
     data object Refused : ShellRequest
 
@@ -62,8 +68,29 @@ sealed interface ShellRequest {
                     ),
                 )
                 "afSpeakControl" -> o.str("action")?.takeIf { it in PageReading.ACTIONS }?.let { SpeakControl(ReadingControl(it, o.num("rate"))) } ?: Refused
+                "afSave" -> Save(
+                    token = o["token"] ?: JsonNull,
+                    name = o.str("name")?.trim()?.takeIf { it.isNotEmpty() } ?: "export",
+                    mime = o.str("mime")?.takeIf { MIME.matches(it) } ?: "application/octet-stream",
+                    data = o.str("data").orEmpty(),
+                )
                 else -> null
             }
+        }
+
+        private val MIME = Regex("[\\w.+-]+/[\\w.+-]+")
+
+        /** A save's bytes, or null when [data] is empty or not base64 (nothing is written then). */
+        fun saveBytes(data: String): ByteArray? =
+            runCatching { java.util.Base64.getDecoder().decode(data) }.getOrNull()?.takeIf { it.isNotEmpty() }
+
+        /** The save's answer: the name it was kept under; neither name nor error is a closed picker. */
+        fun saveDone(token: JsonElement, name: String?, error: String? = null): JsonObject = buildJsonObject {
+            put("type", "afSaveDone")
+            put("token", token)
+            put("ok", name != null && error == null)
+            if (name != null) put("name", name)
+            if (error != null) put("error", error)
         }
 
         /** The answer a page's copy waits for, the same shape the desktop host posts. */

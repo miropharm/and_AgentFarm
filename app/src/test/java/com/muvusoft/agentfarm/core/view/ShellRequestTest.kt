@@ -104,4 +104,27 @@ class ShellRequestTest {
             assertEquals(it, ShellRequest.Refused, of(it))
         }
     }
+
+    @Test
+    fun aSaveStaysOnThePhoneWithItsNameTypeAndBytes() {
+        val r = of("""{"type":"afSave","token":"s1","name":" turns-2026.md ","mime":"text/markdown","data":"aGk="}""")
+        assertEquals(ShellRequest.Save(JsonPrimitive("s1"), "turns-2026.md", "text/markdown", "aGk="), r)
+        // A page that names nothing still saves something nameable, never a blank title or a broken type.
+        assertEquals(ShellRequest.Save(JsonNull, "export", "application/octet-stream", ""), of("""{"type":"afSave","name":"  ","mime":"not a type"}"""))
+    }
+
+    @Test
+    fun aSavesBytesAreItsBase64OrNothing() {
+        assertEquals("hi", ShellRequest.saveBytes("aGk=")?.decodeToString())
+        assertNull(ShellRequest.saveBytes("not base64!"))
+        assertNull(ShellRequest.saveBytes(""))
+    }
+
+    @Test
+    fun aSavesAnswerSaysWhereItWentOrWhyNot() {
+        val t = JsonPrimitive("s1")
+        assertEquals("""{"type":"afSaveDone","token":"s1","ok":true,"name":"a (1).md"}""", ShellRequest.saveDone(t, "a (1).md").toString())
+        assertEquals("""{"type":"afSaveDone","token":"s1","ok":false}""", ShellRequest.saveDone(t, null).toString())
+        assertEquals("""{"type":"afSaveDone","token":"s1","ok":false,"error":"no room"}""", ShellRequest.saveDone(t, null, "no room").toString())
+    }
 }

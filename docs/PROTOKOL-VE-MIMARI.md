@@ -206,7 +206,19 @@ Tasarımın gerekçesi: vault projesi `10_Notes/A-PLN - Android Uygulaması Yeni
   (`token`, `state`: reading · paused · idle, `paragraph`, `count`, `rate`, `error?`) döner; sayfa bunu
   kendi okuma durumu yapar (🔊 / ■ / ▶ ve sekme çubuğunun üstündeki küçük oynatıcı). Sayfa 🔊'ü yalnız
   `afShell.speaks()` doğru dönerse çizer.
+  `afSave` (`token`, `name`, `mime`, `data` = base64) çiftliğin yaptığı bir dosyayı (bir dışa aktarma) telefonda
+  kişinin seçtiği yere yazar: sistemin kaydetme seçicisi (`ACTION_CREATE_DOCUMENT`, önerilen ad `name`) açılır,
+  baytlar ana iş parçacığı dışında yazılır (`ui/page/PageSave`) ve sayfaya `afSaveDone` (`token`, `ok`,
+  `name?` = sağlayıcının verdiği ad, `error?`) döner; seçici kapatılırsa ne `name` ne `error` vardır. Sayfa
+  (`media/afAsk.js`) `afSave`'i yalnız `afShell.saves()` doğru dönerse gönderir; dönmezse çiftliğe "uygulamayı
+  güncelleyin" der. Çiftlik bunu bir sayfanın `afAsk` `kind:"save"` sorusundan üretir (`PanelAsk.save`); bir
+  mesajda 8 MB'tan büyük dosya telefona hiç gönderilmez.
   Diğer bütün sayfa mesajları `view.msg` olarak gider.
+- İçeriği istenen bir dosya (Console'da 📎, ayar seti ya da iş akışı içe aktarma) telefonda telefonun kendi
+  dosyalarından seçilir: çiftliğin `afAsk` `kind:"files"` sorusu sayfada bir alt sayfa açar, düğmesi sayfanın kendi
+  `<input type=file>`'ıdır ve kabuk onu sistemin seçicisiyle karşılar (`ui/page/PageChrome`). Seçilenler base64
+  olarak `afAskAnswer` ile çiftliğe gider (toplam 8 MB) ve PC onları ek hazırlama klasörüne kopyalar; PC'deki bir
+  yol (bir ayarın klasörü) telefondan seçilemez.
 - Çiftlik tarafında sayfa başına bir kural vardır (`vsc_AgentFarm/src/panels/remotePages.ts`): bir
   mesaj ya yalnız PC'de çalışır (telefondan hiç çalışmaz), ya bakar (`read`), ya cevaplar
   (`answer`), ya da sayfanın işlem yetkisini ister. Sesli okuma (`readAloud`, `readControl`) hiçbir sayfada

@@ -92,4 +92,8 @@ class PageBridge(private val canDictate: Boolean, private val onMessage: (String
     /** This shell reads a page's text aloud with the phone's own voice (afSpeak); media/afPhoneRead.js asks before drawing a speaker. */
     @JavascriptInterface
     fun speaks(): Boolean = true
+
+    /** This shell keeps a file a page saves (afSave) where the person chooses; media/afAsk.js asks before sending one. */
+    @JavascriptInterface
+    fun saves(): Boolean = true
 }

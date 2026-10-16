@@ -103,6 +103,7 @@ private fun PageView(
         if (loaded && w != null) w.evaluateJavascript(PageRoute.deliverScript(json), null) else pending += json
     }
     val dictation = rememberDictation(deliver)
+    val saver = rememberPageSave(deliver)
 
     LaunchedEffect(viewId) {
         // frames keeps no replay: the open goes out only once this page listens, or a fast answer is lost.
@@ -156,6 +157,7 @@ private fun PageView(
                             is ShellRequest.Voice -> main.post { dictation.start(r.token) }
                             is ShellRequest.Speak -> speaker.read(viewId, r.ask) { state -> main.post { deliver(state.toString()) } }
                             is ShellRequest.SpeakControl -> speaker.control(viewId, r.control)
+                            is ShellRequest.Save -> main.post { saver.start(r) }
                             ShellRequest.Refused -> Unit
                         }
                     },

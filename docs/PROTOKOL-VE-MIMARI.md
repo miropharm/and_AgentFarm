@@ -167,6 +167,15 @@ Tasarımın gerekçesi: vault projesi `10_Notes/A-PLN - Android Uygulaması Yeni
   değeri saklar (`ShellPrefs`, çiftlik unutulunca silinir). Çiftliğe ulaşılamazken bekleme ekranı
   "Wake this PC" gösterir: sihirli paket (6×FF + 16×MAC) UDP 9'a kartın yayın adresine ve 255.255.255.255'e
   gider, ardından bağlantı geri çekilme beklemeden birkaç kez dener (`Reconnect.AFTER_WAKE_MS`).
+- **Push ile uyandırma (FCM):** telefon Firebase Cloud Messaging'den (proje `agent-farm-f0701`) bir kayıt
+  jetonu alır (`net/PushWakeService`, `ShellPrefs.pushToken`); `welcome.features` `remote.wake`'i listeleyen her
+  çiftliğe her welcome'dan sonra, jeton yenilenince de hemen `call remote.wake.register { token }` ile verir
+  (çiftlik o an gönderemiyor olsa da saklar). Çiftliğin veri mesajı içeriksizdir: `{ wake: "1", farm: <id> }`;
+  eşleşmiş bir çiftliği adlandırırsa (`core/link/PushWake.farmOf`) ön plan servisi kalkar ve o çiftliğin bağlantısı
+  geri çekilmeyi beklemeden dener; kaçırılanlar kendi kanalından `hello.resumeAfter` ile gelir, bildirimi yerel kod
+  kurar. Firebase anahtarı repoda değildir: CI onu Firebase projesinin Android uygulama yapılandırmasından okur
+  (`scripts/ci/firebase-key.sh`) ve `BuildConfig.FIREBASE_API_KEY` olur; anahtarsız bir derlemede ya da Google Play
+  hizmetleri olmayan telefonda push uyandırması yoktur, bağlantı servisi her zamanki gibi çalışır.
 - **Yerel "yeni oturum"** (paylaşım, ses, widget) Telegram `/new` ile aynı kararı kullanır ve son ayarları
   devralır (`seedLastLaunch`). Köprüdeki `sessions.start` devralmadığı için kullanılmaz. Kapısı
   `console.new { agent, prompt?, attach? }`: argümansız çağrılınca açılabilecek ajanları (`agents`) verir;

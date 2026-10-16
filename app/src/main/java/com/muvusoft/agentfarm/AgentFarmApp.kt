@@ -7,6 +7,7 @@ import com.muvusoft.agentfarm.net.AlertPoster
 import com.muvusoft.agentfarm.net.ConnectionManager
 import com.muvusoft.agentfarm.net.FarmStore
 import com.muvusoft.agentfarm.net.OutboxStore
+import com.muvusoft.agentfarm.net.PushWakeService
 import com.muvusoft.agentfarm.net.ShellPrefs
 import com.muvusoft.agentfarm.net.Speaker
 import com.muvusoft.agentfarm.net.phoneLocale
@@ -32,7 +33,13 @@ class AgentFarmApp : Application() {
             save = { outbox.save(it) },
             onWake = { farm, nics -> prefs.setWake(farm, nics) },
             onReceipt = { farmName, item, result -> AlertPoster.post(this, item.farm, Alerts.receipt(item, farmName, result)) },
+            pushToken = { prefs.pushToken },
         )
+    }
+
+    override fun onCreate() {
+        super.onCreate()
+        PushWakeService.setUp(this)
     }
 
     companion object {

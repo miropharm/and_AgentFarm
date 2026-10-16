@@ -6,6 +6,7 @@ import com.muvusoft.agentfarm.core.contract.CallResult
 import com.muvusoft.agentfarm.core.contract.Frame
 import com.muvusoft.agentfarm.core.contract.WakeNic
 import com.muvusoft.agentfarm.core.contract.Welcome
+import com.muvusoft.agentfarm.core.link.PushWake
 import com.muvusoft.agentfarm.core.link.Reconnect
 import com.muvusoft.agentfarm.core.share.ShareTarget
 import com.muvusoft.agentfarm.core.state.Outbox
@@ -28,6 +29,8 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 
 /** A frame from a farm, for whoever renders it (pages, notifications). */
 data class FarmFrame(val farm: String, val frame: Frame)
@@ -45,11 +48,15 @@ class ConnectionManager(
     private val onWake: (farmId: String, nics: List<WakeNic>) -> Unit,
     /** A share queued offline was answered, or waited too long (`result` null): its receipt is shown. */
     private val onReceipt: (farmName: String, item: OutboxItem, result: CallResult?) -> Unit,
+    /** This phone's push token (core/link/PushWake), null while it has none; read at every welcome. */
+    private val pushToken: () -> String?,
     private val clock: () -> Long = System::currentTimeMillis,
     private val connect: (PairedFarm, FarmConnectionEvents) -> FarmConnection = { f, e -> FarmConnection(f, e) },
 ) {
     private val random = SecureRandom()
     private val conns = ConcurrentHashMap<String, FarmConnection>()
+    /** The farms whose last welcome said they keep a push token. */
+    private val wakeable = ConcurrentHashMap.newKeySet<String>()
     private val _state = MutableStateFlow(ShellState(outbox = saved))
     private val _frames = MutableSharedFlow<FarmFrame>(extraBufferCapacity = 256, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
@@ -67,6 +74,7 @@ class ConnectionManager(
         val ids = farms.map { it.id }.toSet()
         for (id in conns.keys - ids) {
             conns.remove(id)?.stop()
+            wakeable -= id
             _state.update { ShellReducer.forget(it, id) }
         }
         for (farm in farms) {
@@ -121,6 +129,16 @@ class ConnectionManager(
     /** A paired farm answered on the local network at `address` (FarmFinder). */
     fun onFound(farmId: String, address: String) = conns[farmId]?.onFound(address)
 
+    /** A farm's push wake: its link tries at once instead of waiting out its backoff. */
+    fun wake(farmId: String) = conns[farmId]?.retryNow()
+
+    /** A new push token goes to every farm that keeps one; the others are given it at their next welcome. */
+    fun registerPush(token: String) = wakeable.forEach { register(it, token) }
+
+    private fun register(farmId: String, token: String) {
+        call(farmId, PushWake.REGISTER_OP, buildJsonObject { put("token", token) })
+    }
+
     /** A woken PC needs a little while: the link tries again at each of these marks instead of waiting out its backoff. */
     fun retryAfterWake(farmId: String) {
         scope.launch {
@@ -145,6 +163,8 @@ class ConnectionManager(
             if (answered != null) onReceipt(nameOf(farmId), answered, frame as CallResult)
             if (frame is Welcome) {
                 frame.wake?.takeIf { it.isNotEmpty() }?.let { onWake(farmId, it) }
+                if (PushWake.FEATURE in frame.features) wakeable += farmId else wakeable -= farmId
+                pushToken()?.takeIf { PushWake.registers(frame.features.keys, it) }?.let { register(farmId, it) }
                 flush(farmId, resend = true)
             }
             _frames.tryEmit(FarmFrame(farmId, frame))

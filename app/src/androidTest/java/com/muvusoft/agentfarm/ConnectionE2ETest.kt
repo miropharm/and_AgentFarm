@@ -29,7 +29,8 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class ConnectionE2ETest {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-    private val manager = ConnectionManager(scope, saved = emptyList(), save = { }, onWake = { _, _ -> }, onReceipt = { _, _, _ -> })
+    private val token = "push-e2e-" + System.nanoTime()
+    private val manager = ConnectionManager(scope, saved = emptyList(), save = { }, onWake = { _, _ -> }, onReceipt = { _, _, _ -> }, pushToken = { token })
 
     @After
     fun tearDown() {
@@ -62,6 +63,20 @@ class ConnectionE2ETest {
         manager.call(farm.id, "farm.ping")
         runBlocking { withTimeout(10_000) { manager.state.first { it.outbox.isEmpty() } } }
         assertTrue(manager.state.value.outbox.isEmpty())
+    }
+
+    @Test
+    fun aFarmThatKeepsWakeTokensIsGivenThisPhonesTokenAtItsWelcome() {
+        val farm = paired()
+        manager.setFarms(listOf(farm))
+        await(farm.id, "online") { it.link is Link.Online }
+        val end = System.currentTimeMillis() + 10_000
+        var calls = FakeHost.get(Pairing.parse(FakeHost.requireLink())!!, "/_test/state")
+        while (!calls.contains(token) && System.currentTimeMillis() < end) {
+            Thread.sleep(300)
+            calls = FakeHost.get(Pairing.parse(FakeHost.requireLink())!!, "/_test/state")
+        }
+        assertTrue("the farm was not given the token: $calls", calls.contains("\"op\":\"remote.wake.register\"") && calls.contains(token))
     }
 
     @Test

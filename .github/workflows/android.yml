@@ -35,6 +35,20 @@ jobs:
       - name: Repo gate (encoding, credentials, dev codes, size, core purity, changelog, pipeline)
         run: node test/run-all.js
 
+      # Push wake reads its Firebase key here; without the sign-in the build goes on without push wake.
+      - id: gcp
+        continue-on-error: true
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - if: steps.gcp.outcome == 'success'
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Firebase key for push wake (never committed)
+        if: steps.gcp.outcome == 'success'
+        run: bash scripts/ci/firebase-key.sh
+
       - name: Unit tests + debug APK + instrumentation APK
         run: gradle --no-daemon testDebugUnitTest assembleDebug assembleDebugAndroidTest
 

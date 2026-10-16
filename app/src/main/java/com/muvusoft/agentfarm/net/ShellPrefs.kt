@@ -24,6 +24,11 @@ class ShellPrefs(context: Context) {
         get() = prefs.getString(VOICE_LANGUAGE, null) ?: VoiceLanguage.PHONE
         set(value) = prefs.edit().putString(VOICE_LANGUAGE, value).apply()
 
+    /** This phone's push token (net/PushWakeService), null until Firebase gave one. */
+    var pushToken: String?
+        get() = prefs.getString(PUSH_TOKEN, null)
+        set(value) = prefs.edit().putString(PUSH_TOKEN, value).apply()
+
     /** The network cards a farm named in its last welcome, kept for waking its PC while it sleeps. */
     fun wake(farmId: String): List<WakeNic> =
         prefs.getString(WAKE + farmId, null)?.let { runCatching { Codec.json.decodeFromString(NICS, it) }.getOrNull() }.orEmpty()
@@ -41,5 +46,6 @@ class ShellPrefs(context: Context) {
         const val LOCK_ON_OPEN = "lockOnOpen"
         const val SPEAK_MODE = "speakMode"
         const val VOICE_LANGUAGE = "voiceLanguage"
+        const val PUSH_TOKEN = "pushToken"
     }
 }

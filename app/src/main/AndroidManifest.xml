@@ -53,6 +53,13 @@
         <receiver
             android:name=".net.AlertActionReceiver"
             android:exported="false" />
+        <service
+            android:name=".net.PushWakeService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
         <receiver
             android:name=".widget.StatusWidget"
             android:exported="false">

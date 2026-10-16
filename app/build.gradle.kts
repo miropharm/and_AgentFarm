@@ -22,6 +22,8 @@ android {
         versionCode = buildNumber
         versionName = "$appVersion-b$buildNumber"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        // Push wake: the CI reads the key from the Firebase project (scripts/ci/firebase-key.sh); never committed.
+        buildConfigField("String", "FIREBASE_API_KEY", "\"${System.getenv("FIREBASE_API_KEY") ?: ""}\"")
     }
 
     // Fixed debug key: every CI build must carry the same signature so the phone accepts it as an update.
@@ -69,6 +71,9 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.7")
     // The pairing QR is read by Google's code scanner: its own camera screen, no camera permission here.
     implementation("com.google.android.gms:play-services-code-scanner:16.1.0")
+    // A farm wakes the phone with a content-free push (net/PushWakeService).
+    implementation(platform("com.google.firebase:firebase-bom:33.7.0"))
+    implementation("com.google.firebase:firebase-messaging")
 
     testImplementation("junit:junit:4.13.2")
 

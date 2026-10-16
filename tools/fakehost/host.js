@@ -17,7 +17,7 @@ const OPS = {
         ? { sent: false, confirm: 'risk', note: '⚠️ This asks for rm -rf on developer, which cannot be undone.\nRun it?\nNot sent yet — confirm it, or send it from the PC.' }
         : { note: '→ developer' },
     'console.sessions': () => [
-        { id: 'c_dev', agent: 'developer', status: 'running', steerable: true, asking: null },
+        { id: 'c_dev', agent: 'developer', status: 'working', steerable: true, asking: null },
         { id: 'c_psy', agent: 'psikolog', status: 'idle', steerable: true, asking: null },
         { id: 'c_old', agent: 'yazar', status: 'ended', steerable: false, asking: null },
     ],

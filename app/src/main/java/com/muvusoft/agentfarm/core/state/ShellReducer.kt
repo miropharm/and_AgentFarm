@@ -10,6 +10,7 @@ import com.muvusoft.agentfarm.core.contract.Frame
 import com.muvusoft.agentfarm.core.contract.Gap
 import com.muvusoft.agentfarm.core.contract.Refuse
 import com.muvusoft.agentfarm.core.contract.Welcome
+import com.muvusoft.agentfarm.core.share.Share
 import com.muvusoft.agentfarm.core.share.ShareTarget
 
 /** Pure transitions of ShellState. Every function returns a new state; none reads a clock or the network. */
@@ -37,7 +38,7 @@ object ShellReducer {
 
     /** What console.sessions listed: kept for a share made offline, and the running count read from it. */
     fun sessions(s: ShellState, farmId: String, targets: List<ShareTarget>): ShellState =
-        running(update(s, farmId) { it.copy(sessions = targets) }, farmId, targets.count { it.status == "running" })
+        running(update(s, farmId) { it.copy(sessions = targets) }, farmId, targets.count(Share::runs))
 
     fun agents(s: ShellState, farmId: String, names: List<String>): ShellState = update(s, farmId) { it.copy(agents = names) }
 

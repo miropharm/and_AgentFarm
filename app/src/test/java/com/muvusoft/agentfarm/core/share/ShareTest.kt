@@ -25,15 +25,16 @@ class ShareTest {
         val rows = json(
             """[
               {"id":"a","agent":"yazar","status":"idle","asking":null},
-              {"id":"b","agent":"developer","status":"running"},
+              {"id":"b","agent":"developer","status":"working"},
               {"id":"c","agent":"eski","status":"ended"},
-              {"id":"d","agent":"psikolog","status":"running","asking":{"kind":"question"}},
+              {"id":"d","agent":"psikolog","status":"working","asking":{"kind":"question"}},
+              {"id":"e","agent":"ops","status":"running"},
               {"agent":"kimliksiz","status":"idle"},
               "bozuk"
             ]""",
         )
         val t = Share.targets(rows)
-        assertEquals(listOf("d", "b", "a"), t.map { it.id })
+        assertEquals(listOf("d", "b", "a", "e"), t.map { it.id })
         assertEquals("waiting for you", Share.statusWord(t[0]))
         assertEquals("running", Share.statusWord(t[1]))
         assertEquals("idle", Share.statusWord(t[2]))

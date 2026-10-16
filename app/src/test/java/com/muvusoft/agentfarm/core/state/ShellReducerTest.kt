@@ -92,7 +92,7 @@ class ShellReducerTest {
     @Test
     fun theListedSessionsAreKeptAndTheRunningCountReadFromThem() {
         val s0 = ShellReducer.pair(ShellState(), home, 1)
-        val listed = listOf(ShareTarget("c_dev", "developer", "running", true), ShareTarget("c_ops", "ops", "idle", false))
+        val listed = listOf(ShareTarget("c_dev", "developer", "working", true), ShareTarget("c_ops", "ops", "idle", false))
         val s = ShellReducer.sessions(s0, "farm_a", listed)
         assertEquals(listed, s.farm("farm_a")?.sessions)
         assertEquals(1, s.farm("farm_a")?.running)

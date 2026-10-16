@@ -10,8 +10,8 @@ class StopTest {
     @Test
     fun onlyARunningTurnCanBeStopped() {
         val rows = json(
-            """[{"id":"c1","agent":"developer","status":"running"},{"id":"c2","agent":"yazar","status":"idle"},
-            {"id":"c3","agent":"psikolog","status":"running","asking":{"q":1}},{"id":"c4","agent":"x","status":"ended"}]""",
+            """[{"id":"c1","agent":"developer","status":"working"},{"id":"c0","agent":"ops","status":"running"},{"id":"c2","agent":"yazar","status":"idle"},
+            {"id":"c3","agent":"psikolog","status":"working","asking":{"q":1}},{"id":"c4","agent":"x","status":"ended"}]""",
         )
         assertEquals(listOf("c3", "c1"), Stop.running(rows).map { it.id })
         assertEquals(emptyList<ShareTarget>(), Stop.running(json("""{"not":"a list"}""")))

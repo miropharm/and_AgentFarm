@@ -77,13 +77,13 @@ object Share {
             val id = r.str("id") ?: return@mapNotNull null
             ShareTarget(id, r.str("agent") ?: id, r.str("status").orEmpty(), r["asking"] is JsonObject)
         }.filterNot { it.status in GONE }
-            .sortedBy { if (it.asking) 0 else if (it.status == "running") 1 else 2 }
+            .sortedBy { if (it.asking) 0 else if (runs(it)) 1 else 2 }
     }
 
     /** A session's state in the row's words. An unknown status is shown as itself. */
     fun statusWord(t: ShareTarget): String = when {
         t.asking -> "waiting for you"
-        t.status == "running" -> "running"
+        runs(t) -> "running"
         t.status == "idle" -> "idle"
         else -> t.status
     }
@@ -148,6 +148,13 @@ object Share {
 
     fun preview(text: String): String = if (text.length <= PREVIEW_CHARS) text else text.take(PREVIEW_CHARS).trimEnd() + "…"
 
+    /**
+     * A turn is in flight. console.sessions says it as the Console's own status, "working" (vsc ConsoleStatus:
+     * starting · idle · working · ended · error); "running" is the row's word for it, never the farm's.
+     */
+    fun runs(t: ShareTarget): Boolean = t.status == WORKING
+
+    private const val WORKING = "working"
     private val GONE = setOf("ended", "closed", "exited", "stopped")
     private val SENTENCE_KEYS = listOf("sentence", "note", "message")
 

@@ -8,9 +8,16 @@ import android.os.Looper
 import android.webkit.WebSettings
 import android.webkit.WebView
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -26,6 +33,7 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.viewinterop.AndroidView
 import com.muvusoft.agentfarm.AgentFarmApp
 import com.muvusoft.agentfarm.R
@@ -39,6 +47,7 @@ import com.muvusoft.agentfarm.core.view.PageRoute
 import com.muvusoft.agentfarm.core.view.PageStack
 import com.muvusoft.agentfarm.core.view.ShellRequest
 import com.muvusoft.agentfarm.net.ConnectionManager
+import com.muvusoft.agentfarm.ui.components.ScreenBar
 import java.util.UUID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.onSubscription
@@ -46,14 +55,27 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 
-/** One of the farm's own pages, carried by a WebView. While the farm is not online the wait is shown instead. */
+/**
+ * One of the farm's own pages, carried by a WebView under the phone's own top bar (Back and the page's own
+ * title). While the farm is not online the wait is shown instead. A link on the page goes to [onLink] first,
+ * with the page it was on: true when the phone opened its own screen for it.
+ */
 @Composable
-fun FarmPage(farmId: String, page: String, manager: ConnectionManager, onBack: () -> Unit, args: JsonObject? = null) {
+fun FarmPage(
+    farmId: String,
+    page: String,
+    manager: ConnectionManager,
+    onBack: () -> Unit,
+    onLink: (from: ShellRequest.Open, to: ShellRequest.Open) -> Boolean,
+    args: JsonObject? = null,
+) {
     // A page's own links open the next page here, with what it asked to be shown; Back walks back
     // through them, then leaves the farm.
     var stack by remember(page, args) { mutableStateOf(listOf(ShellRequest.Open(page, args))) }
-    BackHandler { PageStack.back(stack)?.let { stack = it } ?: onBack() }
+    val back = { PageStack.back(stack)?.let { stack = it } ?: onBack() }
+    BackHandler(onBack = back)
     val current = stack.last()
+    var title by remember(current) { mutableStateOf("") }
     // A dead renderer bumps the generation: the old WebView is dropped and a new one opens a new view.
     var generation by remember { mutableIntStateOf(0) }
     val viewId = remember(generation, current) { "v_" + UUID.randomUUID().toString().take(8) }
@@ -61,19 +83,29 @@ fun FarmPage(farmId: String, page: String, manager: ConnectionManager, onBack: (
     val status = state.farm(farmId)
     val link = status?.link
     val away = status?.away
-    Surface(Modifier.fillMaxSize()) {
-        if (link is Link.Online && away != null) {
-            AwayScreen(farmId = farmId, farmName = status?.farm?.name ?: farmId, away = away, manager = manager)
-        } else if (link is Link.Online) {
-            key(generation, current) {
-                PageView(
-                    farmId = farmId, page = current.page, args = current.args, viewId = viewId, manager = manager,
-                    onRendererGone = { generation++ },
-                    onOpen = { stack = PageStack.open(stack, it) },
-                )
+    Column(Modifier.fillMaxSize()) {
+        ScreenBar(
+            navigation = {
+                IconButton(onClick = back, Modifier.testTag("page-back")) { Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.back)) }
+            },
+        ) {
+            Text(title, Modifier.testTag("page-title"), style = MaterialTheme.typography.titleMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
+        }
+        Surface(Modifier.fillMaxWidth().weight(1f)) {
+            if (link is Link.Online && away != null) {
+                AwayScreen(farmId = farmId, farmName = status?.farm?.name ?: farmId, away = away, manager = manager)
+            } else if (link is Link.Online) {
+                key(generation, current) {
+                    PageView(
+                        farmId = farmId, page = current.page, args = current.args, viewId = viewId, manager = manager,
+                        onRendererGone = { generation++ },
+                        onOpen = { if (!onLink(current, it)) stack = PageStack.open(stack, it) },
+                        onTitle = { title = it },
+                    )
+                }
+            } else {
+                WaitScreen(farmId = farmId, farmName = status?.farm?.name ?: farmId, link = link, manager = manager)
             }
-        } else {
-            WaitScreen(farmId = farmId, farmName = status?.farm?.name ?: farmId, link = link, manager = manager)
         }
     }
 }
@@ -88,6 +120,7 @@ private fun PageView(
     manager: ConnectionManager,
     onRendererGone: () -> Unit,
     onOpen: (ShellRequest.Open) -> Unit,
+    onTitle: (String) -> Unit,
 ) {
     val clipboard = LocalContext.current.getSystemService(ClipboardManager::class.java)
     val speaker = AgentFarmApp.of(LocalContext.current).speaker
@@ -97,7 +130,7 @@ private fun PageView(
     // Host messages that arrive before the page has loaded wait here; all of this runs on the main thread.
     val pending = remember { mutableListOf<String>() }
     var loaded by remember { mutableStateOf(false) }
-    val chrome = rememberPageChrome()
+    val chrome = rememberPageChrome(onTitle)
     val deliver = { json: String ->
         val w = web
         if (loaded && w != null) w.evaluateJavascript(PageRoute.deliverScript(json), null) else pending += json

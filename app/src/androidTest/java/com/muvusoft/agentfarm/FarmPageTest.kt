@@ -11,6 +11,7 @@ import android.view.ViewGroup
 import android.webkit.WebView
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -160,6 +161,31 @@ class FarmPageTest {
         assertEquals(diagnosis(), true, args.contains("sid-2"))
         rule.activityRule.scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }
         assertEquals(diagnosis(), "Fake page: now", titleUntil("Fake page: now"))
+    }
+
+    @Test
+    fun aPagesSessionAndConsoleLinksOpenThePhonesOwnScreensUnderItsOwnTopBar() {
+        rule.waitUntil(20_000) {
+            rule.onAllNodes(hasTestTag("link-$farmId") and hasText("Connected", substring = true), useUnmergedTree = true)
+                .fetchSemanticsNodes().isNotEmpty()
+        }
+        rule.onNodeWithTag("farm-$farmId").performClick()
+        val recent = SemanticsMatcher("a history row") { it.config.getOrNull(SemanticsProperties.TestTag)?.startsWith("recent-") == true }
+        rule.waitUntil(20_000) { rule.onAllNodes(recent, useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty() }
+        val session = rule.onAllNodes(recent, useUnmergedTree = true).fetchSemanticsNodes().first().config[SemanticsProperties.TestTag].removePrefix("recent-")
+        rule.onNodeWithTag("nav-menu").performClick()
+        assertEquals(diagnosis(), "Fake page: now", titleUntil("Fake page: now"))
+        // The phone's own bar names the page by the page's own title.
+        rule.waitUntil(10_000) { rule.onAllNodes(hasTestTag("page-title") and hasText("Fake page: now")).fetchSemanticsNodes().isNotEmpty() }
+        js("acquireVsCodeApi().postMessage({type:'afnav',to:'session',args:{sessionId:'$session'}})")
+        rule.waitUntil(10_000) { rule.onAllNodes(hasTestTag("conv-title")).fetchSemanticsNodes().isNotEmpty() }
+        // Back from the Conversation is the page it was opened from.
+        rule.activityRule.scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }
+        assertEquals(diagnosis(), "Fake page: now", titleUntil("Fake page: now"))
+        js("acquireVsCodeApi().postMessage({type:'afnav',to:'console'})")
+        rule.waitUntil(10_000) {
+            rule.onAllNodes(hasTestTag("now-list")).fetchSemanticsNodes().isNotEmpty() && rule.onAllNodes(hasTestTag("farm-page")).fetchSemanticsNodes().isEmpty()
+        }
     }
 
     @Test

@@ -6,6 +6,7 @@ import com.muvusoft.agentfarm.core.contract.NeedsList
 import com.muvusoft.agentfarm.core.contract.Ops
 import com.muvusoft.agentfarm.core.contract.RecentPage
 import com.muvusoft.agentfarm.core.contract.RecentRow
+import com.muvusoft.agentfarm.core.conversation.ConversationKey
 import com.muvusoft.agentfarm.core.conversation.ConversationText
 import com.muvusoft.agentfarm.core.live.LiveCard
 import com.muvusoft.agentfarm.core.live.LiveMerge
@@ -14,6 +15,7 @@ import com.muvusoft.agentfarm.core.session.AskKind
 import com.muvusoft.agentfarm.core.session.Quick
 import com.muvusoft.agentfarm.core.session.Step
 import com.muvusoft.agentfarm.core.state.Link
+import com.muvusoft.agentfarm.core.view.PageRoute
 import com.muvusoft.agentfarm.core.view.ShellRequest
 import java.io.File
 import kotlinx.serialization.json.Json
@@ -218,6 +220,24 @@ class NowBuildTest {
         assertEquals(NowTarget.Page(ShellRequest.Open(NowOpen.NEEDS_PAGE)), NowOpen.of(s, "ba|1"))
         val running = s.copy(running = s.running + Running("c_new", "developer", "", null, null, null))
         assertEquals("a card the engine has not named yet", "c_new" to null, (NowOpen.of(running, "c_new") as NowTarget.Conversation).key.let { it.card to it.transcript })
+    }
+
+    @Test
+    fun aPagesLinkToNowOrASessionOpensThePhonesOwnScreen() {
+        val s = NowBuild.of("Ev PC", online, 5, listOf(working("c_a", "s-a")), RecentPage(listOf(row("s-old", 10, "Eski iş")), null), null)
+        fun open(page: String, vararg args: Pair<String, Any>) = NowOpen.link(
+            s,
+            ShellRequest.Open(page, if (args.isEmpty()) null else JsonObject(args.associate { (k, v) -> k to if (v is Number) JsonPrimitive(v) else JsonPrimitive(v.toString()) })),
+        )
+        assertEquals(PageLink.Now, open(PageRoute.HOME_PAGE))
+        assertEquals("the plain Console's cards are Now's rows", PageLink.Now, open(NowOpen.CONSOLE_PAGE))
+        assertEquals("a session a card hosts writes through the card", "c_a", (open(NowOpen.SESSION_PAGE, "sessionId" to "s-a") as PageLink.Conversation).key.card)
+        assertEquals(ConversationKey(null, "s-old", "developer", "Eski iş"), (open(NowOpen.SESSION_PAGE, "sessionId" to "s-old") as PageLink.Conversation).key)
+        val talk = open(NowOpen.CONSOLE_PAGE, "agentId" to "psikolog")
+        assertEquals("the Console on one agent stays the page", PageLink.Page(ShellRequest.Open(NowOpen.CONSOLE_PAGE, JsonObject(mapOf("agentId" to JsonPrimitive("psikolog"))))), talk)
+        assertTrue("a link into one step only the page places", open(NowOpen.SESSION_PAGE, "sessionId" to "s-old", "ts" to 1792000000000L) is PageLink.Page)
+        assertTrue("a session named by its file only", open(NowOpen.SESSION_PAGE, "file" to "x.jsonl") is PageLink.Page)
+        assertTrue(open("tasks") is PageLink.Page)
     }
 
     @Test

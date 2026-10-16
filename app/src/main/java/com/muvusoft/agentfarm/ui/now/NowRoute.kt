@@ -15,6 +15,7 @@ import androidx.compose.runtime.setValue
 import com.muvusoft.agentfarm.core.contract.Codec
 import com.muvusoft.agentfarm.core.conversation.ConversationKey
 import com.muvusoft.agentfarm.core.now.NowOpen
+import com.muvusoft.agentfarm.core.now.PageLink
 import com.muvusoft.agentfarm.core.now.NowTarget
 import com.muvusoft.agentfarm.core.state.Link
 import com.muvusoft.agentfarm.core.view.PageRoute
@@ -68,9 +69,27 @@ fun NowRoute(
         }
         onTalkOpened()
     }
+    // The page a Conversation was opened from: Back from the Conversation goes back to it.
+    var under by remember(farmId) { mutableStateOf<ShellRequest.Open?>(null) }
     val open = page
     if (open != null) {
-        FarmPage(farmId = farmId, page = open.page, manager = manager, onBack = { page = null }, args = open.args)
+        FarmPage(
+            farmId = farmId, page = open.page, manager = manager, args = open.args,
+            onBack = { page = null },
+            onLink = { from, to ->
+                val target = NowOpen.link(state, to)
+                when (target) {
+                    PageLink.Now -> page = null
+                    is PageLink.Conversation -> {
+                        under = from
+                        page = null
+                        conversation = target.key
+                    }
+                    is PageLink.Page -> Unit
+                }
+                target !is PageLink.Page
+            },
+        )
         return
     }
     val talk = conversation
@@ -80,7 +99,11 @@ fun NowRoute(
             key = talk,
             manager = manager,
             store = conversations,
-            onBack = { conversation = null },
+            onBack = {
+                conversation = null
+                page = under
+                under = null
+            },
             onFarmPage = { page = NowOpen.page(talk) },
         )
         return

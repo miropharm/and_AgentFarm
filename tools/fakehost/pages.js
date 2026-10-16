@@ -17,6 +17,8 @@ function html(page, view) {
     const safe = s => String(s).replace(/[^a-z0-9._-]/gi, '');
     return '<!doctype html><html><head><meta charset="utf-8">' +
         '<meta name="viewport" content="width=device-width,initial-scale=1">' +
+        // A farm page names itself in its title (vsc src/panels/base.ts), which the phone's own bar shows.
+        `<title>Fake page: ${safe(page)}</title>` +
         '<link rel="stylesheet" href="/res/common.css"><script src="/res/afRemote.js"></script></head>' +
         `<body data-page="${safe(page)}" data-view="${safe(view)}"><h1 id="title">Fake page: ${safe(page)}</h1>` +
         // Records what the host sent, the way a real page's message listener would receive it,

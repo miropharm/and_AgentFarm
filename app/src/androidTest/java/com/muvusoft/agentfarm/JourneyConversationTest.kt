@@ -12,6 +12,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import java.io.File
 import org.json.JSONObject
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -130,10 +131,15 @@ class JourneyConversationTest : JourneyBase() {
 
     private fun j9(profile: String) {
         val j = Journey("J9", profile).begin()
+        // The journey is a conversation the phone holds current when the link drops. The farm's world was just
+        // drawn again, so a copy an earlier journey left is of a record that no longer exists (ConversationStore's
+        // folder): it goes, and the link drops only once the open has read the record and kept it.
+        File(ctx.filesDir, "conversations").deleteRecursively()
         val s = open()
         try {
             fresh()
             openIdle(null, 0)
+            until(15_000) { shown(tagStarts("user-")) }
             j.step("the link drops: the conversation stays, its age shown", taps = 0, targetMs = 5_000) {
                 FakeHost.post("/_test/sleep", "{\"asleep\":true}")
                 seen(10_000, "the copy's age" to { shown(hasText("· updated", substring = true)) }, "the conversation" to { shown(hasTestTag("conv-list")) })

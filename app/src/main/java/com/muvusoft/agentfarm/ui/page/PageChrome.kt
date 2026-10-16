@@ -8,14 +8,18 @@ import android.webkit.WebView
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 
 /**
- * The page's chrome client: a file input opens the system picker. The page's callback is answered
- * exactly once, with null on cancel, or WebView never opens a picker for that page again.
+ * The page's chrome client: a file input opens the system picker, and the page's own title goes to [onTitle].
+ * The page's callback is answered exactly once, with null on cancel, or WebView never opens a picker for that
+ * page again.
  */
 @Composable
-fun rememberPageChrome(): WebChromeClient {
+fun rememberPageChrome(onTitle: (String) -> Unit): WebChromeClient {
+    val titled by rememberUpdatedState(onTitle)
     val waiting = remember { arrayOfNulls<ValueCallback<Array<Uri>>>(1) }
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { r ->
         waiting[0]?.onReceiveValue(WebChromeClient.FileChooserParams.parseResult(r.resultCode, r.data))
@@ -23,6 +27,11 @@ fun rememberPageChrome(): WebChromeClient {
     }
     return remember {
         object : WebChromeClient() {
+            override fun onReceivedTitle(view: WebView, title: String?) {
+                // Until its own title arrives a page is named by its address, which is no title.
+                title?.trim()?.takeIf { it.isNotEmpty() && "://" !in it }?.let { titled(it) }
+            }
+
             override fun onShowFileChooser(view: WebView, callback: ValueCallback<Array<Uri>>, params: FileChooserParams): Boolean {
                 waiting[0]?.onReceiveValue(null)
                 waiting[0] = callback

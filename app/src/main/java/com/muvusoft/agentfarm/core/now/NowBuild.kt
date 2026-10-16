@@ -57,12 +57,15 @@ object NowBuild {
     /**
      * The first page read again (a refresh, the link back): it takes the top, a row it carries moves to its new
      * place, and the rows already read below it stay with their cursor, so nothing scrolled to is read again.
+     * They stay only when the top reaches a row still where it was: more new rows than a page leave a gap no
+     * cursor would ever read, so the list starts again from the top.
      */
     fun head(s: NowState, page: RecentPage): NowState {
         val top = page.rows.map(::recentOf)
         val oldest = top.lastOrNull()?.endedAt ?: return s.copy(recent = emptyList(), cursor = null, moreRecent = false)
         val ids = top.map { it.session }.toSet()
-        val below = s.recent.filter { it.session !in ids && it.endedAt < oldest }
+        val joined = page.next != null && s.recent.any { r -> top.any { it.session == r.session && it.endedAt == r.endedAt } }
+        val below = if (joined) s.recent.filter { it.session !in ids && it.endedAt < oldest } else emptyList()
         val cursor = if (below.isEmpty()) page.next else s.cursor
         return s.copy(recent = top + below, cursor = cursor, moreRecent = cursor != null)
     }

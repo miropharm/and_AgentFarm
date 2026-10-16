@@ -6,9 +6,10 @@
 const PAGE_ROWS = 20;
 const PAGE_MESSAGES = 30;
 
-/** How many rows an answer carried: the list itself, a page's messages, or a queue's items. */
+/** How many rows an answer carried: the list itself, a page's rows or messages, or a queue's items. */
 function rowsOf(result) {
     if (Array.isArray(result)) { return result.length; }
+    if (result && Array.isArray(result.rows)) { return result.rows.length; }
     if (result && Array.isArray(result.messages)) { return result.messages.length; }
     if (result && Array.isArray(result.items)) { return result.items.length; }
     return 0;
@@ -20,7 +21,8 @@ function audit(calls) {
     for (const c of calls) {
         const a = c.args || {};
         if (c.op === 'sessions.recent') {
-            const asked = typeof a.limit === 'number' && a.limit > 0 ? Math.floor(a.limit) : 10;
+            // the page view's own default is a page; the plain list's is 10 (vsc sessionPage.ts, sessions.recent)
+            const asked = typeof a.limit === 'number' && a.limit > 0 ? Math.floor(a.limit) : a.view === 'page' ? PAGE_ROWS : 10;
             if (asked > PAGE_ROWS) { out.push(`${c.id} sessions.recent asked ${asked} sessions (a page is ${PAGE_ROWS})`); }
         }
         if (c.op === 'sessions.read') {

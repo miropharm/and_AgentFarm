@@ -168,6 +168,38 @@
       "example": { "mission": "mr_9x1p", "title": "Ship v2", "outcome": "done", "spoken": { "text": "Ship v2, mission ended.", "lang": "en" } }
     }
   },
+  "ops": {
+    "console.sessions": {
+      "args": { "id": "string?", "messages": "number?", "view": "string?" },
+      "answer": "array",
+      "row": { "id": "string", "agent": "string", "sessionId": "string?", "engine": "string", "engineLabel": "string", "steerable": "boolean", "status": "string", "model": "string?", "effort": "string?", "applied": "object?", "cost": "number", "turns": "number", "held": "number", "lastTurn": "object?", "contextPct": "number?", "asking": "object?", "exitReason": "string?", "messages": "array?" },
+      "example": [{ "id": "c_dev", "agent": "developer", "sessionId": "5f1c2a9e-0d4b-4c1e-9a7f-2b6d8e3c1a01", "engine": "claude", "engineLabel": "Claude Code", "steerable": true, "status": "working", "model": "opus", "effort": "high", "applied": { "model": "claude-opus-4-1", "effort": "high" }, "cost": 4.12, "turns": 7, "held": 0, "lastTurn": null, "contextPct": 48, "asking": { "kind": "question", "tool": "AskUserQuestion", "questions": [{ "question": "Hangi dalda devam edeyim?", "header": "Dal", "multiSelect": false, "options": [{ "label": "master", "description": "Doğrudan ana dal" }, { "label": "yeni dal" }] }], "detail": "Hangi dalda devam edeyim?", "waitingSince": 1792141917129, "autoAnswer": null }, "exitReason": null, "messages": [{ "role": "user", "text": "Testleri çalıştır", "tool": null, "isError": false, "ts": 1792141916000 }, { "role": "tool", "text": null, "tool": "Bash node test/run-all.js", "isError": false, "ts": 1792141916660 }] }]
+    },
+    "sessions.read": {
+      "args": { "session": "string", "roles": "any?", "turn": "number?", "from": "number?", "limit": "number?", "maxChars": "number?" },
+      "answer": "object",
+      "fields": { "id": "string", "file": "string", "engine": "string", "title": "string", "agent": "string?", "turns": "number", "total": "number", "from": "number", "returned": "number", "next": "number?", "clipped": "number", "messages": "array" },
+      "list": "messages",
+      "row": { "i": "number", "key": "string", "turn": "number?", "role": "string", "ts": "number", "text": "string?", "tool": "string?", "input": "string?", "isError": "boolean?", "clipped": "number?" },
+      "example": { "id": "5f1c2a9e-0d4b-4c1e-9a7f-2b6d8e3c1a01", "file": "C:\\Users\\me\\.claude\\projects\\dev\\5f1c2a9e.jsonl", "engine": "claude", "title": "Telefon ana ekranı", "agent": "developer", "turns": 7, "total": 2, "from": 1, "returned": 2, "next": null, "clipped": 0, "messages": [{ "i": 1, "key": "#1", "turn": 1, "role": "user", "ts": 1792141916000, "text": "Testleri çalıştır" }, { "i": 2, "key": "#4", "turn": 1, "role": "assistant", "ts": 1792141918487, "text": "Bütün testler geçti." }] }
+    },
+    "sessions.recent": {
+      "args": { "view": "string", "limit": "number?", "cursor": "string?", "origin": "string?", "engine": "string?" },
+      "answer": "object",
+      "fields": { "rows": "array", "next": "string?" },
+      "list": "rows",
+      "row": { "id": "string", "agent": "string", "title": "string", "engine": "string", "lastTs": "number", "origin": "string", "status": "string?", "waiting": "boolean", "lastLine": "string?" },
+      "example": { "rows": [{ "id": "5f1c2a9e-0d4b-4c1e-9a7f-2b6d8e3c1a01", "agent": "developer", "title": "Telefon ana ekranı", "engine": "claude", "lastTs": 1792141918487, "origin": "baton", "status": null, "waiting": false, "lastLine": "Bütün testler geçti." }], "next": "1792141918487:5f1c2a9e-0d4b-4c1e-9a7f-2b6d8e3c1a01" }
+    },
+    "needs.list": {
+      "args": {},
+      "answer": "object",
+      "fields": { "items": "array", "blocking": "number", "hidden": "number" },
+      "list": "items",
+      "row": { "kind": "string", "agentName": "string", "title": "string", "detail": "string", "ts": "number", "ref": "object", "actions": "array", "key": "string", "options": "array?" },
+      "example": { "items": [{ "kind": "permission", "agentName": "psikolog", "title": "Bash: git status", "detail": "git status", "ts": 1792141917129, "ref": { "sessionId": "8a2e4f10-3b7c-4d2a-8e1f-5c9b0a6d2e02" }, "actions": [{ "id": "permission-allow", "label": "Allow" }, { "id": "permission-deny", "label": "Deny" }], "key": "permission|8a2e4f10-3b7c-4d2a-8e1f-5c9b0a6d2e02" }], "blocking": 1, "hidden": 0 }
+    }
+  },
   "rules": [
     "The host speaks first on /ws with a challenge; the client answers hello; nothing else is accepted before welcome.",
     "A client ignores an event type it does not know; a host refuses a frame kind it does not know with result ok:false (for call) or by dropping it (otherwise).",
@@ -183,6 +215,7 @@
     "welcome.wake lists the farm's network cards on the local network as { mac, broadcast }, absent off the LAN. A client that keeps it may wake the sleeping PC with a Wake-on-LAN magic packet (six 0xFF bytes, then the MAC sixteen times) sent by UDP to port 9 of broadcast, then connect again.",
     "welcome.session authorizes /view and /res for that device only while its socket is open; the host forgets it when the socket closes, and a client never stores it.",
     "spoken { text, lang } is what the host's own reader says for the event: text already cleaned for a voice and cut to the event's length, lang the BCP-47 primary tag of the language it is in. A client that reads aloud reads it as is and picks a voice for lang; it is absent when there is nothing to say, and a client falls back to its own reading then.",
-    "watch asks the host to push one Console session's changes as live frames. Depth full carries agent, status, turnSince, cost, steerable, step (the call in flight, null between calls), asking (as console.sessions says it) and, in messages, the rows new or changed since the last frame, in sessions.read's words (key, turn, role, ts, text?, tool?, input?, isError?, clipped?). Depth summary carries the same without messages, at most once a second per session; session \"*\" with depth summary watches every Console session. A live frame is not numbered and never replayed: after a reconnect the client watches again and reads what it missed with sessions.read, and a live row is provisional until the transcript read by sessions.read carries it. The host ends a watch with unwatch (reason ended when the session goes, unavailable when it cannot be watched); a socket's watches end with it."
+    "watch asks the host to push one Console session's changes as live frames. Depth full carries agent, status, turnSince, cost, steerable, step (the call in flight, null between calls), asking (as console.sessions says it) and, in messages, the rows new or changed since the last frame, in sessions.read's words (key, turn, role, ts, text?, tool?, input?, isError?, clipped?). Depth summary carries the same without messages, at most once a second per session; session \"*\" with depth summary watches every Console session. A live frame is not numbered and never replayed: after a reconnect the client watches again and reads what it missed with sessions.read, and a live row is provisional until the transcript read by sessions.read carries it. The host ends a watch with unwatch (reason ended when the session goes, unavailable when it cannot be watched); a socket's watches end with it.",
+    "ops names the bridge ops a client draws its own screens from and the fields of their answers it reads: answer (array or object), fields (an object answer's own), list (the field of an object answer that holds its rows) and row (each row's). A host may answer more than is declared; it never answers less or renames a field. console.sessions with view summary answers exactly the declared row fields. sessions.recent with view page answers { rows, next }: the sessions it selects, newest activity first, after cursor (a cursor names a row: its activity time and id, so a page never shifts when a session appears on top); next is the cursor of the following page and null on the last; limit is at most 50, 20 by default. A page row's lastLine is the first line of the last thing the agent said, absent when it was not read; status is what a Console card or the live monitor says the session is doing, null when neither knows it."
   ]
 }

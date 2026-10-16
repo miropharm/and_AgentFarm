@@ -1,8 +1,9 @@
 // The scripted farm's world: the Console's live sessions, a long history, conversations up to 2,000 messages
-// and the Needs queue, answered in the shapes of examples.json (Agent Farm's real answers). Seeded, so the
+// and the Needs queue, answered in Agent Farm's real shapes (held to the contract's "ops"). Seeded, so the
 // same farm is drawn on every run and a journey's numbers compare run to run.
 'use strict';
 const { readPage } = require('./read');
+const { recentPage, summaryRow } = require('./views');
 
 // vsc src/core/consoleEngine.ts: the engine table the Console rows carry.
 const ENGINES = {
@@ -135,14 +136,16 @@ function createFarm(opts = {}) {
     const ops = {
         'console.sessions': a => {
             const take = typeof a.messages === 'number' ? Math.max(0, Math.floor(a.messages)) : 0;
-            return rows.filter(x => !a.id || x.id === a.id).map(x => (take
+            const out = rows.filter(x => !a.id || x.id === a.id).map(x => (take
                 ? { ...x, messages: steps(f.bySession(x.sessionId)).slice(-take).map(consoleMessage) } : { ...x }));
+            return a.view === 'summary' && opts.contract ? out.map(x => summaryRow(opts.contract, x)) : out;
         },
         'sessions.recent': a => {
             const limit = typeof a.limit === 'number' && a.limit > 0 ? Math.floor(a.limit) : 10;
             const origin = String(a.origin || '').toLowerCase();
-            return sessions.filter(s => !['user', 'auto', 'baton'].includes(origin) || s.origin === origin)
-                .slice().sort((x, y) => y.lastTs - x.lastTs).slice(0, limit).map(s => ({ ...s }));
+            const selected = sessions.filter(s => !['user', 'auto', 'baton'].includes(origin) || s.origin === origin);
+            if (a.view === 'page') { return recentPage(f, selected, a); }
+            return selected.slice().sort((x, y) => y.lastTs - x.lastTs).slice(0, limit).map(s => ({ ...s }));
         },
         'sessions.read': a => {
             const ref = String(a.session || a.id || '');

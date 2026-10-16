@@ -42,6 +42,24 @@ function checkFrame(c, frame) {
     return ev ? checkFields(frame.data, ev.fields, `event ${frame.type}`) : null;
 }
 
+/** null when an op's answer carries what the contract's "ops" declare for it (vsc checkOpAnswer); otherwise the first problem. */
+function checkOp(c, op, answer) {
+    const s = c.ops && c.ops[op];
+    if (!s) { return `op: unknown ${op}`; }
+    let rows = answer;
+    if (s.answer === 'object') {
+        const own = checkFields(answer, s.fields || {}, op);
+        if (own) { return own; }
+        rows = answer[s.list];
+    }
+    if (!Array.isArray(rows)) { return `${op}: ${s.answer === 'object' ? s.list : 'answer'} is not an array`; }
+    for (let k = 0; k < rows.length; k++) {
+        const r = checkFields(rows[k], s.row, `${op} row ${k}`);
+        if (r) { return r; }
+    }
+    return null;
+}
+
 const signedText = (c, farm, device, nonce) => `${c.contract}/${c.version}|${farm}|${device}|${nonce}`;
 
-module.exports = { load, checkFields, checkFrame, signedText };
+module.exports = { load, checkFields, checkFrame, checkOp, signedText };

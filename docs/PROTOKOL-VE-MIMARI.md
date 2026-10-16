@@ -166,6 +166,17 @@ Tasarımın gerekçesi: vault projesi `10_Notes/A-PLN - Android Uygulaması Yeni
   telefon her yeni soketin `welcome`'unda açık izlemelerini yeniden yollar ve ekrana "yeniden oku" der; izlemenin
   zaten sorulduğu soketin `welcome`'u (ekran bağlantı kurulurken açıldıysa) yeniden bağlanma sayılmaz (`net/LiveWatch.kt`).
   İzleme kimliğini telefon rastgele üretir: aynı cihazın eski soketi kapanırken yeni izlemeyi silemez.
+- **Yerel ekranların okuduğu op cevapları sözleşmededir (`ops`).** `console.sessions`, `sessions.read`,
+  `sessions.recent` ve `needs.list` için sözleşme telefonun okuduğu alanları gerçek bir örnekle bildirir:
+  `answer` (`array` ya da `object`), `fields` (nesne cevabın kendi alanları), `list` (satırları taşıyan alan),
+  `row`. Agent Farm fazlasını verebilir, eksiğini ya da başka adla vermez; vsc bunu cevabı kuran koda karşı
+  sınar. `console.sessions { view: "summary" }` yalnız bildirilen satır alanlarını verir.
+  `sessions.recent { view: "page", cursor?, limit? }` → `{ rows, next }`: son etkinliği en yeni önce, `cursor`'dan
+  sonra (imleç bir satırı adlar — etkinlik zamanı ve kimliği; üste yeni oturum düşse de sayfa kaymaz);
+  `next` sonraki sayfanın imleci, son sayfada `null`; `limit` en çok 50, varsayılan 20. Satır hafiftir: `id`,
+  `agent`, `title`, `engine`, `lastTs`, `origin`, `status` (Console kartının ya da canlı izleyicinin dediği,
+  bilen yoksa `null`), `waiting` (oturumda kullanıcıyı bekleyen bir şey var mı) ve `lastLine?` (ajanın son
+  söylediğinin ilk satırı).
 
 ## 9. Yetki ve özellikler
 

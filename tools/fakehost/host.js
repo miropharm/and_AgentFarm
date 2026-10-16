@@ -68,7 +68,7 @@ function createHost(opts = {}) {
     /** A fresh world: the farm redrawn, its turns stopped, the log emptied, the network profile set. */
     h.scenario = (o = {}) => {
         if (h.turns) { h.turns.clear(); }
-        h.world = createFarm({ history: o.history, longest: o.longest, seed: o.seed });
+        h.world = createFarm({ history: o.history, longest: o.longest, seed: o.seed, contract: c });
         h.turns = createTurns(h.world, h.emit);
         h.profile = PROFILES[o.profile] !== undefined ? o.profile : 'none';
         h.calls = [];

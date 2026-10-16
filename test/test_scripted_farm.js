@@ -1,16 +1,17 @@
-// The scripted farm the journey tests stand on: it answers in Agent Farm's real shapes (examples.json, captured
-// from the farm's bridge), pages a 2,000-message conversation the way sessions.read does, keeps a 500-session
-// history, moves turns over time with the contract's events, delays every frame by its network profile and
-// logs what was asked, finding any call that asked past a page.
+// The scripted farm the journey tests stand on: it answers in the shapes the contract declares for the ops the
+// phone reads (its "ops", with Agent Farm's real answers as examples), pages the history 20 light rows at a time
+// after a cursor, pages a 2,000-message conversation the way sessions.read does, moves turns over time with the
+// contract's events, delays every frame by its network profile and logs what was asked, finding any call that
+// asked past a page.
 'use strict';
 const { suite } = require('./lib');
 const { createHost } = require('../tools/fakehost/host');
 const K = require('../tools/fakehost/contract');
 const P = require('./fakehost_client');
-const real = require('../tools/fakehost/examples.json');
 
 const t = suite();
 const c = K.load();
+const ex = op => c.ops[op].example;
 
 const kind = v => (v === null ? 'null' : Array.isArray(v) ? 'array' : typeof v);
 
@@ -41,39 +42,57 @@ async function main() {
         return s.waitFor(f => f.kind === 'result' && f.id === id, 4000);
     };
 
-    // ---- the real shapes
+    // ---- the contract's shapes
     const rows = (await call('console.sessions', { messages: 4 })).result;
     const dev = rows.find(r => r.id === 'c_dev');
     const old = rows.find(r => r.id === 'c_old');
-    const [rDev, rOld] = real['console.sessions'];
-    const problems = [];
-    shape(rDev, dev, 'console.sessions row', problems);
-    shape(rOld.lastTurn, old.lastTurn, 'console.sessions lastTurn', problems);
-    shape(rDev.messages[0], dev.messages[0], 'console.sessions message', problems);
-    t.ok(problems.length === 0, 'console.sessions rows carry the farm\'s fields and types: ' + problems.join('; '));
+    const [xDev] = ex('console.sessions');
+    t.ok(K.checkOp(c, 'console.sessions', rows) === null, 'console.sessions rows carry the contract\'s fields: ' + K.checkOp(c, 'console.sessions', rows));
+    t.ok(shape(xDev.messages[0], dev.messages[0], 'message', []).length === 0, 'a console.sessions message carries the farm\'s fields: ' + shape(xDev.messages[0], dev.messages[0], 'message', []).join('; '));
     const bare = (await call('console.sessions')).result;
     t.ok(bare.every(r => !('messages' in r)), 'console.sessions without messages carries none (the farm\'s default is 0)');
+    const summary = (await call('console.sessions', { view: 'summary' })).result;
+    t.ok(K.checkOp(c, 'console.sessions', summary) === null && summary.every(r => Object.keys(r).every(k => k in c.ops['console.sessions'].row)),
+        'console.sessions view summary is cut to the contract\'s row');
+    const { agent: _gone, ...noAgent } = summary[0];
+    t.ok(/row 0: missing agent/.test(K.checkOp(c, 'console.sessions', [noAgent]) || '') && /rows is not/.test(K.checkOp(c, 'sessions.recent', { rows: {}, next: null }) || ''),
+        'the contract check refuses a row missing a declared field and a list that is not one');
+    t.ok(JSON.stringify(summary).length * 2 < JSON.stringify(bare).length, `the summary is less than half the full rows (${JSON.stringify(summary).length} of ${JSON.stringify(bare).length} bytes)`);
     t.ok(rows.map(r => r.status).join() === 'working,idle,ended' && dev.steerable === true && old.steerable === false,
         'the three cards keep the states the shell tests rely on: working, idle, ended');
     t.ok(['user', 'agent', 'tool'].includes(dev.messages[3].role) && dev.messages.every(m => m.role !== 'assistant'),
         'console.sessions speaks the Console\'s words (agent, tool), never sessions.read\'s');
 
-    const recent = (await call('sessions.recent', { limit: 20 })).result;
-    t.ok(shape(real['sessions.recent'][0], recent[0], 'sessions.recent row', []).length === 0, 'sessions.recent rows carry the farm\'s fields: ' + shape(real['sessions.recent'][0], recent[0], 'row', []).join('; '));
-    t.ok(recent.length === 20 && recent.every((r, i) => i === 0 || recent[i - 1].lastTs >= r.lastTs), 'sessions.recent gives the page asked for, newest first');
-    t.ok((await call('sessions.recent')).result.length === 10, 'sessions.recent without a limit gives the farm\'s default 10');
+    // ---- the history, 20 light rows at a time after a cursor
+    const first = (await call('sessions.recent', { view: 'page' })).result;
+    t.ok(K.checkOp(c, 'sessions.recent', first) === null && first.rows.length === 20 && typeof first.next === 'string',
+        'the page view gives 20 light rows and the next page\'s cursor: ' + K.checkOp(c, 'sessions.recent', first));
+    t.ok(first.rows.every(r => Object.keys(r).every(k => k in c.ops['sessions.recent'].row)), 'a light row carries only the contract\'s fields');
+    const seen = [...first.rows];
+    let next = first.next;
+    let pages = 1;
+    while (next) { const p = (await call('sessions.recent', { view: 'page', cursor: next })).result; seen.push(...p.rows); next = p.next; pages++; }
+    t.ok(seen.length === 500 && new Set(seen.map(r => r.id)).size === 500 && pages === 25, `pages joined are the 500 sessions once and the last says next null (${pages} pages)`);
+    t.ok(seen.every((r, i) => i === 0 || seen[i - 1].lastTs >= r.lastTs), 'newest first across the pages');
+    const devRow = seen.find(r => r.id === dev.sessionId);
+    t.ok(devRow.status === 'working' && !!devRow.lastLine && seen.filter(r => r.status).length === 3 && seen.filter(r => r.waiting).length === 1,
+        'a card\'s session says its status, a session says its last answer\'s line, the one with a need waits');
+    const talkEnd = r => host.world.steps(host.world.bySession(r.id)).filter(x => x.role === 'user' || x.role === 'assistant').pop();
+    const answered = seen.filter(r => talkEnd(r).role === 'assistant');
+    t.ok(answered.length > 0 && answered.length < seen.length && seen.every(r => !!r.lastLine === (talkEnd(r).role === 'assistant')),
+        `a last line is the answer of the turn; a prompt not answered yet has none, as vsc lastSaid (${answered.length} of ${seen.length} answered)`);
+    t.ok((await call('sessions.recent')).result.length === 10, 'the plain sessions.recent keeps the farm\'s default 10');
     const all = (await call('sessions.recent', { limit: 600 })).result;
     t.ok(all.length === 500, 'the history holds 500 sessions');
 
     const needs = (await call('needs.list')).result;
-    t.ok(shape(real['needs.list'], needs, 'needs.list', []).length === 0 && shape(real['needs.list'].items[0], needs.items[0], 'needs item', []).length === 0,
-        'needs.list and its items carry the farm\'s fields');
+    t.ok(K.checkOp(c, 'needs.list', needs) === null, 'needs.list and its items carry the contract\'s fields: ' + K.checkOp(c, 'needs.list', needs));
     t.ok(needs.items[0].key === `permission|${needs.items[0].ref.sessionId}`, 'a permission need is keyed the way vsc needKey keys it');
 
     // ---- a 2,000-message conversation, paged like sessions.read
     const sid = dev.sessionId;
     const last = (await call('sessions.read', { session: sid, roles: 'all', from: -30, limit: 30 })).result;
-    t.ok(shape(real['sessions.read'], last, 'sessions.read', []).length === 0, 'sessions.read carries the farm\'s page fields: ' + shape(real['sessions.read'], last, 'page', []).join('; '));
+    t.ok(K.checkOp(c, 'sessions.read', last) === null, 'sessions.read carries the contract\'s page and row fields: ' + K.checkOp(c, 'sessions.read', last));
     t.ok(last.total === 2000 && last.returned === 30 && last.from === 1971 && last.next === null && last.messages[29].i === 2000,
         'from -30 is the last thirty of 2,000 and the end has no next');
     const before = (await call('sessions.read', { session: sid.slice(0, 8), roles: 'all', from: last.from - 30, limit: 30 })).result;
@@ -91,6 +110,9 @@ async function main() {
     t.ok(log.findings.some(f => /sessions\.recent asked 600 sessions/.test(f)) && log.findings.some(f => /sessions\.read asked 500 messages/.test(f)),
         'a call past a page is a finding: ' + log.findings.join('; '));
     t.ok(!log.findings.some(f => /asked 20 sessions|asked 30 messages/.test(f)), 'a page-sized call is not');
+    const pageCalls = log.calls.filter(x => x.op === 'sessions.recent' && x.args && x.args.view === 'page');
+    t.ok(pageCalls.length === 25 && pageCalls.every(x => x.rows <= 20) && !log.findings.some(f => pageCalls.some(x => f.startsWith(x.id + ' '))),
+        'the page view asked without a limit is one page, never a finding');
 
     // ---- turns over time: a question parks the turn until it is answered
     await P.request(port, 'POST', '/_test/scenario', {});
@@ -101,8 +123,8 @@ async function main() {
     t.ok(asked && asked.data.options.length === 2, 'the turn parks on its question and the phone hears ask.opened');
     const psy = (await call('console.sessions', { id: 'c_psy', messages: 3 })).result[0];
     t.ok(psy.status === 'working' && psy.asking && psy.asking.kind === 'question', 'while it waits the card says working and asking');
-    t.ok(shape(rDev.asking, psy.asking, 'asking', []).length === 0 && shape(rDev.asking.questions[0], psy.asking.questions[0], 'question', []).length === 0,
-        'asking carries the farm\'s fields: ' + shape(rDev.asking, psy.asking, 'asking', []).join('; '));
+    t.ok(shape(xDev.asking, psy.asking, 'asking', []).length === 0 && shape(xDev.asking.questions[0], psy.asking.questions[0], 'question', []).length === 0,
+        'asking carries the fields of the farm\'s own (the contract\'s example): ' + shape(xDev.asking, psy.asking, 'asking', []).join('; '));
     await call('console.answer', { id: 'c_psy', answer: 'Evet' });
     const closed = await s.waitFor(f => f.kind === 'event' && f.type === 'ask.closed' && f.data.session === 'c_psy', 2000);
     const finished = await s.waitFor(f => f.kind === 'event' && f.type === 'turn.finished' && f.data.session === 'c_psy', 3000);

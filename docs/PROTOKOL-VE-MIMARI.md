@@ -137,6 +137,20 @@ Tasarımın gerekçesi: vault projesi `10_Notes/A-PLN - Android Uygulaması Yeni
 - Telefon tanımadığı olay türünü yok sayar; Agent Farm tanımadığı çerçeveyi reddeder (`call` için `ok:false`).
 - **Tam bir kez:** her `call` telefonun ürettiği bir `id` taşır; aynı `id` ikinci kez gelirse op yeniden
   çalışmaz, saklı cevap `duplicate:true` ile döner. Çevrimdışı giden kutusu bu yüzden güvenle yeniden gönderir.
+- **Okuma giden kutusuna girmez.** Ekranların okuduğu op'lar (`console.sessions`, `sessions.recent`,
+  `needs.list`, `sessions.read`) yalnız bağlıyken açık sokete gider (`ConnectionManager.sendRead`,
+  `net/CallAwait.kt` `read`); cevapsız kalan bir okuma yeniden bağlanınca bir daha gönderilmez. Cevaplar ve
+  eylemler (bir sorunun cevabı, izin, gönderilen mesaj) giden kutusundan, tam bir kez gider.
+- **Şimdi: önce kopya, sonra tazesi, sonra sayfalar.** Açılışta telefondaki kopya (çiftliğin son üç cevabı:
+  kartlar, geçmişin ilk sayfası, Needs; `net/NowStore`, çiftlik unutulunca silinir) aynı kurucuyla
+  (`core/now/NowBuild`) çizilir. Çiftlik bağlanınca `console.sessions { view: "summary" }`,
+  `sessions.recent { view: "page" }` ve `needs.list` okunur; ekran açıkken `watch "*" summary` kartları canlı
+  tutar (kartın sürmekte olan adımı ve tur başlangıcı yalnız canlı vuruştan gelir, tazelemede korunur). Liste
+  sonuna gelince `cursor` ile sonraki 20 satır istenir. Yeniden bağlanınca yalnız ilk sayfa okunur: üste
+  çıkan satır yerini alır, kaydırılıp okunmuş satırlar imleçleriyle kalır. `needs.changed` gelince üçü yeniden
+  okunur; bir kartın turu bitince geçmişin ilk sayfası. "Seni bekliyor": soran kart (`asking`) ve kart dışındaki
+  her Needs satırı; izin satırdan yalnız çiftliğin Needs anahtarıyla (`needs.act`), soru kartın kendi
+  seçenekleriyle (`console.answer`) cevaplanır — bildirim düğmeleriyle aynı kurucu (`core/session/Answers`).
 - **Giden kutusu diskte durur, altı saatten eski çağrı atılır:** süreç ölse de bekleyen çağrı ilk `welcome`
   sonrasında gider; bekleyen bir soruya saatler sonra düşen cevap yeni bir istem gibi okunabileceği için
   `createdAt` üzerinden altı saati geçen çağrı gönderilmez (`core/state/Outbox.kt`).

@@ -45,6 +45,8 @@ class SessionTest {
         assertEquals("Read · 2 min", SessionText.step(Step("Read", null, 0), 120_000))
         assertEquals("3 min · $0.42", SessionText.turn(0, 0.4249, 180_000))
         assertEquals("5 s", SessionText.turn(0, null, 5_000))
+        assertEquals("an unknown turn time is left out, never guessed", "$0.42", SessionText.turn(null, 0.4249, 5_000))
+        assertEquals("", SessionText.turn(null, null, 5_000))
         assertEquals("<$0.01", SessionText.usd(0.004))
         assertEquals("$0.00", SessionText.usd(0.0))
     }

@@ -71,7 +71,7 @@ class AwayE2ETest {
                 .fetchSemanticsNodes().isNotEmpty()
         }
         Shots.take("away-opening")
-        // The service lets go of the socket once VS Code is up; the shell reconnects to the full farm and its page opens.
-        shows("farm-page", 60_000)
+        // The service lets go of the socket once VS Code is up; the shell reconnects to the full farm and its Now opens.
+        shows("now-farm", 60_000)
     }
 }

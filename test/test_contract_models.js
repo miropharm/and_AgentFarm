@@ -60,6 +60,25 @@ for (const [type, spec] of Object.entries(c.events)) {
 checkFields('pair.request', 'PairRequest', c.pairing.request.fields);
 checkFields('pair.response', 'PairResponse', c.pairing.response.fields);
 
+// The op answers the native screens read: OP_ANSWERS names each object answer's model, OP_ROWS each op's rows.
+/** `"op" to Class.serializer()` entries of `val NAME ... = mapOf(...)`, or null when the map is not there. */
+function opMap(name) {
+    const m = new RegExp(`val ${name}\\b[^=]*=\\s*mapOf\\(([\\s\\S]*?)\\n\\)`).exec(src);
+    if (!m) { return null; }
+    return Object.fromEntries([...m[1].matchAll(/"([\w.]+)"\s+to\s+(\w+)\.serializer\(\)/g)].map(e => [e[1], e[2]]));
+}
+const answers = opMap('OP_ANSWERS');
+const opRows = opMap('OP_ROWS');
+t.ok(answers && opRows && Object.keys(opRows).length > 0, 'the op model maps are read from the source');
+const ops = c.ops || {};
+const objects = Object.keys(ops).filter(op => ops[op].answer === 'object');
+t.ok(JSON.stringify(Object.keys(opRows || {}).sort()) === JSON.stringify(Object.keys(ops).sort()), 'OP_ROWS names exactly the contract\'s ops');
+t.ok(JSON.stringify(Object.keys(answers || {}).sort()) === JSON.stringify(objects.sort()), 'OP_ANSWERS names exactly the ops whose answer is an object');
+for (const [op, spec] of Object.entries(ops)) {
+    if (spec.answer === 'object') { checkFields(`op ${op} answer`, (answers || {})[op], spec.fields); }
+    checkFields(`op ${op} row`, (opRows || {})[op], spec.row);
+}
+
 const version = /const val CONTRACT_VERSION = (\d+)L/.exec(src);
 t.ok(version && Number(version[1]) === c.version, `CONTRACT_VERSION in Kotlin is the copy's version (${c.version})`);
 

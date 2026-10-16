@@ -19,13 +19,19 @@ object LiveMerge {
     fun now(s: NowState, session: String, d: LiveCard, now: Long): NowState {
         val oldRun = s.running.firstOrNull { it.session == session }
         val oldWait = s.waiting.firstOrNull { it.session == session }
-        val title = oldWait?.title ?: oldRun?.title ?: s.recent.firstOrNull { it.session == session }?.title.orEmpty()
+        val transcript = s.cards[session]
+        val title = oldWait?.title?.ifEmpty { null } ?: oldRun?.title?.ifEmpty { null }
+            ?: s.recent.firstOrNull { it.session == (transcript ?: session) }?.title.orEmpty()
         val agent = d.agent.ifEmpty { oldWait?.agent ?: oldRun?.agent.orEmpty() }
         val ask = d.asking
-        val waiting = if (ask != null) put(s.waiting, Waiting(session, agent, title, ask)) { it.session == session } else s.waiting.filterNot { it.session == session }
+        val waiting = if (ask != null) {
+            put(s.waiting, Waiting(session, agent, title, ask, oldWait?.need)) { it.session == session }
+        } else {
+            s.waiting.filterNot { it.session == session }
+        }
         val running = if (ask == null && d.working) {
             val since = d.turnSince ?: oldRun?.turnSince ?: d.step?.since ?: now
-            put(s.running, Running(session, agent, title, d.step, since, d.cost ?: oldRun?.cost)) { it.session == session }
+            put(s.running, Running(session, agent, title, d.step, since, d.cost ?: oldRun?.cost, transcript ?: oldRun?.transcript)) { it.session == session }
         } else {
             s.running.filterNot { it.session == session }
         }

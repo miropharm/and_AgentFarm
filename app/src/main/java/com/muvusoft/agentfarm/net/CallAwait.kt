@@ -1,6 +1,7 @@
 package com.muvusoft.agentfarm.net
 
 import com.muvusoft.agentfarm.core.contract.CallResult
+import com.muvusoft.agentfarm.core.state.Link
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.onSubscription
@@ -19,3 +20,14 @@ suspend fun ConnectionManager.request(farmId: String, op: String, args: JsonObje
             .mapNotNull { f -> (f.frame as? CallResult)?.takeIf { f.farm == farmId && it.id == id } }
             .first()
     }
+
+/** A read and its answer, outside the outbox (ConnectionManager.sendRead): null offline or after `timeoutMs`. */
+suspend fun ConnectionManager.read(farmId: String, op: String, args: JsonObject? = null, timeoutMs: Long = 15_000): CallResult? {
+    if (state.value.farm(farmId)?.link !is Link.Online) return null
+    return withTimeoutOrNull(timeoutMs) {
+        var id: String? = null
+        frames.onSubscription { id = sendRead(farmId, op, args) }
+            .mapNotNull { f -> (f.frame as? CallResult)?.takeIf { f.farm == farmId && it.id == id } }
+            .first()
+    }
+}

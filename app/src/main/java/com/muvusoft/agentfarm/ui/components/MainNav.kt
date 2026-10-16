@@ -22,12 +22,14 @@ fun MainNav(tab: MainTab, onNow: () -> Unit, onMenu: () -> Unit) {
         NavigationBarItem(
             selected = tab == MainTab.NOW,
             onClick = onNow,
+            modifier = Modifier.testTag("nav-now"),
             icon = { Icon(Icons.Filled.Home, null) },
             label = { Text(stringResource(R.string.nav_now)) },
         )
         NavigationBarItem(
             selected = tab == MainTab.MENU,
             onClick = onMenu,
+            modifier = Modifier.testTag("nav-menu"),
             icon = { Icon(Icons.Filled.Menu, null) },
             label = { Text(stringResource(R.string.nav_menu)) },
         )

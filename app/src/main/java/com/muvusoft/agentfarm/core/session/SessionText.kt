@@ -14,9 +14,9 @@ object SessionText {
         (if (step.detail.isNullOrBlank()) step.tool else "${step.tool}: ${step.detail.lineSequence().first().trim()}") +
             " · " + ago(now - step.since)
 
-    /** "3 min · $0.42": how long the turn has run and what the session has cost. */
-    fun turn(turnSince: Long, cost: Double?, now: Long): String =
-        ago(now - turnSince) + (cost?.let { " · " + usd(it) } ?: "")
+    /** "3 min · $0.42": how long the turn has run and what the session has cost; either is left out when unknown. */
+    fun turn(turnSince: Long?, cost: Double?, now: Long): String =
+        listOfNotNull(turnSince?.let { ago(now - it) }, cost?.let(::usd)).joinToString(" · ")
 
     fun usd(cost: Double): String = if (cost < 0.01 && cost > 0) "<$0.01" else String.format(Locale.ROOT, "$%.2f", cost)
 

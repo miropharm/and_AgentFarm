@@ -2,7 +2,10 @@ package com.muvusoft.agentfarm.core.contract
 
 import java.io.File
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.long
@@ -51,6 +54,32 @@ class ContractExamplesTest {
             val parsed = Codec.eventData(EventFrame(seq = 1, type = type, ts = 1, data = data))
             assertNotNull("event $type does not decode", parsed)
         }
+    }
+
+    @Test
+    fun everyOpExampleDecodesWithItsModels() {
+        val ops = section("ops")
+        assertEquals("OP_ROWS covers exactly the contract's ops", ops.keys, OP_ROWS.keys)
+        for ((op, spec) in ops) {
+            val s = spec.jsonObject
+            val example = s.getValue("example")
+            val rows = if (s.getValue("answer").jsonPrimitive.content == "object") {
+                assertNotNull("op $op answer does not decode", Ops.read(OP_ANSWERS.getValue(op), example))
+                example.jsonObject.getValue(s.getValue("list").jsonPrimitive.content).jsonArray
+            } else {
+                example.jsonArray
+            }
+            assertTrue("op $op example has rows", rows.isNotEmpty())
+            for (row in rows) assertNotNull("op $op row does not decode: $row", Ops.read(OP_ROWS.getValue(op), row))
+        }
+    }
+
+    @Test
+    fun aRowThatDoesNotReadIsLeftOutTheRestDraw() {
+        val good = section("ops").getValue("console.sessions").jsonObject.getValue("example").jsonArray.first()
+        val rows = Ops.consoleRows(JsonArray(listOf(good, JsonPrimitive("x"))))
+        assertEquals(1, rows?.size)
+        assertNull(Ops.consoleRows(null))
     }
 
     @Test

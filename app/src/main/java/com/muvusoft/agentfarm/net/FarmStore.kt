@@ -11,6 +11,7 @@ import kotlinx.serialization.json.Json
 class FarmStore(context: Context) {
     private val file = File(context.filesDir, "farms.json")
     private val prefs = ShellPrefs(context)
+    private val now = NowStore(context)
     private val json = Json { ignoreUnknownKeys = true }
     private val serializer = ListSerializer(PairedFarm.serializer())
 
@@ -39,6 +40,7 @@ class FarmStore(context: Context) {
         write(old.filterNot { it.id == farmId })
         old.filter { it.id == farmId }.forEach { DeviceKeys.delete(it.key) }
         prefs.setWake(farmId, emptyList())
+        now.forget(farmId)
         return load()
     }
 

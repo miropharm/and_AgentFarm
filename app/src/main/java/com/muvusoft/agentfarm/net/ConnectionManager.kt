@@ -99,6 +99,15 @@ class ConnectionManager(
         return id
     }
 
+    /**
+     * A read sent on the open socket and kept nowhere: unlike `call`, it never enters the outbox, so a read
+     * nobody waits for any more is not sent again after a reconnect. Null when the farm is not connected.
+     */
+    fun sendRead(farmId: String, op: String, args: JsonObject? = null): String? {
+        val id = newCallId(clock(), random.nextLong())
+        return id.takeIf { conns[farmId]?.send(Call(id, op, args)) == true }
+    }
+
     fun focus(farmId: String) = _state.update { ShellReducer.focus(it, farmId) }
 
     fun sessions(farmId: String, targets: List<ShareTarget>) = _state.update { ShellReducer.sessions(it, farmId, targets) }

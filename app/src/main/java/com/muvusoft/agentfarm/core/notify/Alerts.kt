@@ -14,8 +14,8 @@ import com.muvusoft.agentfarm.core.contract.PermissionOpened
 import com.muvusoft.agentfarm.core.contract.Quiet
 import com.muvusoft.agentfarm.core.contract.QuotaWarn
 import com.muvusoft.agentfarm.core.contract.TurnFinished
+import com.muvusoft.agentfarm.core.session.Answers
 import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 
@@ -68,7 +68,7 @@ object Alerts {
             Channel.ASK, "ask:${e.askId}", "${e.agent} is asking · $farmName", e.question,
             withStop(
                 if (e.options.size in 1..MAX_BUTTONS) {
-                    e.options.map { AlertAction(it.label, "console.answer", answer(e.session, e.question, it.label)) }
+                    e.options.map { o -> Answers.question(e.session, e.question, o.label).let { c -> AlertAction(o.label, c.op, c.args) } }
                 } else {
                     listOf(AlertAction("Reply", "console.answer", buildJsonObject { put("id", e.session) }, replyArg = "response"))
                 },
@@ -80,8 +80,8 @@ object Alerts {
             Channel.ASK, "perm:${e.permId}", "${e.agent} asks permission: ${e.tool} · $farmName", e.summary,
             withStop(
                 listOf(
-                    AlertAction("Allow", "needs.act", act(e.key, "permission-allow"), unlock = true),
-                    AlertAction("Deny", "needs.act", act(e.key, "permission-deny")),
+                    Answers.need(e.key, Answers.ALLOW).let { c -> AlertAction("Allow", c.op, c.args, unlock = true) },
+                    Answers.need(e.key, Answers.DENY).let { c -> AlertAction("Deny", c.op, c.args) },
                 ),
                 e.session,
             ),
@@ -152,15 +152,5 @@ object Alerts {
     private fun gateAnswer(gateId: String, more: kotlinx.serialization.json.JsonObjectBuilder.() -> Unit) = buildJsonObject {
         put("id", gateId)
         more()
-    }
-
-    private fun answer(session: String, question: String, label: String) = buildJsonObject {
-        put("id", session)
-        put("answers", JsonObject(mapOf(question to JsonPrimitive(label))))
-    }
-
-    private fun act(key: String, action: String) = buildJsonObject {
-        put("key", key)
-        put("action", action)
     }
 }

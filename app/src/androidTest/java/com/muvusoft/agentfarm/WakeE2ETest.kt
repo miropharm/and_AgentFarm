@@ -66,8 +66,8 @@ class WakeE2ETest {
         rule.waitForIdle()
         Shots.take("wake-sent")
 
-        // The PC is up: the tries after the wake reach it before the backoff would have, and its page opens.
+        // The PC is up: the tries after the wake reach it before the backoff would have, and its Now opens.
         FakeHost.post("/_test/sleep", "{\"asleep\":false}")
-        shows("farm-page", timeoutMs = 45_000)
+        shows("now-farm", timeoutMs = 45_000)
     }
 }

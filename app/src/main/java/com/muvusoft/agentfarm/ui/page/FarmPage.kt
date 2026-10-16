@@ -48,10 +48,10 @@ import kotlinx.serialization.json.JsonObject
 
 /** One of the farm's own pages, carried by a WebView. While the farm is not online the wait is shown instead. */
 @Composable
-fun FarmPage(farmId: String, page: String, manager: ConnectionManager, onBack: () -> Unit) {
+fun FarmPage(farmId: String, page: String, manager: ConnectionManager, onBack: () -> Unit, args: JsonObject? = null) {
     // A page's own links open the next page here, with what it asked to be shown; Back walks back
     // through them, then leaves the farm.
-    var stack by remember(page) { mutableStateOf(listOf(ShellRequest.Open(page))) }
+    var stack by remember(page, args) { mutableStateOf(listOf(ShellRequest.Open(page, args))) }
     BackHandler { PageStack.back(stack)?.let { stack = it } ?: onBack() }
     val current = stack.last()
     // A dead renderer bumps the generation: the old WebView is dropped and a new one opens a new view.

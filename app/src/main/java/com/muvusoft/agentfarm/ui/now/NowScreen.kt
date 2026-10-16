@@ -131,9 +131,10 @@ private fun NowList(state: NowState, now: Long, actions: NowActions) {
                 Box(Modifier.padding(bottom = 10.dp)) { RunningCard(r, now, onOpen = { actions.onOpen(r.session) }) }
             }
         }
-        if (state.recent.isNotEmpty()) {
+        val finished = state.finished
+        if (finished.isNotEmpty()) {
             item(key = "h-recent") { SectionTitle(stringResource(R.string.now_recent)) }
-            items(state.recent, key = { "d-" + it.session }) { r -> RecentRow(r, now, onOpen = { actions.onOpen(r.session) }) }
+            items(finished, key = { "d-" + it.session }) { r -> RecentRow(r, now, onOpen = { actions.onOpen(r.session) }) }
         }
         if (state.moreRecent) {
             item(key = "more") {

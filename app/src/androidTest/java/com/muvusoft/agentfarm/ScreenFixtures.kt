@@ -30,7 +30,7 @@ object ScreenFixtures {
             AskKind.QUESTION, "", questions = listOf(AskQuestion("Bu haftanın notlarını şimdi özetleyeyim mi?", options = listOf(AskOption("Evet"), AskOption("Hayır")))),
             since = NOW - 2 * MIN,
         )),
-        Waiting("c_ops", "developer", "and_AgentFarm CI düzeltmesi", Ask(AskKind.PERMISSION, "git push origin master", "Bash", since = NOW - 40_000)),
+        Waiting("c_ops", "developer", "and_AgentFarm CI düzeltmesi", Ask(AskKind.PERMISSION, "git push origin master", "Bash", since = NOW - 40_000), need = "permission|c_ops"),
         Waiting("c_yaz", "yazar", "Bülten taslağı — Ekim sayısı", Ask(
             AskKind.QUESTION, "",
             questions = listOf(AskQuestion(

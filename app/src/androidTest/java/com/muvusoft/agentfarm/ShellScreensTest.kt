@@ -123,12 +123,12 @@ class ShellScreensTest {
     }
 
     @Test
-    fun theWidgetsAndTilesTapOpensTheFocusedFarmsPage() {
+    fun theWidgetsAndTilesTapOpensTheFocusedFarmsNow() {
         pairedApp().use { }
         val now = Intent(ctx, MainActivity::class.java).putExtra(MainActivity.OPEN_NOW, true)
         ActivityScenario.launch<MainActivity>(now).use {
             rule.waitUntil(15_000) {
-                rule.onAllNodes(hasTestTag("farm-page") or hasTestTag("page-wait")).fetchSemanticsNodes().isNotEmpty()
+                rule.onAllNodes(hasTestTag("now-farm") or hasTestTag("page-wait")).fetchSemanticsNodes().isNotEmpty()
             }
         }
     }

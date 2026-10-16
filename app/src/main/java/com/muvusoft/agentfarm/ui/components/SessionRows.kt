@@ -33,6 +33,7 @@ import com.muvusoft.agentfarm.core.Time
 import com.muvusoft.agentfarm.core.now.Recent
 import com.muvusoft.agentfarm.core.now.Running
 import com.muvusoft.agentfarm.core.now.Waiting
+import com.muvusoft.agentfarm.core.now.Waits
 import com.muvusoft.agentfarm.core.session.AskKind
 import com.muvusoft.agentfarm.core.session.Asks
 import com.muvusoft.agentfarm.core.session.Quick
@@ -75,7 +76,7 @@ fun WaitingRow(w: Waiting, now: Long, onOpen: () -> Unit, onQuick: (Quick) -> Un
             }
             Text(w.title, Modifier.padding(top = 4.dp), style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Text(Asks.firstLine(w.ask), Modifier.padding(top = 6.dp), style = MaterialTheme.typography.bodyLarge, maxLines = 3, overflow = TextOverflow.Ellipsis)
-            val quick = Asks.quick(w.ask)
+            val quick = Waits.quick(w)
             if (quick.isNotEmpty()) {
                 FlowRow(
                     Modifier.fillMaxWidth().padding(top = 10.dp),
@@ -119,7 +120,7 @@ fun RunningCard(r: Running, now: Long, onOpen: () -> Unit) {
             }
         }
     }
-    if (tip) AFTip(listOfNotNull(r.title, r.agent, step, SessionText.turn(r.turnSince, r.cost, now)), onDismiss = { tip = false })
+    if (tip) AFTip(listOfNotNull(r.title, r.agent, step, SessionText.turn(r.turnSince, r.cost, now).ifEmpty { null }), onDismiss = { tip = false })
 }
 
 /** A finished session: its title, when, and the first line of its last answer. */

@@ -126,6 +126,9 @@ class FarmPageTest {
                 .fetchSemanticsNodes().isNotEmpty()
         }
         rule.onNodeWithTag("farm-$farmId").performClick()
+        // A farm opens on the native Now; the farm's own pages are behind the Menu.
+        rule.waitUntil(20_000) { rule.onAllNodes(hasTestTag("nav-menu")).fetchSemanticsNodes().isNotEmpty() }
+        rule.onNodeWithTag("nav-menu").performClick()
     }
 
     private fun titleUntil(want: String): String =

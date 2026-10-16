@@ -22,8 +22,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.saveable.rememberSaveable
 import com.muvusoft.agentfarm.core.link.LinkText
 import com.muvusoft.agentfarm.core.share.Shared
-import com.muvusoft.agentfarm.core.view.PageRoute
-import com.muvusoft.agentfarm.ui.page.FarmPage
+import com.muvusoft.agentfarm.net.NowStore
+import com.muvusoft.agentfarm.ui.now.NowRoute
 import com.muvusoft.agentfarm.core.pairing.PairingStep
 import com.muvusoft.agentfarm.core.pairing.PairingVerdict
 import com.muvusoft.agentfarm.net.ConnectionManager
@@ -133,6 +133,7 @@ private fun Shell(
     val confirm = rememberDestructiveConfirm()
 
     val context = LocalContext.current
+    val nowStore = remember { NowStore(context) }
     val askNotifications = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { }
     LaunchedEffect(farms) {
         manager.setFarms(farms)
@@ -176,7 +177,7 @@ private fun Shell(
 
     val open = opened
     if (open != null) {
-        FarmPage(farmId = open, page = PageRoute.HOME_PAGE, manager = manager, onBack = { opened = null })
+        NowRoute(farmId = open, manager = manager, store = nowStore, onFarms = { opened = null })
         return
     }
 

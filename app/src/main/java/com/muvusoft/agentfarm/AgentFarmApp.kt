@@ -3,6 +3,9 @@ package com.muvusoft.agentfarm
 import android.app.Application
 import android.content.Context
 import android.content.SharedPreferences
+import android.content.res.Configuration
+import com.muvusoft.agentfarm.core.lang.Words
+import com.muvusoft.agentfarm.net.appLocale
 import com.muvusoft.agentfarm.core.notify.Alerts
 import com.muvusoft.agentfarm.net.AlertPoster
 import com.muvusoft.agentfarm.net.AppVisible
@@ -50,12 +53,20 @@ class AgentFarmApp : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        Words.lang = appLocale(language.value).language
         languageWatch = prefs.watchLanguage {
             _language.value = prefs.language()
+            Words.lang = appLocale(language.value).language
             AlertPoster.channels(this)
         }
         registerActivityLifecycleCallbacks(visible)
         PushWakeService.setUp(this)
+    }
+
+    /** The phone's own language changed: the core's sentences follow when no farm's language stands over it. */
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        Words.lang = appLocale(language.value).language
     }
 
     companion object {

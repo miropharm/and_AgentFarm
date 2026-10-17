@@ -44,7 +44,7 @@ class MainActivity : FragmentActivity() {
     override fun attachBaseContext(newBase: Context) {
         super.attachBaseContext(newBase)
         drawnIn = AgentFarmApp.of(newBase).language.value
-        languageOverride(drawnIn)?.let { applyOverrideConfiguration(it) }
+        applyOverrideConfiguration(languageOverride(drawnIn))
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {

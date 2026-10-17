@@ -28,6 +28,17 @@ object AppLanguage {
     /** The paired farms' records -> the app's tag, null when none told one (the phone's own language then). */
     fun of(told: Collection<Told>): String? = told.maxByOrNull { it.since }?.tag
 
+    /**
+     * The language the app's words are drawn in: the told one when the app has words for it, else the first of the
+     * phone's languages it has words for, else English. Resolved here, never by Android's resource matching: English
+     * is the default resources, not values-en, so a phone listing English before Turkish would match Turkish.
+     * A language the phone also lists keeps the phone's region ("en" on an en-US phone is en-US: nothing to redraw).
+     */
+    fun effective(tag: String?, phone: List<Locale>, supported: Set<String>): Locale {
+        val pick = (listOfNotNull(clean(tag)?.let(Locale::forLanguageTag)) + phone).firstOrNull { it.language in supported } ?: Locale.ENGLISH
+        return phone.firstOrNull { it.language == pick.language } ?: pick
+    }
+
     /** A record as kept on the phone ("tr|1792251673568"), and back; a damaged one reads as never told. */
     fun write(told: Told): String = "${told.tag}|${told.since}"
 

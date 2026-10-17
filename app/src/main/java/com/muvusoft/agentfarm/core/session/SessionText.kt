@@ -1,6 +1,7 @@
 package com.muvusoft.agentfarm.core.session
 
 import com.muvusoft.agentfarm.core.Time.ago
+import com.muvusoft.agentfarm.core.lang.Words
 import com.muvusoft.agentfarm.core.state.Link
 import java.util.Locale
 
@@ -27,10 +28,10 @@ object SessionText {
     fun stale(link: Link, updatedAt: Long, now: Long): String? {
         val state = when (link) {
             is Link.Online -> return null
-            is Link.Connecting -> "Connecting"
-            is Link.Resting -> "Resting"
-            is Link.Offline, is Link.Refused -> "Offline"
+            is Link.Connecting -> Words.t("Connecting")
+            is Link.Resting -> Words.t("Resting")
+            is Link.Offline, is Link.Refused -> Words.t("Offline")
         }
-        return if (updatedAt <= 0) "$state · nothing saved yet" else "$state · updated ${ago(now - updatedAt)} ago"
+        return if (updatedAt <= 0) Words.t("{0} · nothing saved yet", state) else Words.t("{0} · updated {1} ago", state, ago(now - updatedAt))
     }
 }

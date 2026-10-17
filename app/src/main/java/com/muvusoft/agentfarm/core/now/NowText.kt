@@ -1,11 +1,12 @@
 package com.muvusoft.agentfarm.core.now
 
 import com.muvusoft.agentfarm.core.contract.CallResult
+import com.muvusoft.agentfarm.core.lang.Words
 
 /** The Now screen's sentences that are verdicts, not labels. */
 object NowText {
-    const val NO_ANSWER = "The farm did not answer. Pull down to try again."
-    const val NOT_READ = "The farm's answer did not read. Agent Farm on the PC may need an update."
+    val NO_ANSWER: String get() = Words.t("The farm did not answer. Pull down to try again.")
+    val NOT_READ: String get() = Words.t("The farm's answer did not read. Agent Farm on the PC may need an update.")
 
     /**
      * Why the fresh answer is not on screen: the farm's own sentence first, then silence, then a shape it does not

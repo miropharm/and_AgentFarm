@@ -84,7 +84,8 @@ for (const f of translations) {
 
 const literals = src => [...stripComments(src).matchAll(/"((?:[^"\\\n]|\\.)*)"/g)].map(m => m[1]);
 t.ok(literals('val a = "Bağlı"; // "yorum"').length === 1 && TURKISH.test(literals('x("Bağlı")')[0]), 'the literal reader finds a Turkish literal and skips comments');
-for (const f of walk('app/src/main/java', ['.kt'])) {
+// The core's translation catalogs (core/lang/Words<Lang>.kt, test/test_core_words.js) are the one exception.
+for (const f of walk('app/src/main/java', ['.kt']).filter(f => !/core[\\/]lang[\\/]Words[A-Z][a-z]\.kt$/.test(f))) {
     for (const s of literals(read(f))) {
         t.ok(!TURKISH.test(s), `${f}: shown words must be English, like Agent Farm: "${s}"`);
     }

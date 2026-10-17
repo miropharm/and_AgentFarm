@@ -56,6 +56,33 @@ class AppLanguageTest {
         assertNull(AppLanguage.clean(""))
     }
 
+    private val supported = setOf("en", "tr")
+    private fun phone(vararg tags: String) = tags.map { java.util.Locale.forLanguageTag(it) }
+
+    @Test
+    fun theToldLanguageWinsWhenTheAppHasWordsForIt() {
+        assertEquals("tr", AppLanguage.effective("tr", phone("en-US"), supported).language)
+        assertEquals("en", AppLanguage.effective("en", phone("tr-TR"), supported).language)
+    }
+
+    @Test
+    fun aLanguageThePhoneAlsoListsKeepsItsRegionSoNothingIsRedrawn() {
+        assertEquals(AppLanguage.effective(null, phone("en-US"), supported), AppLanguage.effective("en", phone("en-US"), supported))
+        assertEquals("en-GB", AppLanguage.effective("en", phone("tr-TR", "en-GB"), supported).toLanguageTag())
+    }
+
+    @Test
+    fun aPhoneListingEnglishBeforeTurkishReadsEnglishWhenNoFarmTells() {
+        assertEquals("en-US", AppLanguage.effective(null, phone("en-US", "tr-TR"), supported).toLanguageTag())
+        assertEquals("tr-TR", AppLanguage.effective(null, phone("de-DE", "tr-TR"), supported).toLanguageTag())
+    }
+
+    @Test
+    fun aLanguageWithoutWordsFallsToThePhonesThenToEnglish() {
+        assertEquals("tr-TR", AppLanguage.effective("de", phone("tr-TR"), supported).toLanguageTag())
+        assertEquals("en", AppLanguage.effective("de", phone("fr-FR"), supported).language)
+    }
+
     @Test
     fun aRecordSurvivesBeingKeptAndADamagedOneReadsAsNeverTold() {
         val t = Told("tr", 1792251673568)

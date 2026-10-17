@@ -1,6 +1,7 @@
 package com.muvusoft.agentfarm.core.share
 
 import com.muvusoft.agentfarm.core.contract.CallResult
+import com.muvusoft.agentfarm.core.lang.Words
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
@@ -82,19 +83,19 @@ object Share {
 
     /** A session's state in the row's words. An unknown status is shown as itself. */
     fun statusWord(t: ShareTarget): String = when {
-        t.asking -> "waiting for you"
-        runs(t) -> "running"
-        t.status == "idle" -> "idle"
+        t.asking -> Words.t("waiting for you")
+        runs(t) -> Words.t("running")
+        t.status == "idle" -> Words.t("idle")
         else -> t.status
     }
 
     /** What a finished send says: the host's own sentence when it gave one. */
     fun outcome(ok: Boolean, result: JsonElement?, error: String?): String {
-        if (!ok) return "Not sent: ${error ?: "the farm did not answer"}"
+        if (!ok) return Words.t("Not sent: {0}", error ?: Words.t("the farm did not answer"))
         val o = result as? JsonObject
         val said = SENTENCE_KEYS.firstNotNullOfOrNull { o?.str(it) }
         val held = (o?.get("held") as? JsonPrimitive)?.booleanOrNull == true
-        return said ?: if (held) "Queued; it is said when the turn ends." else "Sent."
+        return said ?: if (held) Words.t("Queued; it is said when the turn ends.") else Words.t("Sent.")
     }
 
     /**
@@ -109,7 +110,7 @@ object Share {
     }
 
     /** A farm offered for a share: one that answers, or one that does not but whose sessions are known (the text then waits on the phone). */
-    fun farmLabel(name: String, online: Boolean): String = if (online) name else "$name · not connected"
+    fun farmLabel(name: String, online: Boolean): String = if (online) name else Words.t("{0} · not connected", name)
 
     /**
      * The farm a share goes to: the one picked here, else the focused farm when it answers, else the first
@@ -124,19 +125,19 @@ object Share {
 
     /** What a share queued on the phone says at once. */
     fun queued(to: String, farmName: String, hours: Long): String =
-        "Waiting on this phone: it goes to $to when $farmName answers, within $hours h. A notification says how it went."
+        Words.t("Waiting on this phone: it goes to {0} when {1} answers, within {2} h. A notification says how it went.", to, farmName, hours)
 
     /**
      * A queued share's fate, told in a notification: the title says whether it arrived, the text gives the
      * farm's own sentence. `result` null = it waited too long and was dropped.
      */
     fun receipt(to: String, farmName: String, result: CallResult?, hours: Long): Receipt {
-        val missed = "Not sent to $to · $farmName"
+        val missed = Words.t("Not sent to {0} · {1}", to, farmName)
         return when {
-            result == null -> Receipt(false, missed, "$farmName did not answer within $hours h; the text was dropped.")
+            result == null -> Receipt(false, missed, Words.t("{0} did not answer within {1} h; the text was dropped.", farmName, hours))
             !result.ok -> Receipt(false, missed, outcome(false, result.result, result.error))
-            asks(true, result.result) != null -> Receipt(false, missed, "${outcome(true, result.result, null)} Share it again to answer.")
-            else -> Receipt(true, "Delivered to $to · $farmName", outcome(true, result.result, null))
+            asks(true, result.result) != null -> Receipt(false, missed, Words.t("{0} Share it again to answer.", outcome(true, result.result, null)))
+            else -> Receipt(true, Words.t("Delivered to {0} · {1}", to, farmName), outcome(true, result.result, null))
         }
     }
 

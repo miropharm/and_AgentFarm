@@ -1,5 +1,6 @@
 package com.muvusoft.agentfarm.core.share
 
+import com.muvusoft.agentfarm.core.lang.Words
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -12,8 +13,8 @@ object Stop {
 
     /** What the stop says: the farm's own words for how it stopped (they differ by engine). */
     fun outcome(ok: Boolean, result: JsonElement?, error: String?): String {
-        if (!ok) return "Not stopped: ${error ?: "the farm did not answer"}"
+        if (!ok) return Words.t("Not stopped: {0}", error ?: Words.t("the farm did not answer"))
         val how = ((result as? JsonObject)?.get("how") as? JsonPrimitive)?.takeIf { it.isString }?.contentOrNull
-        return if (how.isNullOrBlank()) "Stopped." else "Stopped: $how."
+        return if (how.isNullOrBlank()) Words.t("Stopped.") else Words.t("Stopped: {0}.", how)
     }
 }

@@ -1,6 +1,7 @@
 package com.muvusoft.agentfarm.core.away
 
 import com.muvusoft.agentfarm.core.Time
+import com.muvusoft.agentfarm.core.lang.Words
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
@@ -35,7 +36,7 @@ object AwayVerdict {
     /** Rows of the snapshot's needs shown under the wait; the rest is counted. */
     const val TOP = 5
 
-    const val NO_ANSWER = "The farm did not answer; try again in a moment."
+    val NO_ANSWER: String get() = Words.t("The farm did not answer; try again in a moment.")
 
     /** farm.away's answer: an Away while VS Code is closed, null while Agent Farm runs (or an answer it cannot read). */
     fun of(result: JsonElement?): Away? {
@@ -48,7 +49,7 @@ object AwayVerdict {
             (r as? JsonObject)?.let { AwayNeed(it.str("agent").orEmpty(), it.str("title").orEmpty()) }?.takeIf { it.title.isNotBlank() }
         }
         return Away(
-            sentence = o.str("sentence")?.takeIf { it.isNotBlank() } ?: "Agent Farm is not running: VS Code is closed on $farm.",
+            sentence = o.str("sentence")?.takeIf { it.isNotBlank() } ?: Words.t("Agent Farm is not running: VS Code is closed on {0}.", farm),
             since = o.num("since"),
             openedAt = o.num("openedAt"),
             snapshotAt = snap?.num("ts"),
@@ -61,40 +62,39 @@ object AwayVerdict {
 
     /** The status strip while away. */
     fun short(a: Away, now: Long): String =
-        "VS Code is closed" + (a.snapshotAt?.let { " · last state ${Time.ago(now - it)} ago" } ?: "")
+        a.snapshotAt?.let { Words.t("VS Code is closed · last state {0} ago", Time.ago(now - it)) } ?: Words.t("VS Code is closed")
 
     /** The wait screen's lines under the sentence: since when, how old the numbers are, the numbers. */
     fun lines(a: Away, now: Long): List<String> {
         val out = mutableListOf<String>()
-        a.since?.let { out += "VS Code was last seen ${Time.ago(now - it)} ago." }
+        a.since?.let { out += Words.t("VS Code was last seen {0} ago.", Time.ago(now - it)) }
         if (a.snapshotAt == null) {
-            out += "There is no saved state to show."
+            out += Words.t("There is no saved state to show.")
         } else {
-            out += "The numbers below are from ${Time.ago(now - a.snapshotAt)} ago; nothing behind them moves until VS Code opens."
+            out += Words.t("The numbers below are from {0} ago; nothing behind them moves until VS Code opens.", Time.ago(now - a.snapshotAt))
             val counts = listOfNotNull(
-                a.needs?.let { "$it waiting for you" },
-                a.unreadNotices?.let { count(it, "unread notice") },
-                a.runningTasks?.let { count(it, "running task") },
+                a.needs?.let { Words.t("{0} waiting for you", it) },
+                a.unreadNotices?.let { if (it == 1L) Words.t("{0} unread notice", it) else Words.t("{0} unread notices", it) },
+                a.runningTasks?.let { if (it == 1L) Words.t("{0} running task", it) else Words.t("{0} running tasks", it) },
             )
             if (counts.isNotEmpty()) out += counts.joinToString(" · ")
         }
         return out
     }
 
-    private fun count(n: Long, thing: String): String = "$n $thing" + if (n == 1L) "" else "s"
-
     fun row(n: AwayNeed): String = if (n.agent.isBlank()) n.title else "${n.agent} · ${n.title}"
 
     /** What farm.open answered, as one sentence; `error` is the farm's own refusal when the call failed. */
     fun opened(ok: Boolean, result: JsonElement?, error: String?, farm: String, now: Long): String {
-        if (!ok) return error?.takeIf { it.isNotBlank() } ?: "Agent Farm could not be opened."
+        if (!ok) return error?.takeIf { it.isNotBlank() } ?: Words.t("Agent Farm could not be opened.")
         val o = result as? JsonObject
         return when {
-            o?.bool("already") == true -> "Agent Farm is already running on $farm."
-            o?.bool("again") == true -> "VS Code is already starting on $farm" +
-                (o.num("since")?.let { " (asked ${Time.ago(now - it)} ago)" } ?: "") + "; it connects by itself once it is up."
-            o?.bool("opening") == true -> "Starting VS Code on $farm; the farm's pages open here once it is up."
-            else -> "Agent Farm answered, but not with a start."
+            o?.bool("already") == true -> Words.t("Agent Farm is already running on {0}.", farm)
+            o?.bool("again") == true -> o.num("since")
+                ?.let { Words.t("VS Code is already starting on {0} (asked {1} ago); it connects by itself once it is up.", farm, Time.ago(now - it)) }
+                ?: Words.t("VS Code is already starting on {0}; it connects by itself once it is up.", farm)
+            o?.bool("opening") == true -> Words.t("Starting VS Code on {0}; the farm's pages open here once it is up.", farm)
+            else -> Words.t("Agent Farm answered, but not with a start.")
         }
     }
 

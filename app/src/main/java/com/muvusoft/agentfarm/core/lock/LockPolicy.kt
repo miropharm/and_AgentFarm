@@ -1,5 +1,7 @@
 package com.muvusoft.agentfarm.core.lock
 
+import com.muvusoft.agentfarm.core.lang.Words
+
 /** When the shell asks for its owner, and how a destructive action is confirmed. The platform reports; this decides. */
 object LockPolicy {
     /** How long the app may sit in the background before coming back asks for the owner again. */
@@ -25,8 +27,8 @@ object LockPolicy {
     /** Why the owner check is not offered, in the user's words; null when it is. */
     fun reason(availability: Availability): String? = when (availability) {
         Availability.READY -> null
-        Availability.NOT_ENROLLED -> "This phone has no screen lock or fingerprint set up."
-        Availability.NO_HARDWARE -> "This phone offers no way to verify its owner."
-        Availability.UNAVAILABLE -> "Owner verification is not available right now."
+        Availability.NOT_ENROLLED -> Words.t("This phone has no screen lock or fingerprint set up.")
+        Availability.NO_HARDWARE -> Words.t("This phone offers no way to verify its owner.")
+        Availability.UNAVAILABLE -> Words.t("Owner verification is not available right now.")
     }
 }

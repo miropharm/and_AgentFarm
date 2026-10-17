@@ -1,5 +1,6 @@
 package com.muvusoft.agentfarm.core.speech
 
+import com.muvusoft.agentfarm.core.lang.Words
 import java.util.Locale
 import kotlin.math.pow
 import kotlinx.serialization.json.JsonElement
@@ -126,12 +127,12 @@ object PageReading {
 
     /** Said on the page when neither the text's language nor the user's own has a voice on this phone. */
     fun noVoice(lang: String): String {
-        val name = Locale.forLanguageTag(lang).getDisplayLanguage(Locale.ENGLISH).ifEmpty { "this language" }
-        return "This phone has no voice for $name - add one in the phone's text-to-speech settings."
+        val name = Locale.forLanguageTag(lang).getDisplayLanguage(Locale.forLanguageTag(Words.lang)).ifEmpty { Words.t("this language") }
+        return Words.t("This phone has no voice for {0} - add one in the phone's text-to-speech settings.", name)
     }
 
     /** Said when the phone's voice refused or broke off a paragraph. */
-    const val VOICE_FAILED = "The phone's voice could not read this."
+    val VOICE_FAILED: String get() = Words.t("The phone's voice could not read this.")
 
     private val SENTENCE_END = Regex("[.!?…][\"')\\]]*(?=\\s)")
 }

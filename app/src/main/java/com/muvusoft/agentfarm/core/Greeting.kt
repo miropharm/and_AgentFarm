@@ -1,5 +1,7 @@
 package com.muvusoft.agentfarm.core
 
-const val GREETING_TITLE = "Hello, Agent Farm"
+import com.muvusoft.agentfarm.core.lang.Words
 
-fun buildLabel(versionName: String): String = "Version $versionName"
+val GREETING_TITLE: String get() = Words.t("Hello, Agent Farm")
+
+fun buildLabel(versionName: String): String = Words.t("Version {0}", versionName)

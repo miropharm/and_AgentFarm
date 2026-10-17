@@ -1,6 +1,7 @@
 package com.muvusoft.agentfarm.core.conversation
 
 import com.muvusoft.agentfarm.core.contract.CallResult
+import com.muvusoft.agentfarm.core.lang.Words
 import com.muvusoft.agentfarm.core.now.NowText
 import com.muvusoft.agentfarm.core.share.Share
 import kotlinx.serialization.json.JsonObject
@@ -47,9 +48,9 @@ object Sending {
 
 /** The Conversation's sentences that are verdicts, not labels. */
 object ConversationText {
-    const val NOT_IN_CONSOLE = "Not open in the Console: the phone reads it, and writes only to a session the Console hosts."
-    const val NO_ANSWER = "The farm did not answer."
-    const val PICTURE_ONLINE = "A picture goes only while the farm answers."
+    val NOT_IN_CONSOLE: String get() = Words.t("Not open in the Console: the phone reads it, and writes only to a session the Console hosts.")
+    val NO_ANSWER: String get() = Words.t("The farm did not answer.")
+    val PICTURE_ONLINE: String get() = Words.t("A picture goes only while the farm answers.")
 
     /**
      * Why a page is not on screen: the farm's own sentence, else silence, else a shape this build does not read.
@@ -62,5 +63,9 @@ object ConversationText {
 
     /** The farm ended the live watch: the card left the Console ("ended"), or it cannot be followed here. */
     fun ended(reason: String?): String =
-        if (reason == "ended") "This session closed in the Console; what it said stays here to read." else "This session cannot be followed live from here${reason?.let { " ($it)" }.orEmpty()}."
+        when (reason) {
+            "ended" -> Words.t("This session closed in the Console; what it said stays here to read.")
+            null -> Words.t("This session cannot be followed live from here.")
+            else -> Words.t("This session cannot be followed live from here ({0}).", reason)
+        }
 }

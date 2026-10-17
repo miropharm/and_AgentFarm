@@ -3,6 +3,7 @@ package com.muvusoft.agentfarm.core.notify
 import com.muvusoft.agentfarm.core.contract.AskAnswersSoon
 import com.muvusoft.agentfarm.core.contract.AskOpened
 import com.muvusoft.agentfarm.core.contract.CallResult
+import com.muvusoft.agentfarm.core.lang.Words
 import com.muvusoft.agentfarm.core.share.Share
 import com.muvusoft.agentfarm.core.state.Outbox
 import com.muvusoft.agentfarm.core.state.OutboxItem
@@ -67,12 +68,12 @@ object Alerts {
     /** The notification an event deserves, or null for events that only update state. */
     fun of(farmName: String, e: FarmEventData): Alert? = when (e) {
         is AskOpened -> Alert(
-            Channel.ASK, "ask:${e.askId}", "${e.agent} is asking · $farmName", e.question,
+            Channel.ASK, "ask:${e.askId}", Words.t("{0} is asking · {1}", e.agent, farmName), e.question,
             withStop(
                 if (e.options.size in 1..MAX_BUTTONS) {
                     e.options.map { o -> Answers.question(e.session, e.question, o.label).let { c -> AlertAction(o.label, c.op, c.args) } }
                 } else {
-                    listOf(AlertAction("Reply", "console.answer", buildJsonObject { put("id", e.session) }, replyArg = "response"))
+                    listOf(AlertAction(Words.t("Reply"), "console.answer", buildJsonObject { put("id", e.session) }, replyArg = "response"))
                 },
                 e.session,
             ),
@@ -80,35 +81,35 @@ object Alerts {
             session = e.session,
         )
         is PermissionOpened -> Alert(
-            Channel.ASK, "perm:${e.permId}", "${e.agent} asks permission: ${e.tool} · $farmName", e.summary,
+            Channel.ASK, "perm:${e.permId}", Words.t("{0} asks permission: {1} · {2}", e.agent, e.tool, farmName), e.summary,
             withStop(
                 listOf(
-                    Answers.need(e.key, Answers.ALLOW).let { c -> AlertAction("Allow", c.op, c.args, unlock = true) },
-                    Answers.need(e.key, Answers.DENY).let { c -> AlertAction("Deny", c.op, c.args) },
+                    Answers.need(e.key, Answers.ALLOW).let { c -> AlertAction(Words.t("Allow"), c.op, c.args, unlock = true) },
+                    Answers.need(e.key, Answers.DENY).let { c -> AlertAction(Words.t("Deny"), c.op, c.args) },
                 ),
                 e.session,
             ),
             silenced(e.quiet),
             session = e.session,
         )
-        is TurnFinished -> Alert(Channel.TURN, "turn:${e.session}", "${e.agent}: turn finished · $farmName", e.title, emptyList(), silenced(e.quiet), session = e.session)
+        is TurnFinished -> Alert(Channel.TURN, "turn:${e.session}", Words.t("{0}: turn finished · {1}", e.agent, farmName), e.title, emptyList(), silenced(e.quiet), session = e.session)
         is NoticePosted -> Alert(noticeChannel(e.level), "notice:${e.id}", "${e.agent} · $farmName", e.title, emptyList(), silenced(e.quiet))
         is GateOpened -> Alert(
-            Channel.ASK, "gate:${e.gateId}", "Workflow \"${e.workflow}\" asks · $farmName", e.question,
+            Channel.ASK, "gate:${e.gateId}", Words.t("Workflow \"{0}\" asks · {1}", e.workflow, farmName), e.question,
             if (e.options.size in 1..MAX_BUTTONS) {
                 e.options.mapIndexed { i, o -> AlertAction(o, "workflows.answer", gateAnswer(e.gateId) { put("option", i + 1) }) }
             } else {
-                listOf(AlertAction("Reply", "workflows.answer", gateAnswer(e.gateId) { }, replyArg = "answer"))
+                listOf(AlertAction(Words.t("Reply"), "workflows.answer", gateAnswer(e.gateId) { }, replyArg = "answer"))
             },
             silenced(e.quiet),
         )
         is MissionEnded -> Alert(
             if (e.outcome == "failed") Channel.NOTICE else Channel.TURN, "mission:${e.mission}",
-            "${if (e.outcome == "failed") "Mission failed" else "Mission finished"} · $farmName", e.title, emptyList(), silenced(e.quiet),
+            if (e.outcome == "failed") Words.t("Mission failed · {0}", farmName) else Words.t("Mission finished · {0}", farmName), e.title, emptyList(), silenced(e.quiet),
         )
         is QuotaWarn -> Alert(
-            Channel.NOTICE, "quota:${e.engine}:${e.window}", "Quota warning · $farmName",
-            "${e.engine} ${e.window} window is ${e.percent.toInt()}% full", emptyList(), silenced(e.quiet),
+            Channel.NOTICE, "quota:${e.engine}:${e.window}", Words.t("Quota warning · {0}", farmName),
+            Words.t("{0} {1} window is {2}% full", e.engine, e.window, e.percent.toInt()), emptyList(), silenced(e.quiet),
         )
         else -> null
     }
@@ -119,11 +120,11 @@ object Alerts {
      * that never saw the question (it started later) shows the reminder alone.
      */
     fun reminder(question: Alert?, farmName: String, e: AskAnswersSoon): Alert {
-        val head = "Answers itself in ${e.minutes} min"
+        val head = Words.t("Answers itself in {0} min", e.minutes)
         return question?.copy(title = "$head · ${question.title}", silent = question.silent || silenced(e.quiet), renotify = true)
             ?: Alert(
-                Channel.ASK, "ask:${e.askId}", "${e.agent}'s question answers itself in ${e.minutes} min · $farmName",
-                "Answer it before then, or its recommended option is taken for you.", emptyList(), silenced(e.quiet), renotify = true,
+                Channel.ASK, "ask:${e.askId}", Words.t("{0}'s question answers itself in {1} min · {2}", e.agent, e.minutes, farmName),
+                Words.t("Answer it before then, or its recommended option is taken for you."), emptyList(), silenced(e.quiet), renotify = true,
             )
     }
 
@@ -151,7 +152,7 @@ object Alerts {
      * keeps the session. It cannot be undone, so the device is unlocked first.
      */
     private fun withStop(actions: List<AlertAction>, session: String): List<AlertAction> =
-        if (actions.size < MAX_BUTTONS) actions + AlertAction("Stop", "console.interrupt", buildJsonObject { put("id", session) }, unlock = true) else actions
+        if (actions.size < MAX_BUTTONS) actions + AlertAction(Words.t("Stop"), "console.interrupt", buildJsonObject { put("id", session) }, unlock = true) else actions
 
     private fun gateAnswer(gateId: String, more: kotlinx.serialization.json.JsonObjectBuilder.() -> Unit) = buildJsonObject {
         put("id", gateId)

@@ -5,23 +5,38 @@ import com.muvusoft.agentfarm.core.contract.PairRequest
 import com.muvusoft.agentfarm.core.contract.PairResponse
 import com.muvusoft.agentfarm.core.contract.Pairing
 import com.muvusoft.agentfarm.core.contract.PairingInfo
+import com.muvusoft.agentfarm.core.lang.Words
 import com.muvusoft.agentfarm.core.state.PairedFarm
 
-/** Why a pairing did not happen; the screen prints `message`, never re-derives it. */
-sealed class PairingProblem(val message: String) {
-    object NotALink : PairingProblem("This is not an Agent Farm pairing link.")
-    data class NewerContract(val v: Long) :
-        PairingProblem("This farm speaks a newer contract (v$v); update the app.")
-    object CodeUsed : PairingProblem("The pairing code was used or has expired; get a new code in Agent Farm.")
-    object WrongFarm : PairingProblem("The farm that answered is not the farm in the link; nothing was paired.")
-    object CertificateMismatch : PairingProblem("The server certificate does not match the fingerprint in the link; nothing was paired.")
-    data class Unreachable(val tried: List<String>) :
-        PairingProblem(
-            "Could not reach the farm. Addresses tried: ${tried.joinToString(", ")}. " +
-                "Is the phone on the same Wi-Fi? On the computer, Toolbox > Services > Agent Farm app says what stops it.",
+/** Why a pairing did not happen; the screen prints `message`, never re-derives it. Read when shown: in the app's language then. */
+sealed class PairingProblem {
+    abstract val message: String
+
+    object NotALink : PairingProblem() {
+        override val message: String get() = Words.t("This is not an Agent Farm pairing link.")
+    }
+    data class NewerContract(val v: Long) : PairingProblem() {
+        override val message: String get() = Words.t("This farm speaks a newer contract (v{0}); update the app.", v)
+    }
+    object CodeUsed : PairingProblem() {
+        override val message: String get() = Words.t("The pairing code was used or has expired; get a new code in Agent Farm.")
+    }
+    object WrongFarm : PairingProblem() {
+        override val message: String get() = Words.t("The farm that answered is not the farm in the link; nothing was paired.")
+    }
+    object CertificateMismatch : PairingProblem() {
+        override val message: String get() = Words.t("The server certificate does not match the fingerprint in the link; nothing was paired.")
+    }
+    data class Unreachable(val tried: List<String>) : PairingProblem() {
+        override val message: String get() = Words.t(
+            "Could not reach the farm. Addresses tried: {0}. Is the phone on the same Wi-Fi? On the computer, Toolbox > Services > Agent Farm app says what stops it.",
+            tried.joinToString(", "),
         )
-    data class Refused(val status: Int, val detail: String?) :
-        PairingProblem("The farm refused the pairing ($status)" + (detail?.let { ": $it" } ?: "."))
+    }
+    data class Refused(val status: Int, val detail: String?) : PairingProblem() {
+        override val message: String get() =
+            detail?.let { Words.t("The farm refused the pairing ({0}): {1}", status, it) } ?: Words.t("The farm refused the pairing ({0}).", status)
+    }
 }
 
 sealed interface PairingStep {

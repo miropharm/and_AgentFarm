@@ -1,5 +1,7 @@
 package com.muvusoft.agentfarm.core.conversation
 
+import com.muvusoft.agentfarm.core.lang.Words
+
 /** What the conversation draws, one row each: tool steps in a row fold into one. */
 sealed interface Block {
     val first: Int
@@ -71,8 +73,8 @@ object Blocks {
         val names = steps.steps.mapNotNull { it.tool?.substringBefore(' ')?.takeIf(String::isNotBlank) }.distinct()
         val shown = names.take(NAMES_SHOWN).joinToString(", ") + if (names.size > NAMES_SHOWN) " +${names.size - NAMES_SHOWN}" else ""
         val errors = steps.steps.count { it.isError }
-        return (if (calls == 1) "1 step" else "$calls steps") +
+        return (if (calls == 1) Words.t("1 step") else Words.t("{0} steps", calls)) +
             (if (shown.isNotEmpty()) " · $shown" else "") +
-            (if (errors > 0) " · $errors failed" else "")
+            (if (errors > 0) " · " + Words.t("{0} failed", errors) else "")
     }
 }

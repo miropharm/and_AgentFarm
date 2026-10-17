@@ -26,9 +26,10 @@ object AlertPoster {
 
     fun channels(context: Context) {
         val nm = context.getSystemService(NotificationManager::class.java)
+        val words = context.inAppLanguage()
         for ((ch, spec) in SPEC) {
-            nm.createNotificationChannel(NotificationChannel(ch.id, context.getString(spec.first), spec.second).apply {
-                description = context.getString(spec.third)
+            nm.createNotificationChannel(NotificationChannel(ch.id, words.getString(spec.first), spec.second).apply {
+                description = words.getString(spec.third)
                 setShowBadge(ch == Channel.ASK || ch == Channel.IMPORTANT || ch == Channel.NOTICE)
             })
         }

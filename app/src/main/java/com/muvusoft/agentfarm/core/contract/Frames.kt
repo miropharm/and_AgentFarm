@@ -42,6 +42,8 @@ data class Welcome(
     val session: String? = null,
     /** The farm's network cards on the local network, for Wake-on-LAN while the PC sleeps; empty off the LAN. */
     val wake: List<WakeNic>? = null,
+    /** The language the farm draws its pages in (BCP 47); the app's own screens follow it (core/lang/AppLanguage). */
+    val lang: String? = null,
 ) : Frame()
 
 @Serializable

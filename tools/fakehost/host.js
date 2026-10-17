@@ -38,7 +38,7 @@ function createHost(opts = {}) {
     const c = opts.contract || K.load();
     const farm = opts.farm || { id: 'farm_fake', name: 'Fake Farm' };
     const keep = opts.keep || 100;
-    const h = { c, farm, codes: new Set([opts.code || 'FAKE-CODE']), devices: new Map(), events: [], seq: 0, results: new Map(), calls: [], conns: new Set(), sessions: new Map(), profile: 'none' };
+    const h = { c, farm, codes: new Set([opts.code || 'FAKE-CODE']), devices: new Map(), events: [], seq: 0, results: new Map(), calls: [], conns: new Set(), sessions: new Map(), profile: 'none', lang: opts.lang === undefined ? 'en' : opts.lang };
 
     const reply = (res, status, body) => { res.writeHead(status, { 'content-type': 'application/json' }); res.end(JSON.stringify(body)); };
     const body = req => new Promise(r => { let s = ''; req.on('data', d => { s += d; }); req.on('end', () => { try { r(JSON.parse(s || '{}')); } catch { r(null); } }); });
@@ -96,6 +96,8 @@ function createHost(opts = {}) {
         if (req.method === 'POST' && url === '/_test/drop') { for (const conn of [...h.conns]) { conn.close(); } return reply(res, 200, { dropped: true }); }
         if (req.method === 'POST' && url === '/_test/away') { const b = await body(req); h.away = b.away === true; for (const conn of [...h.conns]) { conn.close(); } return reply(res, 200, { away: h.away }); }
         if (req.method === 'POST' && url === '/_test/sleep') { const b = await body(req); h.asleep = b.asleep === true; if (h.asleep) { for (const conn of [...h.conns]) { conn.close(); } } return reply(res, 200, { asleep: h.asleep }); }
+        // The PC's language setting changed: a live farm.language event, and every later welcome tells it (lang null = an older farm that says none).
+        if (req.method === 'POST' && url === '/_test/lang') { const b = await body(req) || {}; h.lang = typeof b.lang === 'string' && b.lang ? b.lang : null; return reply(res, 200, { lang: h.lang, seq: h.lang ? h.emit('farm.language', { lang: h.lang }) : null }); }
         if (req.method === 'POST' && url === '/_test/revoke') { const b = await body(req); const d = h.devices.get(b.device); if (d) { d.revoked = true; } return reply(res, 200, { revoked: !!d }); }
         if (req.method === 'GET' && url === '/_test/state') { return reply(res, 200, { lastSeq: h.seq, devices: [...h.devices.keys()], calls: h.calls, code: [...h.codes][0] || h.newCode(), sockets: [...h.conns].filter(x => x.welcomed).length }); }
         if (req.method === 'POST' && url === '/_test/scenario') { return reply(res, 200, h.scenario(await body(req) || {})); }
@@ -126,7 +128,7 @@ function createHost(opts = {}) {
         conn.session = 's_' + crypto.randomBytes(12).toString('base64url');
         h.sessions.set(conn.session, f.device);
         const features = Object.fromEntries(c.features.map(x => [x, { allowed: true }]));
-        send(conn, { kind: 'welcome', farm, device: f.device, scope: d.scope, features, lastSeq: h.seq, session: conn.session, wake: WAKE });
+        send(conn, { kind: 'welcome', farm, device: f.device, scope: d.scope, features, lastSeq: h.seq, session: conn.session, wake: WAKE, ...(h.lang ? { lang: h.lang } : {}) });
         if (typeof f.resumeAfter === 'number') {
             const oldest = h.events.length ? h.events[0].seq : h.seq + 1;
             if (oldest > f.resumeAfter + 1) { send(conn, { kind: 'gap', from: f.resumeAfter + 1, to: oldest - 1 }); }

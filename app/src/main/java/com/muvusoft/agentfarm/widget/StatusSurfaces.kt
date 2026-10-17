@@ -11,6 +11,7 @@ import com.muvusoft.agentfarm.AgentFarmApp
 import com.muvusoft.agentfarm.MainActivity
 import com.muvusoft.agentfarm.R
 import com.muvusoft.agentfarm.core.notify.StatusLine
+import com.muvusoft.agentfarm.net.inAppLanguage
 
 /**
  * The home-screen widget and the quick settings tile say what the ongoing notification says — the same
@@ -35,6 +36,10 @@ object StatusSurfaces {
             setOnClickPendingIntent(R.id.widget_root, openNow(context))
             setOnClickPendingIntent(R.id.widget_mic, openVoice(context))
             setOnClickPendingIntent(R.id.widget_stop, openStop(context))
+            // The launcher inflates the layout in the phone's language; the labels are given in the app's.
+            val words = context.inAppLanguage()
+            setContentDescription(R.id.widget_mic, words.getString(R.string.widget_mic))
+            setContentDescription(R.id.widget_stop, words.getString(R.string.widget_stop))
         }
 
     /** The widget's stop: the running turns, one stopped after the owner's yes. */

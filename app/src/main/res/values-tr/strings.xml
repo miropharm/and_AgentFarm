@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Common -->
+    <string name="back">Geri</string>
+    <string name="cancel">Vazgeç</string>
+    <string name="clear">Temizle</string>
+
+    <!-- Farms and pairing -->
+    <string name="open_settings">Ayarlar</string>
+    <string name="farms">Çiftlikler</string>
+    <string name="farms_empty">Henüz eşli bir çiftlik yok.</string>
+    <string name="pair_new">Çiftlik eşle</string>
+    <string name="pair_hint">Agent Farm\'ın gösterdiği eşleme QR kodunu tara ya da bağlantısını yapıştır.</string>
+    <string name="pair_link">Eşleme bağlantısı</string>
+    <string name="pair_go">Eşle</string>
+    <string name="pair_busy">Eşleniyor…</string>
+    <string name="scan_qr">QR kodu tara</string>
+    <string name="scan_unavailable">Bu telefon burada tarayamıyor. Agent Farm\'da eşleme bağlantısını kopyala ve aşağıya yapıştır.</string>
+    <string name="scan_empty">Bu kod bir eşleme bağlantısı taşımıyor. Agent Farm\'ın gösterdiği QR kodunu tara.</string>
+    <string name="paired_with">%1$s ile eşlendi.</string>
+    <string name="farm_open">Çiftliği aç</string>
+    <string name="farm_link_detail">Bağlantı ayrıntıları</string>
+    <string name="forget">Unut</string>
+    <string name="forget_title">%1$s unutulsun mu?</string>
+    <string name="forget_detail">Bu telefonun bu çiftlik için anahtarı silinir; yeniden bağlanmak için yeni bir QR kod gerekir.</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Ayarlar</string>
+    <string name="settings_lock">Uygulama kilidi</string>
+    <string name="lock_on_open">Açılışta kimliğini doğrula</string>
+    <string name="lock_on_open_detail">Uygulama açıldığında ve bir dakikadan uzun süre arka planda kaldıktan sonra.</string>
+    <string name="lock_destructive_asks">Bir çiftliği unutmak gibi geri alınamayan işlemlerde kimliğin her zaman doğrulanır.</string>
+    <string name="lock_destructive_confirms">Geri alınamayan işlemler bu telefonda bir onay penceresiyle sorulur.</string>
+    <string name="settings_speech">Sesli okuma</string>
+    <string name="speak_off">Kapalı</string>
+    <string name="speak_asks">Sorular ve izinler</string>
+    <string name="speak_asks_and_turns">Sorular, izinler ve biten turlar</string>
+    <string name="speak_detail">Bir ajan soru sorduğunda ya da izin istediğinde telefon bunu aşağıdaki ses dilinde sesli okur; seçilirse biten bir turun özetini de. Dikte de aynı dilde dinler. Rahatsız Etmeyin açıkken sessiz kalır.</string>
+    <string name="voice_language">Ses dili</string>
+    <string name="voice_language_phone_value">Telefonun dili → %1$s</string>
+    <string name="voice_language_change">ses dilini değiştir</string>
+    <string name="voice_missing">Bu telefonda henüz %1$s sesi yok: telefonun metin okuma ayarlarından bir ses ekle. O zamana kadar hiçbir şey sesli okunmaz.</string>
+    <string name="settings_battery">Pil optimizasyonu</string>
+    <string name="settings_device">Bu cihaz</string>
+    <string name="device_line">%1$s %2$s · Android %3$s</string>
+
+    <!-- The lock -->
+    <string name="lock_ask_open">Agent Farm\'ı aç</string>
+    <string name="lock_ask_turn_on">Uygulama kilidini aç</string>
+    <string name="lock_ask_turn_off">Uygulama kilidini kapat</string>
+    <string name="locked_title">Agent Farm kilitli</string>
+    <string name="locked_detail">Açmak için kimliğini doğrula.</string>
+    <string name="unlock">Kilidi aç</string>
+
+    <!-- Sharing into a session -->
+    <string name="share_title">Bir oturuma gönder</string>
+    <string name="share_whole">Metnin tamamı</string>
+    <string name="share_farm">Çiftlik</string>
+    <string name="share_session">Oturum</string>
+    <string name="share_loading">Oturumlar okunuyor…</string>
+    <string name="share_no_farm">Bağlı çiftlik yok; paylaşılan metin bir çiftlik bağlanınca gönderilebilir.</string>
+    <string name="share_no_session">Bu çiftlikte açık bir Konsol oturumu yok.</string>
+    <string name="share_new">Yeni oturum</string>
+    <string name="share_image">Paylaşılan resim</string>
+    <string name="share_image_online">Resim yalnız şu an yanıt veren bir çiftliğe gider ve yanıt veren yok.</string>
+    <string name="share_image_big">Bu resim çok büyük: çiftlik en fazla %1$d MB resim alır.</string>
+    <string name="share_send">Gönder</string>
+    <string name="share_confirm">Yine de gönder</string>
+    <string name="share_confirm_title">Çiftliğin denetimine rağmen gönderilsin mi?</string>
+    <string name="close">Kapat</string>
+
+    <!-- Widget and quick settings tile -->
+    <string name="widget_description">Bağlı çiftlikler, seni bekleyenler ve çalışan oturumlar; Şimdi sayfası için dokun.</string>
+    <string name="widget_mic">Bir oturuma söyle</string>
+    <string name="widget_stop">Çalışan bir turu durdur</string>
+
+    <!-- Stopping a running turn -->
+    <string name="stop_title">Çalışan bir turu durdur</string>
+    <string name="stop_no_farm">Bağlı çiftlik yok; şu an buradan hiçbir şey durdurulamaz.</string>
+    <string name="stop_none">Bu çiftlikte çalışan bir şey yok.</string>
+    <string name="stop_go">Durdur</string>
+    <string name="stop_confirm_title">%1$s ajanının turu durdurulsun mu?</string>
+    <string name="stop_confirm_detail">Tur olduğu yerde biter; oturum ve bağlamı kalır, sonraki mesaj kaldığı yerden sürer.</string>
+
+    <!-- Waking a sleeping farm PC (Wake-on-LAN) -->
+    <string name="wake_go">Bu PC\'yi uyandır</string>
+    <string name="wake_hint">Telefon PC\'nin ağındayken ve PC ağdan uyanacak biçimde ayarlıyken çalışır.</string>
+    <string name="wake_sent">%1$s için uyandırma sinyali gönderildi. Ağdan uyanacak biçimde ayarlı bir PC bir dakika içinde açılır; uygulama o yanıt verir vermez bağlanır.</string>
+    <string name="wake_failed">Uyandırma sinyali gönderilemedi: %1$s</string>
+
+    <!-- Farm pages -->
+    <string name="farm_unpaired">Bu çiftlik artık eşli değil.</string>
+    <string name="clipboard_refused">Pano bunu kabul etmedi.</string>
+    <string name="voice_prompt">Konuş…</string>
+    <string name="voice_unavailable">Bu telefonda konuşma tanıma yok.</string>
+    <!-- Read on the farm's page after "… was not saved —" -->
+    <string name="save_damaged">dosya bozuk geldi</string>
+    <string name="save_unavailable">bu telefonda dosya kaydedebilecek bir uygulama yok</string>
+    <string name="save_failed">oraya yazılamadı</string>
+    <string name="page_blocked">Bu adres uygulamada açılmaz.</string>
+    <string name="page_offline">Çiftlik şu an bağlı değil.</string>
+    <string name="away_open">Agent Farm\'ı aç</string>
+    <string name="away_waiting">Seni bekleyenler</string>
+
+    <!-- Notification channels (system settings show these) -->
+    <string name="channel_ask">Sorular ve izinler</string>
+    <string name="channel_ask_detail">Bir ajan bir yanıt ya da izin bekliyor</string>
+    <string name="channel_important">Önemli bildirimler</string>
+    <string name="channel_important_detail">Ajanların önemli ve kritik bildirimleri</string>
+    <string name="channel_notice">Bildirimler</string>
+    <string name="channel_notice_detail">Ajanların bildirimleri ve kota uyarıları</string>
+    <string name="channel_turn">Tur bitti</string>
+    <string name="channel_turn_detail">Bir ajanın turu bitti</string>
+    <string name="channel_routine">Rutin bildirimler</string>
+    <string name="channel_routine_detail">Ajanların rutin güncellemeleri, sessiz gösterilir</string>
+    <string name="channel_link">Bağlantı</string>
+    <string name="channel_link_detail">Çiftliklerine bağlantının sürekli durum satırı</string>
+    <!-- Now and Conversation -->
+    <string name="nav_now">Şimdi</string>
+    <string name="nav_menu">Menü</string>
+    <string name="menu_work">İş</string>
+    <string name="menu_info">Bilgi</string>
+    <string name="menu_more">Daha fazla</string>
+    <string name="menu_phone">Telefon</string>
+    <string name="menu_phone_settings">Telefon ayarları</string>
+    <string name="menu_farm_pages">Çiftliğin sayfaları</string>
+    <string name="now_waiting">Seni bekleyenler</string>
+    <string name="now_running">Çalışanlar</string>
+    <string name="now_recent">Son oturumlar</string>
+    <string name="now_empty">Şu an çalışan bir şey yok</string>
+    <string name="new_session">Yeni oturum</string>
+    <string name="new_agent">Ajan</string>
+    <string name="new_no_agent">Henüz ajan yok: liste çiftlik yanıt verince gelir.</string>
+    <string name="new_image_online">Resim yalnız çiftlik yanıt verirken gider.</string>
+    <string name="new_drop_image">Resmi kaldır</string>
+    <string name="loading">Yükleniyor</string>
+    <string name="retry">Yeniden dene</string>
+    <string name="failed">Başarısız</string>
+    <string name="more">Daha fazla</string>
+    <string name="open_conversation">Konuşmayı aç</string>
+    <string name="show_details">Ayrıntıları göster</string>
+    <string name="ask_question">Soru</string>
+    <string name="ask_permission">İzin</string>
+    <string name="ask_approval">Onay</string>
+    <string name="allow">İzin ver</string>
+    <string name="deny">Reddet</string>
+    <string name="step_thinking">Düşünüyor</string>
+    <string name="live_now">Şimdi: %1$s</string>
+    <string name="steps_show">Adımları göster</string>
+    <string name="steps_hide">Adımları gizle</string>
+    <string name="show_all">Tümünü göster</string>
+    <string name="send">Gönder</string>
+    <string name="attach">Dosya ekle</string>
+    <string name="dictate">Dikte et</string>
+    <string name="message_hint">Mesaj</string>
+    <string name="answer_hint">Ya da yanıtını yaz</string>
+    <string name="after_turn">Tur bitince gider</string>
+    <string name="send_waiting">Bağlantı bekleniyor</string>
+    <string name="send_sending">Gönderiliyor…</string>
+    <string name="send_delivered">İletildi</string>
+</resources>

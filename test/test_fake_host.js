@@ -138,6 +138,16 @@ async function main() {
     await P.request(port, 'POST', '/_test/sleep', { asleep: false });
     const woken = await hs(me);
     t.ok(woken.answer && woken.answer.kind === 'welcome', 'a woken PC welcomes again');
+    t.ok(woken.answer.lang === 'en', 'welcome tells the language the farm draws its pages in (English by default)');
+    const changed = await P.request(port, 'POST', '/_test/lang', { lang: 'tr' });
+    const live = await woken.waitFor(f => f.kind === 'event' && f.type === 'farm.language');
+    t.ok(live && live.data.lang === 'tr' && live.seq === changed.body.seq && !woken.closed, '/_test/lang tells a linked phone at once, as a farm.language event');
+    const told = await hs(me);
+    t.ok(told.answer && told.answer.lang === 'tr', 'the next welcome tells the changed language');
+    await P.request(port, 'POST', '/_test/lang', { lang: null });
+    const older = await hs(me);
+    t.ok(older.answer && older.answer.kind === 'welcome' && !('lang' in older.answer), 'lang null plays an older farm that tells none');
+    await P.request(port, 'POST', '/_test/lang', { lang: 'en' });
 
     await P.request(port, 'POST', '/_test/revoke', { device: me.device });
     const revoked = await hs(me);

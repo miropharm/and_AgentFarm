@@ -1,5 +1,6 @@
 package com.muvusoft.agentfarm
 
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -9,14 +10,21 @@ import androidx.core.content.IntentCompat
 import androidx.fragment.app.FragmentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.mutableStateOf
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.muvusoft.agentfarm.core.share.Shared
 import com.muvusoft.agentfarm.core.view.NowRequest
 import com.muvusoft.agentfarm.core.view.ShellRequest
 import com.muvusoft.agentfarm.net.SharedImages
+import com.muvusoft.agentfarm.net.drawAlike
+import com.muvusoft.agentfarm.net.languageOverride
 import com.muvusoft.agentfarm.ui.page.dictationLanguage
 import com.muvusoft.agentfarm.ui.page.speechIntent
 import com.muvusoft.agentfarm.ui.theme.AppTheme
 import com.muvusoft.agentfarm.ui.ShellApp
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 
 /** A FragmentActivity because the system owner prompt (biometric or screen lock) needs one. */
 class MainActivity : FragmentActivity() {
@@ -31,10 +39,20 @@ class MainActivity : FragmentActivity() {
         ShellRequest.heard(results)?.let { incomingShare.value = Shared(it) }
     }
 
+    private var drawnIn: String? = null
+
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(newBase)
+        drawnIn = AgentFarmApp.of(newBase).language.value
+        languageOverride(drawnIn)?.let { applyOverrideConfiguration(it) }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         take(intent)
         val app = AgentFarmApp.of(this)
+        // A farm told another language: the screens are drawn again in it, their saved state carried across.
+        lifecycleScope.launch { repeatOnLifecycle(Lifecycle.State.STARTED) { app.language.first { !drawAlike(it, drawnIn) }; recreate() } }
         setContent {
             AppTheme {
                 ShellApp(

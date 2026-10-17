@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Agent Farm</string>
+    <string name="app_name" translatable="false">Agent Farm</string>
 
     <!-- Common -->
     <string name="back">Back</string>
@@ -73,7 +73,7 @@
 
     <!-- Widget and quick settings tile -->
     <string name="widget_description">Connected farms, what waits for you and running sessions; tap for the Now page.</string>
-    <string name="tile_label">Agent Farm</string>
+    <string name="tile_label" translatable="false">Agent Farm</string>
     <string name="widget_mic">Say it to a session</string>
     <string name="widget_stop">Stop a running turn</string>
 

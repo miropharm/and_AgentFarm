@@ -2,6 +2,7 @@ package com.muvusoft.agentfarm
 
 import android.app.Application
 import android.content.Context
+import android.content.SharedPreferences
 import com.muvusoft.agentfarm.core.notify.Alerts
 import com.muvusoft.agentfarm.net.AlertPoster
 import com.muvusoft.agentfarm.net.AppVisible
@@ -16,6 +17,8 @@ import com.muvusoft.agentfarm.core.speech.VoiceLanguage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 
 /**
  * One connection manager, one farm store and one voice for the whole process: the screens and the link
@@ -29,6 +32,10 @@ class AgentFarmApp : Application() {
     val speaker by lazy { Speaker(this) { VoiceLanguage.locale(prefs.voiceLanguage, phoneLocale()) } }
     /** Whether a screen of the app is on: a farm's link is held open while it is (core/power/LinkRest). */
     val visible = AppVisible()
+    private val _language by lazy { MutableStateFlow(prefs.language()) }
+    /** The app's own language (core/lang/AppLanguage), null for the phone's; follows what the farms tell. */
+    val language: StateFlow<String?> get() = _language
+    private lateinit var languageWatch: SharedPreferences.OnSharedPreferenceChangeListener
     val manager by lazy {
         ConnectionManager(
             scope,
@@ -37,11 +44,16 @@ class AgentFarmApp : Application() {
             onWake = { farm, nics -> prefs.setWake(farm, nics) },
             onReceipt = { farmName, item, result -> AlertPoster.post(this, item.farm, Alerts.receipt(item, farmName, result)) },
             pushToken = { prefs.pushToken },
+            onLanguage = { farm, tag -> prefs.tellLanguage(farm, tag, System.currentTimeMillis()) },
         )
     }
 
     override fun onCreate() {
         super.onCreate()
+        languageWatch = prefs.watchLanguage {
+            _language.value = prefs.language()
+            AlertPoster.channels(this)
+        }
         registerActivityLifecycleCallbacks(visible)
         PushWakeService.setUp(this)
     }

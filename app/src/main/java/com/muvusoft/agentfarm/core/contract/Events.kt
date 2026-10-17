@@ -109,6 +109,10 @@ data class GateClosed(val gateId: String) : FarmEventData
 @Serializable
 data class MissionEnded(val mission: String, val title: String, val outcome: String, val spoken: Spoken? = null, val quiet: Quiet? = null) : FarmEventData
 
+/** The farm's language setting changed while the phone was linked: its pages are drawn in [lang] now (core/lang/AppLanguage). */
+@Serializable
+data class FarmLanguage(val lang: String) : FarmEventData
+
 val EVENT_TYPES: Map<String, KSerializer<out FarmEventData>> = mapOf(
     "needs.changed" to NeedsChanged.serializer(),
     "ask.opened" to AskOpened.serializer(),
@@ -123,4 +127,5 @@ val EVENT_TYPES: Map<String, KSerializer<out FarmEventData>> = mapOf(
     "gate.opened" to GateOpened.serializer(),
     "gate.closed" to GateClosed.serializer(),
     "mission.ended" to MissionEnded.serializer(),
+    "farm.language" to FarmLanguage.serializer(),
 )

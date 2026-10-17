@@ -65,6 +65,23 @@ for (const [name, value] of defined) {
 for (const [name, value] of defined) {
     t.ok(!TURKISH.test(value), `strings.xml "${name}" is English, like Agent Farm: ${value}`);
 }
+// A translation (res/values-xx/strings.xml) carries every translatable word of the main file and nothing
+// else, with the same placeholders: a missing one would show English mid-sentence, a wrong one crashes.
+const STRING = /<string name="([a-z0-9_]+)"[^>]*>([\s\S]*?)<\/string>/g;
+const translatable = new Set([...xml.matchAll(/<string name="([a-z0-9_]+)"([^>]*)>/g)].filter(m => !/translatable="false"/.test(m[2])).map(m => m[1]));
+const placeholders = v => (v.match(/%\d+\$[sd]/g) || []).sort().join(',');
+const translations = walk('app/src/main/res', ['.xml']).filter(f => /res[\\/]values-[a-z]{2,3}(-r[A-Z]{2})?[\\/]strings\.xml$/.test(f));
+t.ok(translations.some(f => /values-tr[\\/]/.test(f)), 'the Turkish translation is found');
+for (const f of translations) {
+    const words = new Map([...read(f).matchAll(STRING)].map(m => [m[1], m[2]]));
+    for (const name of translatable) { t.ok(words.has(name), `${f}: "${name}" is not translated`); }
+    for (const [name, value] of words) {
+        t.ok(translatable.has(name), `${f}: "${name}" is not a translatable word of strings.xml`);
+        t.ok(!/(^|[^\\])'/.test(value), `${f} "${name}": an apostrophe must be escaped as \\'`);
+        t.ok(placeholders(value) === placeholders(defined.get(name) || ''), `${f} "${name}": its placeholders are the main file's`);
+    }
+}
+
 const literals = src => [...stripComments(src).matchAll(/"((?:[^"\\\n]|\\.)*)"/g)].map(m => m[1]);
 t.ok(literals('val a = "Bağlı"; // "yorum"').length === 1 && TURKISH.test(literals('x("Bağlı")')[0]), 'the literal reader finds a Turkish literal and skips comments');
 for (const f of walk('app/src/main/java', ['.kt'])) {

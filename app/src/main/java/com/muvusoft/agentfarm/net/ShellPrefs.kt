@@ -1,8 +1,10 @@
 package com.muvusoft.agentfarm.net
 
 import android.content.Context
+import android.content.SharedPreferences
 import com.muvusoft.agentfarm.core.contract.Codec
 import com.muvusoft.agentfarm.core.contract.WakeNic
+import com.muvusoft.agentfarm.core.lang.AppLanguage
 import kotlinx.serialization.builtins.ListSerializer
 import com.muvusoft.agentfarm.core.speech.SpeakMode
 import com.muvusoft.agentfarm.core.speech.VoiceLanguage
@@ -40,9 +42,28 @@ class ShellPrefs(context: Context) {
         e.apply()
     }
 
+    /** The language the app draws in (core/lang/AppLanguage) from what the paired farms told; null for the phone's own. */
+    fun language(): String? =
+        AppLanguage.of(prefs.all.filterKeys { it.startsWith(TOLD) }.values.mapNotNull { AppLanguage.read(it as? String) })
+
+    /** A farm's welcome told the language its pages are drawn in (null from a farm that does not say). */
+    fun tellLanguage(farmId: String, tag: String?, now: Long) {
+        val before = AppLanguage.read(prefs.getString(TOLD + farmId, null))
+        val after = AppLanguage.tell(before, tag, now) ?: return
+        if (after != before) prefs.edit().putString(TOLD + farmId, AppLanguage.write(after)).apply()
+    }
+
+    fun forgetLanguage(farmId: String) = prefs.edit().remove(TOLD + farmId).apply()
+
+    /** Calls [changed] on the main thread when [language] may have changed; keep the returned listener (it is held weakly). */
+    fun watchLanguage(changed: () -> Unit): SharedPreferences.OnSharedPreferenceChangeListener =
+        SharedPreferences.OnSharedPreferenceChangeListener { _, key -> if (key == null || key.startsWith(TOLD)) changed() }
+            .also { prefs.registerOnSharedPreferenceChangeListener(it) }
+
     private companion object {
         val NICS = ListSerializer(WakeNic.serializer())
         const val WAKE = "wake."
+        const val TOLD = "told."
         const val LOCK_ON_OPEN = "lockOnOpen"
         const val SPEAK_MODE = "speakMode"
         const val VOICE_LANGUAGE = "voiceLanguage"

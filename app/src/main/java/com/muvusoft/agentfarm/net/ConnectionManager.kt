@@ -3,6 +3,9 @@ package com.muvusoft.agentfarm.net
 import com.muvusoft.agentfarm.core.away.Away
 import com.muvusoft.agentfarm.core.contract.Call
 import com.muvusoft.agentfarm.core.contract.CallResult
+import com.muvusoft.agentfarm.core.contract.Codec
+import com.muvusoft.agentfarm.core.contract.EventFrame
+import com.muvusoft.agentfarm.core.contract.FarmLanguage
 import com.muvusoft.agentfarm.core.contract.Frame
 import com.muvusoft.agentfarm.core.contract.WakeNic
 import com.muvusoft.agentfarm.core.contract.Welcome
@@ -52,11 +55,15 @@ class ConnectionManager(
     private val pushToken: () -> String?,
     private val clock: () -> Long = System::currentTimeMillis,
     private val connect: (PairedFarm, FarmConnectionEvents) -> FarmConnection = { f, e -> FarmConnection(f, e) },
+    /** A welcome told the language the farm draws its pages in (null from a farm that does not say). */
+    private val onLanguage: (farmId: String, tag: String?) -> Unit = { _, _ -> },
 ) {
     private val random = SecureRandom()
     private val conns = ConcurrentHashMap<String, FarmConnection>()
     /** The farms whose last welcome said they keep a push token. */
     private val wakeable = ConcurrentHashMap.newKeySet<String>()
+    /** Each farm's lastSeq at its last welcome. */
+    private val welcomedAt = ConcurrentHashMap<String, Long>()
     private val _state = MutableStateFlow(ShellState(outbox = saved))
     private val _frames = MutableSharedFlow<FarmFrame>(extraBufferCapacity = 256, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
@@ -175,11 +182,19 @@ class ConnectionManager(
         onFrame = { frame, address ->
             val answered = (frame as? CallResult)?.let { r -> _state.value.outbox.firstOrNull { it.id == r.id && it.farm == farmId && it.receipt != null } }
             // Known before the state says Online: whoever looks at the new state (the rest keeper) reads it.
-            if (frame is Welcome) { if (PushWake.FEATURE in frame.features) wakeable += farmId else wakeable -= farmId }
+            if (frame is Welcome) {
+                if (PushWake.FEATURE in frame.features) wakeable += farmId else wakeable -= farmId
+                welcomedAt[farmId] = frame.lastSeq
+            }
+            // A replayed language change (at or below the welcome's lastSeq) is already in the welcome's lang.
+            if (frame is EventFrame && frame.seq > (welcomedAt[farmId] ?: 0)) {
+                (Codec.eventData(frame) as? FarmLanguage)?.let { onLanguage(farmId, it.lang) }
+            }
             _state.update { ShellReducer.onFrame(it, farmId, frame, address, clock()) }
             if (answered != null) onReceipt(nameOf(farmId), answered, frame as CallResult)
             if (frame is Welcome) {
                 frame.wake?.takeIf { it.isNotEmpty() }?.let { onWake(farmId, it) }
+                onLanguage(farmId, frame.lang)
                 pushToken()?.takeIf { PushWake.registers(frame.features.keys, it) }?.let { register(farmId, it) }
                 flush(farmId, resend = true)
             }

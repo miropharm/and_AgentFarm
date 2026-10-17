@@ -42,6 +42,7 @@ class FarmStore(context: Context) {
         write(old.filterNot { it.id == farmId })
         old.filter { it.id == farmId }.forEach { DeviceKeys.delete(it.key) }
         prefs.setWake(farmId, emptyList())
+        prefs.forgetLanguage(farmId)
         now.forget(farmId)
         conversations.forget(farmId)
         menu.forget(farmId)

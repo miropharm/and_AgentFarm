@@ -99,7 +99,7 @@ Tasarımın gerekçesi: vault projesi `10_Notes/A-PLN - Android Uygulaması Yeni
 |---|---|---|
 | `challenge` | Agent Farm | Bağlantıyı açar, imzalanacak nonce'u verir |
 | `hello` | telefon | Cihaz kimliği + imza; kaçırılan olaylar için `resumeAfter` |
-| `welcome` | Agent Farm | Bağlantı kabul: yetki, özellik cevapları, son olay numarası |
+| `welcome` | Agent Farm | Bağlantı kabul: yetki, özellik cevapları, son olay numarası, sayfaların dili (`lang`) |
 | `refuse` | Agent Farm | Bağlantı reddi, nedeniyle; sürüm uyuşmazlığında gereken sürüm |
 | `event` | Agent Farm | Numaralı olay (`seq`, `type`, `ts`, `data`); `user` kimin kaydı olduğunu söyler, alanı olmayan olay sahibinindir |
 | `gap` | Agent Farm | İstenen olayların bir kısmı artık tutulmuyor: `from`–`to` arası kayıp |
@@ -131,6 +131,7 @@ Tasarımın gerekçesi: vault projesi `10_Notes/A-PLN - Android Uygulaması Yeni
 | `gate.opened` | Bir iş akışının yöneticisi bir insanı bekliyor (insan kapısı): `workflows.answer { id: gateId, option (1'den) \| answer }` ile cevaplanır, ilk cevap kazanır |
 | `gate.closed` | Kapı cevaplandı, nerede olursa olsun; uyarısı her telefondan kalkar. Pencere yeniden yüklenince açık kapı bu olay olmadan düşer: cevap `ok:false` döner, bildirim düğmeye basınca zaten kalkar |
 | `mission.ended` | Üst düzey bir görev (mission) bitti; `outcome` `done` ya da `failed` |
+| `farm.language` | Çiftliğin dil ayarı değişti; sayfalar artık `lang` dilinde çiziliyor (uyarı değildir, telefonu uyandırmaz) |
 
 ## 8. Kurallar
 
@@ -216,6 +217,13 @@ Tasarımın gerekçesi: vault projesi `10_Notes/A-PLN - Android Uygulaması Yeni
   değeri saklar (`ShellPrefs`, çiftlik unutulunca silinir). Çiftliğe ulaşılamazken bekleme ekranı
   "Wake this PC" gösterir: sihirli paket (6×FF + 16×MAC) UDP 9'a kartın yayın adresine ve 255.255.255.255'e
   gider, ardından bağlantı geri çekilme beklemeden birkaç kez dener (`Reconnect.AFTER_WAKE_MS`).
+- **Dil:** `welcome.lang` çiftliğin sayfalarını çizdiği dili taşır (`agentFarm.language`'ın çözülmüş hali; `auto`
+  ise VS Code'un görüntü dili). Telefon her çiftliğin son söylediği dili ve o dilin ne zaman değiştiğini saklar
+  (`ShellPrefs`, çiftlik unutulunca silinir); uygulama, söyleyişi en son değişen eşli çiftliğin dilinde çizer,
+  hiçbiri söylemediyse telefonun dilinde (`core/lang/AppLanguage`). Alanı göndermeyen eski bir çiftlik ya da
+  VS Code kapalıyken cevap veren başsız servis bir şey değiştirmez. Ayar telefon bağlıyken değişirse
+  `farm.language { lang }` olayı hemen gelir; yeniden bağlanınca tekrar oynatılan eski bir dil olayı
+  (`seq` ≤ `welcome.lastSeq`) uygulanmaz, çünkü `welcome.lang` zaten sonuncusunu söyler (`net/ConnectionManager.kt`).
 - **Push ile uyandırma (FCM):** telefon Firebase Cloud Messaging'den (proje `agent-farm-f0701`) bir kayıt
   jetonu alır (`net/PushWakeService`, `ShellPrefs.pushToken`); `welcome.features` `remote.wake`'i listeleyen her
   çiftliğe her welcome'dan sonra, jeton yenilenince de hemen `call remote.wake.register { token }` ile verir

@@ -21,15 +21,21 @@ class PushWakeService : FirebaseMessagingService() {
     override fun onNewToken(token: String) = keepToken(this, token)
 
     override fun onMessageReceived(message: RemoteMessage) {
-        val app = AgentFarmApp.of(this)
-        val farm = PushWake.farmOf(message.data, app.store.load().map { it.id }) ?: return
-        Log.i(TAG, "wake for $farm")
-        // A high-priority message may start the foreground service; a deprioritised one may not, and the next wake will.
-        runCatching { LinkService.sync(this, anyFarm = true) }.onFailure { Log.w(TAG, "link service not started: $it") }
-        app.manager.wake(farm)
+        wake(this, message.data)
     }
 
     companion object {
+        /** A wake message: the link service comes up and the named farm's link opens, a resting one too; false when it names no paired farm. */
+        fun wake(context: Context, data: Map<String, String>): Boolean {
+            val app = AgentFarmApp.of(context)
+            val farm = PushWake.farmOf(data, app.store.load().map { it.id }) ?: return false
+            Log.i(TAG, "wake for $farm")
+            // A high-priority message may start the foreground service; a deprioritised one may not, and the next wake will.
+            runCatching { LinkService.sync(context, anyFarm = true) }.onFailure { Log.w(TAG, "link service not started: $it") }
+            app.manager.wake(farm)
+            return true
+        }
+
         private const val TAG = "AFPush"
         private const val PROJECT = "agent-farm-f0701"
         private const val APP_ID = "1:426334010939:android:ead4c441732d1dbf17e61e"

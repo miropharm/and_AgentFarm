@@ -212,6 +212,15 @@ async function main() {
     await P.request(port, 'POST', '/_test/scenario', {});
     t.ok(!(await call('console.sessions')).result.some(r => r.id === opened.id), 'a new scenario takes the opened cards away');
 
+    // quiet: the farm an idle link rests on (the phone's core/power/LinkRest) - no turn runs, nothing waits.
+    await P.request(port, 'POST', '/_test/scenario', { quiet: true });
+    const calm = (await call('console.sessions', { view: 'summary' })).result;
+    t.ok(calm.length > 0 && !calm.some(r => r.status === 'working'), 'a quiet farm runs no turn: ' + calm.map(r => r.status).join(','));
+    t.ok((await call('needs.list')).result.items.length === 0, 'a quiet farm has nothing waiting');
+    t.ok((await P.request(port, 'GET', '/_test/state')).body.sockets === 1, 'the farm counts the welcomed sockets (a resting phone has none)');
+    await P.request(port, 'POST', '/_test/scenario', {});
+    t.ok((await call('console.sessions', { view: 'summary' })).result.some(r => r.status === 'working'), 'the default scenario runs a turn again');
+
     t.ok(s.bad.length === 0, 'every frame the scripted farm sent passes the contract checker: ' + s.bad.join('; '));
     await host.close();
 }

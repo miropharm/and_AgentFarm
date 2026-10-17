@@ -116,8 +116,9 @@ function createFarm(opts = {}) {
         s.tokens = s.turns * 9000;
         s.wTokens = s.turns * 3000;
     }
+    // quiet: nothing runs and nothing waits, the farm an idle link may rest on (core/power/LinkRest).
     const live = [
-        { id: 'c_dev', agent: 'developer', status: 'working', at: 0, cost: 4.12 },
+        { id: 'c_dev', agent: 'developer', status: opts.quiet ? 'idle' : 'working', at: 0, cost: 4.12 },
         { id: 'c_psy', agent: 'psikolog', status: 'idle', at: 1, cost: 0.4 },
         { id: 'c_old', agent: 'yazar', status: 'ended', at: 2, cost: 0.84 },
     ];
@@ -125,7 +126,7 @@ function createFarm(opts = {}) {
         const s = sessions[l.at];
         return consoleRow({ ...l, sessionId: s.id, engine: s.engine, turns: steps(s).filter(x => x.role === 'user').length, end: s.lastTs });
     });
-    const needs = [{
+    const needs = opts.quiet ? [] : [{
         urgency: 0, kind: 'permission', agentName: 'asistan', title: 'Bash: git status', detail: 'git status',
         ts: now - 40000, ref: { sessionId: sessions[3].id },
         actions: [{ id: 'permission-allow', label: 'Allow' }, { id: 'permission-deny', label: 'Deny' }],

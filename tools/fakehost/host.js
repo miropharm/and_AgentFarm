@@ -64,7 +64,7 @@ function createHost(opts = {}) {
     /** A fresh world: the farm redrawn, its turns stopped, the log emptied, the network profile set. */
     h.scenario = (o = {}) => {
         if (h.turns) { h.turns.clear(); }
-        h.world = createFarm({ history: o.history, longest: o.longest, seed: o.seed, contract: c });
+        h.world = createFarm({ history: o.history, longest: o.longest, seed: o.seed, quiet: o.quiet === true, contract: c });
         h.turns = createTurns(h.world, h.emit);
         h.profile = PROFILES[o.profile] !== undefined ? o.profile : 'none';
         h.calls = [];
@@ -97,7 +97,7 @@ function createHost(opts = {}) {
         if (req.method === 'POST' && url === '/_test/away') { const b = await body(req); h.away = b.away === true; for (const conn of [...h.conns]) { conn.close(); } return reply(res, 200, { away: h.away }); }
         if (req.method === 'POST' && url === '/_test/sleep') { const b = await body(req); h.asleep = b.asleep === true; if (h.asleep) { for (const conn of [...h.conns]) { conn.close(); } } return reply(res, 200, { asleep: h.asleep }); }
         if (req.method === 'POST' && url === '/_test/revoke') { const b = await body(req); const d = h.devices.get(b.device); if (d) { d.revoked = true; } return reply(res, 200, { revoked: !!d }); }
-        if (req.method === 'GET' && url === '/_test/state') { return reply(res, 200, { lastSeq: h.seq, devices: [...h.devices.keys()], calls: h.calls, code: [...h.codes][0] || h.newCode() }); }
+        if (req.method === 'GET' && url === '/_test/state') { return reply(res, 200, { lastSeq: h.seq, devices: [...h.devices.keys()], calls: h.calls, code: [...h.codes][0] || h.newCode(), sockets: [...h.conns].filter(x => x.welcomed).length }); }
         if (req.method === 'POST' && url === '/_test/scenario') { return reply(res, 200, h.scenario(await body(req) || {})); }
         // The PC answers a parked turn itself (the Console, another phone): the card's question or permission closes.
         if (req.method === 'POST' && url === '/_test/answer') { const b = await body(req) || {}; return reply(res, 200, { settled: h.turns.settle(String(b.id || ''), b.answer) }); }

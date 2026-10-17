@@ -1,6 +1,7 @@
 name: android
 
-# Commit message markers: [testlab] runs Firebase Test Lab, [deliver] sends the APK to App Distribution group "dev".
+# Commit TITLE markers: [testlab] runs Firebase Test Lab, [deliver] sends the APK to App Distribution group "dev".
+# Only the title line counts: a body that names a marker while explaining it starts nothing.
 on:
   push:
     branches: [master]
@@ -17,6 +18,23 @@ env:
   FIREBASE_APP_ID: "1:426334010939:android:ead4c441732d1dbf17e61e"
 
 jobs:
+  markers:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    outputs:
+      deliver: ${{ steps.title.outputs.deliver }}
+      testlab: ${{ steps.title.outputs.testlab }}
+    steps:
+      - id: title
+        env:
+          MESSAGE: ${{ github.event.head_commit.message }}
+        run: |
+          title=$(printf '%s\n' "$MESSAGE" | head -1)
+          for m in deliver testlab; do
+            case "$title" in *"[$m]"*) echo "$m=true" ;; *) echo "$m=false" ;; esac >> "$GITHUB_OUTPUT"
+          done
+          cat "$GITHUB_OUTPUT"
+
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -105,8 +123,8 @@ jobs:
           path: emulator-out/
 
   testlab:
-    needs: build
-    if: contains(github.event.head_commit.message, '[testlab]')
+    needs: [build, markers]
+    if: needs.markers.outputs.testlab == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
@@ -134,8 +152,8 @@ jobs:
           path: testlab-out/
 
   deliver:
-    needs: [build, emulator]
-    if: contains(github.event.head_commit.message, '[deliver]')
+    needs: [build, emulator, markers]
+    if: needs.markers.outputs.deliver == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:

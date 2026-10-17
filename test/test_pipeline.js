@@ -25,9 +25,13 @@ const gradle = build.indexOf('gradle --no-daemon');
 t.ok(gate >= 0 && gradle >= 0 && gate < gradle, 'the repo gate runs before the Gradle build');
 
 const deliver = job('deliver');
-t.ok(/needs:\s*\[\s*build\s*,\s*emulator\s*\]/.test(deliver), 'deliver waits for the emulator gate');
-t.ok(/contains\(github\.event\.head_commit\.message, '\[deliver\]'\)/.test(deliver), 'deliver runs only on [deliver]');
-t.ok(/contains\(github\.event\.head_commit\.message, '\[testlab\]'\)/.test(job('testlab')), 'testlab runs only on [testlab]');
+t.ok(/needs:\s*\[\s*build\s*,\s*emulator\s*,\s*markers\s*\]/.test(deliver), 'deliver waits for the emulator gate');
+// A body that named [deliver] while explaining the rule once sent a build to the phone (v1.141): only the title counts.
+const markers = job('markers');
+t.ok(/head -1/.test(markers) && /MESSAGE: \$\{\{ github\.event\.head_commit\.message \}\}/.test(markers), 'the markers are read from the commit title line only');
+t.ok(!/contains\(github\.event\.head_commit\.message/.test(yml), 'no job reads a marker from the whole commit message');
+t.ok(/if: needs\.markers\.outputs\.deliver == 'true'/.test(deliver), 'deliver runs only on a [deliver] title');
+t.ok(/needs: \[build, markers\]/.test(job('testlab')) && /if: needs\.markers\.outputs\.testlab == 'true'/.test(job('testlab')), 'testlab runs only on a [testlab] title');
 
 // The journeys' timing targets mean the phone the user holds: the tested APK is the delivered one, not debuggable.
 const gradleFile = read('app/build.gradle.kts');

@@ -9,7 +9,6 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import java.io.File
@@ -80,7 +79,12 @@ class JourneyConversationTest : JourneyBase() {
         try {
             fresh()
             openIdle(j, freshMs)
-            type(J3_WORDS)
+            // The keyboard takes the bottom of the screen and the list gives way to it: a window slid up instead
+            // hides the bar with the session's name, Back and Stop for as long as the person types.
+            val room = listBottom()
+            val up = type(J3_WORDS)
+            val left = listBottom()
+            j.check("the keyboard up: the list makes room, the bar stays", up && left < room, "keyboard up and still: $up · the list's bottom $room px, then $left px")
             val sentAt = SystemClock.elapsedRealtime()
             j.step("send: your words at once", taps = 1, targetMs = 200) {
                 rule.onNodeWithTag("composer-send").performClick()
@@ -176,9 +180,9 @@ class JourneyConversationTest : JourneyBase() {
         if (j == null) act() else j.step("open the idle session from the history", taps = 1, targetMs = freshMs) { act() }
     }
 
-    /** The typing is the person's own time, not the app's. */
-    private fun type(words: String) =
-        rule.onNode(hasSetTextAction() and hasAnyAncestor(hasTestTag("composer"))).performTextInput(words)
+    private fun type(words: String) = typeInto(hasSetTextAction() and hasAnyAncestor(hasTestTag("composer")), words)
+
+    private fun listBottom() = rule.onNodeWithTag("conv-list", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot.bottom
 
     private fun back() {
         InstrumentationRegistry.getInstrumentation().sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)

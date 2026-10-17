@@ -132,8 +132,7 @@ class JourneyNowTest : JourneyBase() {
                 rule.onNodeWithTag("now-new").performClick()
                 until { picked() }
             }
-            // The typing is the person's own time, not the app's.
-            rule.onNode(hasSetTextAction() and hasAnyAncestor(hasTestTag("new-session"))).performTextInput(OFFLINE_WORDS)
+            typeInto(hasSetTextAction() and hasAnyAncestor(hasTestTag("new-session")), OFFLINE_WORDS)
             j.step("send offline: it waits on this phone", taps = 1, targetMs = 1_000) {
                 rule.onNodeWithTag("composer-send").performClick()
                 until(2_000) { shown(hasText("Waiting on this phone", substring = true)) }

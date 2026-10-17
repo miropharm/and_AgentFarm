@@ -14,6 +14,7 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTextInput
 import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import org.json.JSONObject
@@ -43,6 +44,13 @@ abstract class JourneyBase {
         ActivityScenario.launch(Intent(ctx, MainActivity::class.java).putExtra(MainActivity.OPEN_NOW, true))
 
     protected fun until(ms: Long = 10_000, what: () -> Boolean) = rule.waitUntil(ms, what)
+
+    /** Words typed into [field], the person's own time like the keyboard rising for them: true once it is up and still. */
+    protected fun typeInto(field: SemanticsMatcher, words: String): Boolean {
+        rule.onNode(field).performTextInput(words)
+        rule.waitForIdle()
+        return Keyboard.settle()
+    }
 
     /** Every named look on screen within [ms]; past it, the failure names the looks that were missing. */
     protected fun seen(ms: Long, vararg looks: Pair<String, () -> Boolean>) {

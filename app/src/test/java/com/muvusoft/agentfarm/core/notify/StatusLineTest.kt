@@ -80,6 +80,6 @@ class StatusLineTest {
         val both = ShellReducer.link(ShellReducer.link(two(), "farm_a", Link.Resting(0)), "farm_b", Link.Resting(0))
         assertEquals("2 farms resting", StatusLine.of(both, 0).title)
         val lost = ShellReducer.link(two(), "farm_a", Link.Resting(0))
-        assertEquals("one resting and one unreachable is not all well", "0/2 farms connected", StatusLine.of(lost, 0).title)
+        assertEquals("one resting and one unreachable is not all well", "1 resting · 1 not connected", StatusLine.of(lost, 0).title)
     }
 }

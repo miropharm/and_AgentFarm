@@ -138,8 +138,14 @@ class ConnectionManager(
     /** A paired farm answered on the local network at `address` (FarmFinder). */
     fun onFound(farmId: String, address: String) = conns[farmId]?.onFound(address)
 
-    /** A farm's push wake: its link tries at once instead of waiting out its backoff. */
+    /** A farm's push wake: its link tries at once instead of waiting out its backoff, and a resting one opens. */
     fun wake(farmId: String) = conns[farmId]?.retryNow()
+
+    /** Closes a farm's socket to spare the battery until [wake] (core/power/LinkRest). */
+    fun rest(farmId: String) = conns[farmId]?.rest()
+
+    /** Whether a farm's last welcome said it keeps a push token, so it can wake this phone while no socket is open. */
+    fun isWakeable(farmId: String): Boolean = farmId in wakeable
 
     /** A new push token goes to every farm that keeps one; the others are given it at their next welcome. */
     fun registerPush(token: String) = wakeable.forEach { register(it, token) }
@@ -168,11 +174,12 @@ class ConnectionManager(
         onLink = { link -> _state.update { ShellReducer.link(it, farmId, link) } },
         onFrame = { frame, address ->
             val answered = (frame as? CallResult)?.let { r -> _state.value.outbox.firstOrNull { it.id == r.id && it.farm == farmId && it.receipt != null } }
+            // Known before the state says Online: whoever looks at the new state (the rest keeper) reads it.
+            if (frame is Welcome) { if (PushWake.FEATURE in frame.features) wakeable += farmId else wakeable -= farmId }
             _state.update { ShellReducer.onFrame(it, farmId, frame, address, clock()) }
             if (answered != null) onReceipt(nameOf(farmId), answered, frame as CallResult)
             if (frame is Welcome) {
                 frame.wake?.takeIf { it.isNotEmpty() }?.let { onWake(farmId, it) }
-                if (PushWake.FEATURE in frame.features) wakeable += farmId else wakeable -= farmId
                 pushToken()?.takeIf { PushWake.registers(frame.features.keys, it) }?.let { register(farmId, it) }
                 flush(farmId, resend = true)
             }

@@ -38,6 +38,11 @@ sealed interface Link {
      * `minContract` the contract version the farm needs (sent with reason "contract").
      */
     data class Refused(val reason: String, val detail: String?, override val since: Long, val minContract: Long? = null) : Link
+    /**
+     * The farm was reached and its socket closed to spare the battery (core/power/LinkRest): it wakes this phone for
+     * anything alerting, and the link opens again on that, on the app coming forward or on a call to send.
+     */
+    data class Resting(override val since: Long) : Link
 }
 
 data class FarmStatus(

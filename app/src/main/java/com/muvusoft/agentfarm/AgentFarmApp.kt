@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.Context
 import com.muvusoft.agentfarm.core.notify.Alerts
 import com.muvusoft.agentfarm.net.AlertPoster
+import com.muvusoft.agentfarm.net.AppVisible
 import com.muvusoft.agentfarm.net.ConnectionManager
 import com.muvusoft.agentfarm.net.FarmStore
 import com.muvusoft.agentfarm.net.OutboxStore
@@ -26,6 +27,8 @@ class AgentFarmApp : Application() {
     val prefs by lazy { ShellPrefs(this) }
     private val outbox by lazy { OutboxStore(this) }
     val speaker by lazy { Speaker(this) { VoiceLanguage.locale(prefs.voiceLanguage, phoneLocale()) } }
+    /** Whether a screen of the app is on: a farm's link is held open while it is (core/power/LinkRest). */
+    val visible = AppVisible()
     val manager by lazy {
         ConnectionManager(
             scope,
@@ -39,6 +42,7 @@ class AgentFarmApp : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        registerActivityLifecycleCallbacks(visible)
         PushWakeService.setUp(this)
     }
 

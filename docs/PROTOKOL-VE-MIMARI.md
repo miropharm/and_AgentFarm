@@ -225,6 +225,17 @@ Tasarımın gerekçesi: vault projesi `10_Notes/A-PLN - Android Uygulaması Yeni
   kurar. Firebase anahtarı repoda değildir: CI onu Firebase projesinin Android uygulama yapılandırmasından okur
   (`scripts/ci/firebase-key.sh`) ve `BuildConfig.FIREBASE_API_KEY` olur; anahtarsız bir derlemede ya da Google Play
   hizmetleri olmayan telefonda push uyandırması yoktur, bağlantı servisi her zamanki gibi çalışır.
+- **Boştayken dinlenme (pil):** push ile uyandırabilen bir çiftliğin soketi yalnız çiftliğin push'lamayacağı bir
+  şey olabilecekken açık tutulur (`core/power/LinkRest.hold`): uygulama ekrandayken, giden kutusunda o çiftliğe
+  bir çağrı varken, kullanıcıyı bekleyen bir şey (`needs`) varken, çalışan tur sayısı bilinmezken ya da sıfırdan
+  büyükken. Çiftlik `remote.wake` listelemiyorsa ya da telefonun jetonu yoksa soket hep açıktır. Hiçbiri yoksa
+  bağlı ya da ulaşılamayan bağlantı `GRACE_MS` (2 dk) sonra kapanır ve `Link.Resting` olur: çok yayınlı arama ve
+  Wake-on-LAN önerisi ona açılmaz, durum satırı "Resting" der. Dinlenen bağlantı push uyandırmasıyla, uygulama
+  öne gelince, giden kutusuna bir çağrı düşünce ya da `PEEK_EVERY_MS`'de (15 dk) bir yoklama için açılır;
+  yoklama bir şey bulmazsa `PEEK_GRACE_MS` (20 sn) sonra yeniden dinlenir. Kararı `net/LinkRestKeeper` bağlantı
+  servisinde her durum değişikliğinde ve kararın adlandırdığı anda uygular; soketi `FarmConnection.rest` kapatır,
+  `retryNow` açar. Dinlenme kapanışı çiftlik için temiz bir `close 1000 "resting"`dir: soketsiz telefon artık
+  uyarı gerektiren olaylarda push ile uyandırılır.
 - **Yerel "yeni oturum"** (paylaşım, ses, widget) Telegram `/new` ile aynı kararı kullanır ve son ayarları
   devralır (`seedLastLaunch`). Köprüdeki `sessions.start` devralmadığı için kullanılmaz. Kapısı
   `console.new { agent, prompt?, attach? }`: argümansız çağrılınca açılabilecek ajanları (`agents`) verir;

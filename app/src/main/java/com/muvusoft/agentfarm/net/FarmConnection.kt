@@ -43,6 +43,8 @@ class FarmConnection(
     @Volatile private var socket: WebSocket? = null
     @Volatile private var welcomed = false
     @Volatile private var stopped = false
+    /** The socket is left closed to spare the battery (core/power/LinkRest) until [retryNow]. */
+    @Volatile private var resting = false
     private var lastGood: String? = null
     @Volatile private var found: String? = null
     @Volatile private var current: String? = null
@@ -87,8 +89,14 @@ class FarmConnection(
     private suspend fun loop() {
         var attempt = 0
         while (true) {
+            if (resting) {
+                link(Link.Resting(clock()))
+                while (resting) wake.receive()
+                attempt = 0
+            }
             val seen = found
             for (address in Reconnect.order(farm.addresses, lastGood, seen)) {
+                if (resting) break
                 attempt++
                 link(Link.Connecting(address, attempt, clock()))
                 val end = session(address)
@@ -99,6 +107,7 @@ class FarmConnection(
                 // The farm just answered somewhere new: the old list waits, the new address goes first.
                 if (found != seen) break
             }
+            if (resting) continue
             if (attempt > 0) link(Link.Offline("unreachable", clock()))
             // A network that comes back cuts the wait short; the backoff starts over from there.
             if (withTimeoutOrNull(Reconnect.delayMs(attempt.coerceAtLeast(1), Math.random())) { wake.receive() } != null) attempt = 0
@@ -107,7 +116,7 @@ class FarmConnection(
 
     /** The phone's default network changed: try now if waiting, or drop a socket whose route is gone. */
     fun onNetwork(net: Reconnect.Net) {
-        if (stopped) return
+        if (stopped || resting) return
         when (Reconnect.onNetwork(net, welcomed)) {
             Reconnect.Nudge.RETRY_NOW -> wake.trySend(Unit)
             Reconnect.Nudge.RECONNECT -> socket?.cancel()
@@ -118,15 +127,25 @@ class FarmConnection(
     /** The farm answered on the local network at `address`: tried first from now on, and at once if the link is down. */
     fun onFound(address: String) {
         found = address
-        if (stopped || welcomed) return
+        if (stopped || resting || welcomed) return
         wake.trySend(Unit)
         // An attempt still hanging on an old address would hold the new one back until its timeout.
         if (current != address) socket?.cancel()
     }
 
-    /** Try at once instead of waiting out the backoff (a PC was just woken). */
+    /** Try at once instead of waiting out the backoff (a PC was just woken, a push came, the app came forward); a resting link opens. */
     fun retryNow() {
-        if (!stopped && !welcomed) wake.trySend(Unit)
+        if (stopped) return
+        resting = false
+        if (!welcomed) wake.trySend(Unit)
+    }
+
+    /** Close the socket and leave it closed until [retryNow]; an attempt under way is closed as soon as it is welcomed. */
+    fun rest() {
+        if (stopped) return
+        resting = true
+        wake.trySend(Unit)
+        socket?.close(1000, "resting")
     }
 
     private class End(val welcomed: Boolean, val refuse: Refuse?)
@@ -141,7 +160,10 @@ class FarmConnection(
                 val frame = Codec.decode(text) ?: return
                 when (frame) {
                     is Challenge -> webSocket.send(Codec.encode(hello(frame)))
-                    is Welcome -> { session = frame.session; welcomed = true; wasWelcomed = true }
+                    is Welcome -> {
+                        session = frame.session; welcomed = true; wasWelcomed = true
+                        if (resting) webSocket.close(1000, "resting")
+                    }
                     is Refuse -> refused = frame
                     else -> Unit
                 }
@@ -155,7 +177,7 @@ class FarmConnection(
             private fun finish() {
                 welcomed = false
                 session = null
-                if (!done.isCompleted && wasWelcomed && refused == null) link(Link.Offline("closed", clock()))
+                if (!done.isCompleted && wasWelcomed && refused == null && !resting) link(Link.Offline("closed", clock()))
                 done.complete(End(wasWelcomed, refused))
             }
         }

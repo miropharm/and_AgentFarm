@@ -72,7 +72,7 @@ class NowActions(
 fun linkColor(link: Link): Color = when (link) {
     is Link.Online -> LocalStatusColors.current.running
     is Link.Connecting -> LocalStatusColors.current.waiting
-    is Link.Offline -> MaterialTheme.colorScheme.outline
+    is Link.Offline, is Link.Resting -> MaterialTheme.colorScheme.outline
     is Link.Refused -> MaterialTheme.colorScheme.error
 }
 

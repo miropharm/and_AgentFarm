@@ -13,12 +13,16 @@ object StatusLine {
         val total = s.farms.size
         val needs = s.farms.sumOf { it.needs }
         val refused = s.farms.count { it.link is Link.Refused }
+        // A resting farm was reached and closed its socket to spare the battery: it wakes the phone, it is not lost.
+        val resting = s.farms.count { it.link is Link.Resting }
         // A farm whose VS Code is closed answers through its service: connected, but Agent Farm is not running.
         val away = s.farms.count { it.link is Link.Online && it.away != null }
         val title = when {
             total == 0 -> "No paired farm"
             total == 1 && away == 1 -> "VS Code closed · ${s.farms[0].farm.name}"
+            total == 1 && resting == 1 -> "Resting · ${s.farms[0].farm.name}"
             online == total -> if (total == 1) "Connected · ${s.farms[0].farm.name}" else "$total farms connected"
+            resting > 0 && online + resting == total -> if (online == 0) "$total farms resting" else "$online connected · $resting resting"
             online == 0 -> if (refused > 0) "Link refused" else "Not connected · retrying"
             else -> "$online/$total farms connected"
         } + if (total > 1 && away > 0) " · $away with VS Code closed" else ""

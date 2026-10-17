@@ -68,6 +68,10 @@ class LinkTest {
         assertTrue(refused.short.startsWith("Refused"))
         assertTrue(refused.long.contains("Pair again"))
         assertFalse(LinkText.of(Link.Online("a:1", "manage", emptyMap(), 0), 0).short.contains("Refused"))
+        val resting = LinkText.of(Link.Resting(0), 125_000)
+        assertTrue(resting.short.startsWith("Resting"))
+        assertTrue("since", resting.long.contains("2 min"))
+        assertTrue("what clears it", resting.long.contains("app comes forward"))
     }
 
     @Test

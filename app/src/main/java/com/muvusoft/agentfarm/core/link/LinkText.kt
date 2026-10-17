@@ -30,6 +30,11 @@ object LinkText {
             "Not connected · ${offline(link.reason)}",
             "Not connected: ${offline(link.reason)}, for ${ago(now - link.since)}. It connects by itself once the farm is reachable.",
         )
+        is Link.Resting -> Text(
+            "Resting · wakes when something happens",
+            "Resting for ${ago(now - link.since)}: the link closed to spare the battery. The farm wakes this phone when a " +
+                "question, a permission or a finished turn arrives; it also opens when the app comes forward and every few minutes to catch up.",
+        )
         is Link.Refused -> Text(
             "Refused · ${refused(link.reason, link.minContract)}",
             "The farm refused the link: ${refused(link.reason, link.minContract)}" + (link.detail?.let { " ($it)" } ?: "") +

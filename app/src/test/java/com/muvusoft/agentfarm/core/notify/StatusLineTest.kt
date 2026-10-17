@@ -70,4 +70,16 @@ class StatusLineTest {
         val s = ShellReducer.link(ShellReducer.pair(ShellState(), home, 0), "farm_a", Link.Refused("revoked", null, 0))
         assertEquals("Link refused", StatusLine.of(s, 0).title)
     }
+
+    @Test
+    fun aRestingFarmIsSaidToRestNotToBeRetried() {
+        val one = ShellReducer.link(ShellReducer.pair(ShellState(), home, 0), "farm_a", Link.Resting(0))
+        assertEquals("Resting · Masaüstü", StatusLine.of(one, 0).title)
+        val mixed = ShellReducer.link(ShellReducer.link(two(), "farm_a", online), "farm_b", Link.Resting(0))
+        assertEquals("1 connected · 1 resting", StatusLine.of(mixed, 0).title)
+        val both = ShellReducer.link(ShellReducer.link(two(), "farm_a", Link.Resting(0)), "farm_b", Link.Resting(0))
+        assertEquals("2 farms resting", StatusLine.of(both, 0).title)
+        val lost = ShellReducer.link(two(), "farm_a", Link.Resting(0))
+        assertEquals("one resting and one unreachable is not all well", "0/2 farms connected", StatusLine.of(lost, 0).title)
+    }
 }

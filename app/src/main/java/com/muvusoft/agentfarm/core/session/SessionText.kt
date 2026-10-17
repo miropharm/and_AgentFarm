@@ -28,6 +28,7 @@ object SessionText {
         val state = when (link) {
             is Link.Online -> return null
             is Link.Connecting -> "Connecting"
+            is Link.Resting -> "Resting"
             is Link.Offline, is Link.Refused -> "Offline"
         }
         return if (updatedAt <= 0) "$state · nothing saved yet" else "$state · updated ${ago(now - updatedAt)} ago"

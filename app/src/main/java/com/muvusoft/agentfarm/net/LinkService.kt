@@ -40,13 +40,15 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 
 /**
- * Keeps the farm sockets alive while the app is not on screen, and shows what is connected and what
- * waits in one quiet, ongoing notification. Runs while at least one farm is paired.
+ * Keeps the farm sockets alive while the app is not on screen — an idle one rests while its farm can wake the
+ * phone (LinkRestKeeper) — and shows what is connected and what waits in one quiet, ongoing notification. Runs
+ * while at least one farm is paired.
  */
 class LinkService : Service() {
     private var job: Job? = null
     private var alerts: Job? = null
     private var poll: Job? = null
+    private var rest: Job? = null
     private var network: NetworkWatch? = null
     private var finder: FarmFinder? = null
     private var seek: Job? = null
@@ -115,6 +117,8 @@ class LinkService : Service() {
                 }
             }
         }
+        // An idle socket rests and opens again on a push wake, the app, an outbox item or a sparse check (core/power/LinkRest).
+        if (rest == null) rest = app.scope.launch { LinkRestKeeper(app.manager, app.visible.on, pushToken = { app.prefs.pushToken }).run() }
         return START_STICKY
     }
 
@@ -125,6 +129,8 @@ class LinkService : Service() {
         alerts = null
         poll?.cancel()
         poll = null
+        rest?.cancel()
+        rest = null
         synchronized(running) {
             running.values.forEach { it.cancel() }
             running.clear()

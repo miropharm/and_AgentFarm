@@ -18,7 +18,7 @@ object Words {
     fun t(english: String, vararg args: Any?): String =
         fill(CATALOGS[lang]?.get(english) ?: english, args)
 
-    private val BLANK = Regex("\\{(\\d)}")
+    private val BLANK = Regex("\\{(\\d)\\}")
 
     private fun fill(sentence: String, args: Array<out Any?>): String =
         BLANK.replace(sentence) { m -> args.getOrNull(m.groupValues[1].toInt())?.toString() ?: m.value }

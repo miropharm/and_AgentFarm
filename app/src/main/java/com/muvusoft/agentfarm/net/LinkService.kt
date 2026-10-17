@@ -36,6 +36,8 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonObject
 
 /**
  * Keeps the farm sockets alive while the app is not on screen, and shows what is connected and what
@@ -48,6 +50,7 @@ class LinkService : Service() {
     private var network: NetworkWatch? = null
     private var finder: FarmFinder? = null
     private var seek: Job? = null
+    private val running = HashMap<String, Job>()
     private val book = AlertBook()
     private val prefs by lazy { ShellPrefs(this) }
     private val speaker: Speaker get() = AgentFarmApp.of(this).speaker
@@ -122,6 +125,10 @@ class LinkService : Service() {
         alerts = null
         poll?.cancel()
         poll = null
+        synchronized(running) {
+            running.values.forEach { it.cancel() }
+            running.clear()
+        }
         network?.stop()
         network = null
         seek?.cancel()
@@ -141,11 +148,20 @@ class LinkService : Service() {
         }
     }
 
+    /**
+     * The running count and the share targets. Asked once for a burst (a welcome, a turn's end and the question it
+     * opens arrive together), as a read (outside the outbox: an answer nobody waits for is never sent again later),
+     * and as the summary rows, the fields Share.targets reads.
+     */
     private fun refreshRunning(farmId: String) {
         val app = AgentFarmApp.of(this)
-        app.scope.launch {
-            val r = app.manager.request(farmId, "console.sessions") ?: return@launch
-            if (r.ok) app.manager.sessions(farmId, Share.targets(r.result))
+        synchronized(running) {
+            running[farmId]?.cancel()
+            running[farmId] = app.scope.launch {
+                delay(BURST_MS)
+                val r = app.manager.read(farmId, "console.sessions", buildJsonObject { put("view", JsonPrimitive("summary")) }) ?: return@launch
+                if (r.ok) app.manager.sessions(farmId, Share.targets(r.result))
+            }
         }
     }
 
@@ -176,6 +192,9 @@ class LinkService : Service() {
     companion object {
         val CHANNEL = Channel.LINK.id
         const val NOTIFICATION_ID = 1
+
+        /** How long a burst of the farm's frames is waited out before the running sessions are asked once. */
+        private const val BURST_MS = 400L
 
         /** Runs the service while any farm is paired, stops it when none is. */
         fun sync(context: Context, anyFarm: Boolean) {

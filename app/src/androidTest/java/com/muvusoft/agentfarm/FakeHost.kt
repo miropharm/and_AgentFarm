@@ -5,7 +5,9 @@ import com.muvusoft.agentfarm.core.contract.Pairing
 import com.muvusoft.agentfarm.core.contract.PairingInfo
 import com.muvusoft.agentfarm.net.PinnedTls
 import org.junit.Assume.assumeTrue
+import java.util.concurrent.ConcurrentHashMap
 import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 
@@ -31,7 +33,7 @@ object FakeHost {
     fun get(path: String): String = get(Pairing.parse(requireLink())!!, path)
 
     fun get(info: PairingInfo, path: String): String =
-        PinnedTls.client(info.fp).newCall(Request.Builder().url("https://${info.addresses.first()}$path").build())
+        client(info.fp).newCall(Request.Builder().url("https://${info.addresses.first()}$path").build())
             .execute().use { it.body!!.string() }
 
     /** POSTs a test control request under /_test (emit an event, drop sockets, revoke a device). */
@@ -39,6 +41,15 @@ object FakeHost {
         val info = Pairing.parse(requireLink())!!
         val req = Request.Builder().url("https://${info.addresses.first()}$path")
             .post(json.toRequestBody("application/json".toMediaType())).build()
-        return PinnedTls.client(info.fp).newCall(req).execute().use { it.body!!.string() }
+        return client(info.fp).newCall(req).execute().use { it.body!!.string() }
     }
+
+    /**
+     * One client per farm, its connection kept: a journey step that waits on the farm's log asks it every turn of
+     * its wait, and a new client each time paid a TLS handshake per look, so a step ended a whole look after the
+     * screen had what it waited for.
+     */
+    private val clients = ConcurrentHashMap<String, OkHttpClient>()
+
+    private fun client(fp: String): OkHttpClient = clients.getOrPut(fp) { PinnedTls.client(fp) }
 }

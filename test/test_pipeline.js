@@ -29,6 +29,18 @@ t.ok(/needs:\s*\[\s*build\s*,\s*emulator\s*\]/.test(deliver), 'deliver waits for
 t.ok(/contains\(github\.event\.head_commit\.message, '\[deliver\]'\)/.test(deliver), 'deliver runs only on [deliver]');
 t.ok(/contains\(github\.event\.head_commit\.message, '\[testlab\]'\)/.test(job('testlab')), 'testlab runs only on [testlab]');
 
+// The journeys' timing targets mean the phone the user holds: the tested APK is the delivered one, not debuggable.
+const gradleFile = read('app/build.gradle.kts');
+t.ok(/testBuildType\s*=\s*"release"/.test(gradleFile), 'instrumentation tests run against the release build');
+const release = (gradleFile.match(/^\s*release\s*\{[\s\S]*?^\s*\}/m) || [''])[0];
+t.ok(/signingConfig\s*=\s*signingConfigs\.getByName\("debug"\)/.test(release), 'the release build is signed with the fixed key the phone already accepts');
+t.ok(release !== '' && !/isDebuggable\s*=\s*true/.test(release), 'the release build is not debuggable');
+t.ok(/assembleRelease\b/.test(build) && /assembleReleaseAndroidTest\b/.test(build), 'the build job assembles the release APK and its instrumentation APK');
+for (const s of ['emulator-run', 'testlab-run', 'deliver']) {
+    const sh = read(`scripts/ci/${s}.sh`);
+    t.ok(/app-release\.apk/.test(sh) && !/app-debug/.test(sh), `${s}.sh takes the release APK`);
+}
+
 for (const m of yml.matchAll(/bash (scripts\/ci\/[\w-]+\.sh)/g)) {
     t.ok(exists(m[1]), `${m[1]} referenced by the workflow exists`);
 }

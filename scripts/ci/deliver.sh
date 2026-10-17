@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# Uploads the debug APK to Firebase App Distribution and sends it to the tester group.
+# Uploads the APK the emulator gate tested to Firebase App Distribution and sends it to the tester group.
 # The group is resolved by display name or alias, because the console's display name and the API alias can differ.
 set -euo pipefail
 
 WANT="${DELIVER_GROUP:-dev}"
 PROJECT_NUMBER="${FIREBASE_APP_ID#1:}"
 PROJECT_NUMBER="${PROJECT_NUMBER%%:*}"
-APK=$(find apks -name app-debug.apk | head -1)
+APK=$(find apks -name app-release.apk | head -1)
 
 gcloud services enable firebaseappdistribution.googleapis.com --project "$FIREBASE_PROJECT" --quiet
 

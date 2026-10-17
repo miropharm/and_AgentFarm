@@ -7,8 +7,8 @@ mkdir -p "$OUT"
 DEVICE="${TESTLAB_DEVICE:-model=MediumPhone.arm,version=34}"
 DIR="run-${GITHUB_RUN_NUMBER}-${GITHUB_RUN_ATTEMPT}"
 
-APP=$(find apks -name app-debug.apk | head -1)
-TEST=$(find apks -name app-debug-androidTest.apk | head -1)
+APP=$(find apks -name app-release.apk | head -1)
+TEST=$(find apks -name app-release-androidTest.apk | head -1)
 
 gcloud config set project "$FIREBASE_PROJECT"
 gcloud services enable testing.googleapis.com toolresults.googleapis.com --quiet

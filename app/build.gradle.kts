@@ -36,9 +36,12 @@ android {
         }
     }
 
+    // The emulator measures the very APK the phone receives: debuggable code runs markedly slower.
+    testBuildType = "release"
     buildTypes {
         release {
             isMinifyEnabled = false
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
 
@@ -81,5 +84,6 @@ dependencies {
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
     androidTestImplementation("androidx.test:runner:1.6.2")
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
-    debugImplementation("androidx.compose.ui:ui-test-manifest")
+    // createComposeRule's host activity must be declared by the app under test (testBuildType).
+    releaseImplementation("androidx.compose.ui:ui-test-manifest")
 }

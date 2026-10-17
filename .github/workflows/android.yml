@@ -49,16 +49,16 @@ jobs:
         if: steps.gcp.outcome == 'success'
         run: bash scripts/ci/firebase-key.sh
 
-      - name: Unit tests + debug APK + instrumentation APK
-        run: gradle --no-daemon testDebugUnitTest assembleDebug assembleDebugAndroidTest
+      - name: Unit tests + release APK (the tested and delivered one) + instrumentation APK
+        run: gradle --no-daemon testReleaseUnitTest assembleRelease assembleReleaseAndroidTest
 
       - name: Upload APKs
         uses: actions/upload-artifact@v4
         with:
           name: apks-b${{ github.run_number }}
           path: |
-            app/build/outputs/apk/debug/app-debug.apk
-            app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
+            app/build/outputs/apk/release/app-release.apk
+            app/build/outputs/apk/androidTest/release/app-release-androidTest.apk
 
       - name: Upload unit test report
         if: always()

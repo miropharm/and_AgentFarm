@@ -6,8 +6,8 @@ PKG=com.muvusoft.agentfarm
 OUT=emulator-out
 mkdir -p "$OUT"
 
-APP=$(find apks -name app-debug.apk | head -1)
-TEST=$(find apks -name app-debug-androidTest.apk | head -1)
+APP=$(find apks -name app-release.apk | head -1)
+TEST=$(find apks -name app-release-androidTest.apk | head -1)
 
 adb install -r -t "$APP"
 adb install -r -t "$TEST"

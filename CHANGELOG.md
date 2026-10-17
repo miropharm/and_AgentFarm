@@ -2,6 +2,18 @@
 
 User-facing changes to the Agent Farm Android app, newest first. Each build's release notes on the phone are read from its own heading here.
 
+## 0.2.8 - The app's own Now, conversations and Menu, a link that rests to spare the battery, and your farm's language (2026-10-18)
+
+- The app opens on its own Now: what waits for you (answer a question or a permission right there), what is running, and your recent sessions. The last copy shows at once, then the fresh one; older sessions load as you scroll.
+- A session opens in the app's own Conversation: it follows the talk live, keeps a running turn in view and writes to a session the Console hosts. The bar with the session's name, Back and Stop stays above the keyboard.
+- The + on Now starts a new session from a sheet, set up like your last launch.
+- The Menu lists the farm's pages in their groups, then the phone's own. A page opens under the app's top bar, and a session or Now link on it opens the app's own screen.
+- A notification for a question or a finished turn opens its conversation.
+- An idle link rests to spare the battery: the farm wakes the phone with a push when a question, a permission or a finished turn arrives, and the link opens again when you bring the app forward.
+- The app speaks the language your farm's pages are drawn in (English or Turkish) and changes the moment you change it in Agent Farm; with no farm telling one, it follows the phone.
+- Needs Agent Farm 4.3.0 or newer on the computer.
+- To try first: answer a waiting question on Now; open a session and write to it; change Agent Farm's language and watch the app follow.
+
 ## 0.2.7 - Share pictures, save exports, wake the PC, and get woken by the farm (2026-10-16)
 
 - Share a picture to Agent Farm and pick a running session: it goes to the computer and into the message, so the agent sees it (up to 5 MB). A share can also open a new session with an agent, using the setup that agent last started with.

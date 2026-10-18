@@ -80,13 +80,23 @@ class NowSource(
         if (link() is Link.Online) fresh()
     }
 
-    /** The next history page, once the list reaches its end; one at a time. */
+    /**
+     * The next history page, once the list reaches its end; one at a time. A page that comes back after the fresh
+     * head moved the list's end is not laid on it, and the new end is asked in its place: nothing grew, so the
+     * loader that asked would never ask again.
+     */
     suspend fun more() {
-        val cursor = _state.value.cursor ?: return
-        if (!paging.compareAndSet(false, true)) return
+        if (_state.value.cursor == null || !paging.compareAndSet(false, true)) return
         try {
-            val page = page(manager.read(farmId, OP_RECENT, pageArgs(cursor))) ?: return
-            _state.update { if (it.cursor == cursor) NowBuild.more(it, page) else it }
+            do {
+                val cursor = _state.value.cursor ?: return
+                val page = page(manager.read(farmId, OP_RECENT, pageArgs(cursor))) ?: return
+                var laid = false
+                _state.update { s ->
+                    laid = s.cursor == cursor
+                    if (laid) NowBuild.more(s, page) else s
+                }
+            } while (!laid)
         } finally {
             paging.set(false)
         }

@@ -20,7 +20,7 @@ import org.junit.runner.RunWith
 /**
  * Now's journeys on the scripted farm, on the LAN and on mobile data, in the order a person meets them: J1 open and
  * see (the copy at once, the fresh answer within the network's target, what waits above what runs), J8 the
- * history 20 at a time, J7 a new session into its own Conversation and back to its card, J9 the link drops and comes back (the copy and its age
+ * history 20 at a time (the first scroll before the fresh answer), J7 a new session into its own Conversation and back to its card, J9 the link drops and comes back (the copy and its age
  * stay, a new session typed meanwhile waits on the phone, the way back reads only the head).
  */
 @RunWith(AndroidJUnit4::class)
@@ -68,13 +68,22 @@ class JourneyNowTest : JourneyBase() {
 
     private fun j8(profile: String) {
         val j = Journey("J8", profile, rule).begin()
+        // The copy on screen is the last world's, so its end is not the fresh list's. The fresh head is held until
+        // the copy's page was asked, and that page until the head moved the end: the race a quick thumb wins.
+        FakeHost.post("/_test/slow", """{"headMs":$HOLD_HEAD_MS,"pageMs":$HOLD_PAGE_MS}""")
         val s = open()
         try {
+            j.step("scroll before the fresh answer: the fresh list's next page where the loader was", taps = 1, targetMs = 2 * HOLD_PAGE_MS + 2_000) {
+                more(1, 15_000)
+            }
+            FakeHost.post("/_test/slow", """{"headMs":0,"pageMs":0}""")
+            val early = pages()
+            j.note(if (early > 1) "the copy's page came after the fresh head; the fresh end was asked in its place ($early pages)" else "the fresh head came before the scroll: the race was not set up")
             fresh()
             for (k in 1..3) {
-                j.step("scroll: 20 more", taps = 1, targetMs = 1_000) { more(k) }
+                j.step("scroll: 20 more", taps = 1, targetMs = 1_000) { more(early + k) }
             }
-            val asked = pages()
+            val asked = pages() - early
             j.check("each scroll asks one page", asked == 3, "$asked pages for 3 scrolls")
             j.economy()
         } finally {
@@ -162,9 +171,9 @@ class JourneyNowTest : JourneyBase() {
      * At the list's end, as a person who scrolled there is: the k-th next page asked for, and rows where its loader
      * was. One jump by key: performScrollToNode searches the list, and its time is the test's, not the app's.
      */
-    private fun more(k: Int) {
+    private fun more(k: Int, ms: Long = 10_000) {
         rule.onNodeWithTag("now-list").performScrollToKey("more")
-        until { pages() >= k && !shown(hasTestTag("skeleton")) }
+        until(ms) { pages() >= k && !shown(hasTestTag("skeleton")) }
     }
 
     private fun picked() = rule.onAllNodes(tagStarts("new-agent-") and isSelected()).fetchSemanticsNodes().isNotEmpty()
@@ -176,5 +185,7 @@ class JourneyNowTest : JourneyBase() {
     private companion object {
         const val OFFLINE_WORDS = "Bağlantı yokken yazıldı: sürüm notunu hazırla"
         const val J7_WORDS = "Telefon ana ekranının testlerini çalıştır"
+        const val HOLD_HEAD_MS = 1_500L
+        const val HOLD_PAGE_MS = 2_000L
     }
 }

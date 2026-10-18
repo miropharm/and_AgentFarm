@@ -147,6 +147,13 @@ async function main() {
     await P.request(port, 'POST', '/_test/lang', { lang: null });
     const older = await hs(me);
     t.ok(older.answer && older.answer.kind === 'welcome' && !('lang' in older.answer), 'lang null plays an older farm that tells none');
+    await P.request(port, 'POST', '/_test/slow', { headMs: 300, pageMs: 0 });
+    older.send({ kind: 'call', id: 's1', op: 'sessions.recent', args: { view: 'page' } });
+    older.send({ kind: 'call', id: 's2', op: 'sessions.recent', args: { view: 'page', cursor: '1:x' } });
+    const held = await older.waitFor(f => f.kind === 'result' && f.id === 's1', 1000);
+    const first = older.frames.find(f => f.kind === 'result' && (f.id === 's1' || f.id === 's2'));
+    t.ok(held && held.ok && first.id === 's2', '/_test/slow holds the fresh head back while a page after a cursor goes at once');
+    await P.request(port, 'POST', '/_test/slow', {});
     await P.request(port, 'POST', '/_test/lang', { lang: 'en' });
 
     await P.request(port, 'POST', '/_test/revoke', { device: me.device });

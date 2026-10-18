@@ -201,6 +201,8 @@ class JourneyHandsFreeTest {
     fun onePressSaysHowTheFarmIsThenItsQuestionIsAnsweredByVoice() {
         FakeHost.requireLink()
         val c = button()
+        // The journey's world first: a scenario redraws the farm and stops its turns, the parked one with them.
+        val j = Journey("J13", "lan").begin()
         val question = "Hangi dal? (j13)"
         // The question parks a real scripted turn; the mode is not ready meanwhile, so only the press reads it.
         ready = false
@@ -209,7 +211,6 @@ class JourneyHandsFreeTest {
         ready = true
         val before = summaries()
         words += "Master"
-        val j = Journey("J13", "lan").begin()
         j.step("one press: the farm says how it is", taps = 0, targetMs = Presses.GAP_MS + 1_000) {
             c.press()
             until(10_000, "the farm's sentence") { said.isNotEmpty() }
@@ -233,11 +234,11 @@ class JourneyHandsFreeTest {
     fun twoPressesOpenANewSessionByVoice() {
         FakeHost.requireLink()
         val c = button()
+        val j = Journey("J14", "lan").begin()
         val before = summaries()
         val prompt = "Write the release note (j14)"
         words += "Developer"
         words += prompt
-        val j = Journey("J14", "lan").begin()
         j.step("two presses: which agent, a tone", taps = 0, targetMs = 1_500) {
             c.press()
             Thread.sleep(150)

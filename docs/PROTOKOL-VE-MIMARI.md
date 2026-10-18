@@ -147,7 +147,9 @@ Tasarımın gerekçesi: vault projesi `10_Notes/A-PLN - Android Uygulaması Yeni
   (`core/now/NowBuild`) çizilir. Çiftlik bağlanınca `console.sessions { view: "summary" }`,
   `sessions.recent { view: "page" }` ve `needs.list` okunur; ekran açıkken `watch "*" summary` kartları canlı
   tutar (kartın sürmekte olan adımı ve tur başlangıcı yalnız canlı vuruştan gelir, tazelemede korunur). Liste
-  sonuna gelince `cursor` ile sonraki 20 satır istenir. Yeniden bağlanınca yalnız ilk sayfa okunur: üste
+  sonuna gelince `cursor` ile sonraki 20 satır istenir; taze ilk sayfa listenin sonunu kaydırdıysa geç gelen sayfa
+  serilmez, yeni sonun sayfası onun yerine istenir, bağlantı yokken sorup bir şey alamayan yükleyici bağlantı
+  gelince yeniden sorar. Yeniden bağlanınca yalnız ilk sayfa okunur: üste
   çıkan satır yerini alır, kaydırılıp okunmuş satırlar imleçleriyle kalır. `needs.changed` gelince üçü yeniden
   okunur; bir kartın turu bitince geçmişin ilk sayfası. "Seni bekliyor": soran kart (`asking`) ve kart dışındaki
   her Needs satırı; izin satırdan yalnız çiftliğin Needs anahtarıyla (`needs.act`), soru kartın kendi

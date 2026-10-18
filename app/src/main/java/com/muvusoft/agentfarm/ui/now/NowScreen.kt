@@ -159,8 +159,9 @@ private fun NowList(state: NowState, now: Long, actions: NowActions, wake: @Comp
             item(key = "more") {
                 SkeletonRows(2, Modifier.padding(top = 12.dp))
                 // A loader composed ahead of the scroll, or pushed down by the page that just came, asks nothing:
-                // the next page is asked once the list was laid out with this one and the loader is in view.
-                LaunchedEffect(state.recent.size) {
+                // the next page is asked once the list was laid out with this one and the loader is in view. A loader
+                // that asked while the link was down got nothing: it asks again once the link is back or the end moved.
+                LaunchedEffect(state.recent.size, state.cursor, state.link is Link.Online) {
                     withFrameNanos { }
                     snapshotFlow { list.layoutInfo.visibleItemsInfo.any { it.key == "more" } }.first { it }
                     actions.onMoreRecent()

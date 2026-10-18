@@ -69,6 +69,7 @@ function createHost(opts = {}) {
         h.turns = createTurns(h.world, h.emit);
         h.profile = PROFILES[o.profile] !== undefined ? o.profile : 'none';
         h.calls = [];
+        h.slow = { headMs: 0, pageMs: 0 };
         live.clear();
         return { profile: h.profile, sessions: h.world.sessions.length, cards: h.world.rows.map(x => x.id) };
     };
@@ -101,6 +102,8 @@ function createHost(opts = {}) {
         if (req.method === 'POST' && url === '/_test/lang') { const b = await body(req) || {}; h.lang = typeof b.lang === 'string' && b.lang ? b.lang : null; return reply(res, 200, { lang: h.lang, seq: h.lang ? h.emit('farm.language', { lang: h.lang }) : null }); }
         if (req.method === 'POST' && url === '/_test/revoke') { const b = await body(req); const d = h.devices.get(b.device); if (d) { d.revoked = true; } return reply(res, 200, { revoked: !!d }); }
         if (req.method === 'GET' && url === '/_test/state') { return reply(res, 200, { lastSeq: h.seq, devices: [...h.devices.keys()], calls: h.calls, code: [...h.codes][0] || h.newCode(), sockets: [...h.conns].filter(x => x.welcomed).length, socketsOf: socketsOf() }); }
+        // The history's answers held back (ms): the first page (the fresh head) and a page after a cursor, apart.
+        if (req.method === 'POST' && url === '/_test/slow') { const b = await body(req) || {}; h.slow = { headMs: Number(b.headMs) || 0, pageMs: Number(b.pageMs) || 0 }; return reply(res, 200, h.slow); }
         if (req.method === 'POST' && url === '/_test/scenario') { return reply(res, 200, h.scenario(await body(req) || {})); }
         // The PC answers a parked turn itself (the Console, another phone): the card's question or permission closes.
         if (req.method === 'POST' && url === '/_test/answer') { const b = await body(req) || {}; return reply(res, 200, { settled: h.turns.settle(String(b.id || ''), b.answer) }); }
@@ -194,7 +197,8 @@ function createHost(opts = {}) {
         entry.rows = rowsOf(r.result);
         entry.bytes = Buffer.byteLength(JSON.stringify(r));
         h.results.set(f.id, r);
-        send(conn, r);
+        const late = f.op === 'sessions.recent' ? (f.args && f.args.cursor ? h.slow.pageMs : h.slow.headMs) : 0;
+        if (late) { setTimeout(() => send(conn, r), late); } else { send(conn, r); }
     }
 
     function onFrame(conn, text) {

@@ -2,6 +2,16 @@
 
 User-facing changes to the Agent Farm Android app, newest first. Each build's release notes on the phone are read from its own heading here.
 
+## 0.2.10 - The headset button: hear how the farm is, answer it, or start a session, by voice (2026-10-18)
+
+- This is the first build to reach your phone with 0.2.9's headset mode (0.2.9 itself was never delivered): its notes below come with it.
+- One press of the headset's button, with Headset mode on: the phone says how the farm is in one sentence - what waits for you, then what is running and for how long - and reads the first question waiting for you, which you answer by voice the same way.
+- Two presses: "Which agent?" - say its name, then what it should do. Your words are read back and, unless you say "cancel" within 3 seconds, a new session opens with them, set up like that agent's last launch. The phone then says it is open, or reads the farm's own reason when it did not open; with the farm unreachable, it waits on the phone and goes when the farm answers again.
+- A press while something is being read cuts it: the button always does what you just asked.
+- Recent sessions on Now no longer stay loading when you scroll to their end before the fresh list arrives, or while the link is down.
+- Needs Agent Farm 4.10.0 or newer on the computer for the button; everything else works with 4.3.0 or newer.
+- To try first: with Headset mode on and your headset connected, press its button once and listen; then press it twice and start a session by voice.
+
 ## 0.2.9 - Headset mode: answer the farm by voice with the phone in your pocket (2026-10-18)
 
 - Headset mode, in Settings: with a headset on, a question is read aloud, a short tone plays and you answer by voice. What you said is read back, and unless you say "cancel" within 3 seconds it goes to the question. Silence sends nothing.

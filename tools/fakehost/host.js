@@ -99,13 +99,20 @@ function createHost(opts = {}) {
         // The PC's language setting changed: a live farm.language event, and every later welcome tells it (lang null = an older farm that says none).
         if (req.method === 'POST' && url === '/_test/lang') { const b = await body(req) || {}; h.lang = typeof b.lang === 'string' && b.lang ? b.lang : null; return reply(res, 200, { lang: h.lang, seq: h.lang ? h.emit('farm.language', { lang: h.lang }) : null }); }
         if (req.method === 'POST' && url === '/_test/revoke') { const b = await body(req); const d = h.devices.get(b.device); if (d) { d.revoked = true; } return reply(res, 200, { revoked: !!d }); }
-        if (req.method === 'GET' && url === '/_test/state') { return reply(res, 200, { lastSeq: h.seq, devices: [...h.devices.keys()], calls: h.calls, code: [...h.codes][0] || h.newCode(), sockets: [...h.conns].filter(x => x.welcomed).length }); }
+        if (req.method === 'GET' && url === '/_test/state') { return reply(res, 200, { lastSeq: h.seq, devices: [...h.devices.keys()], calls: h.calls, code: [...h.codes][0] || h.newCode(), sockets: [...h.conns].filter(x => x.welcomed).length, socketsOf: socketsOf() }); }
         if (req.method === 'POST' && url === '/_test/scenario') { return reply(res, 200, h.scenario(await body(req) || {})); }
         // The PC answers a parked turn itself (the Console, another phone): the card's question or permission closes.
         if (req.method === 'POST' && url === '/_test/answer') { const b = await body(req) || {}; return reply(res, 200, { settled: h.turns.settle(String(b.id || ''), b.answer) }); }
         if (req.method === 'POST' && url === '/_test/turn') { const b = await body(req) || {}; return reply(res, 200, h.turns.start(String(b.id || ''), b)); }
         if (req.method === 'GET' && url === '/_test/log') { return reply(res, 200, { profile: h.profile, calls: h.calls, findings: audit(h.calls), live: live.stats() }); }
         reply(res, 404, { error: 'not found' });
+    }
+
+    /** The welcomed sockets per device: a test's own link apart from the app's link service on the same farm. */
+    function socketsOf() {
+        const n = {};
+        for (const x of h.conns) { if (x.welcomed) { n[x.device] = (n[x.device] || 0) + 1; } }
+        return n;
     }
 
     function refuse(conn, reason, extra = {}) { conn.send(JSON.stringify({ kind: 'refuse', reason, ...extra })); conn.close(); }

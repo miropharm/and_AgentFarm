@@ -217,7 +217,9 @@ async function main() {
     const calm = (await call('console.sessions', { view: 'summary' })).result;
     t.ok(calm.length > 0 && !calm.some(r => r.status === 'working'), 'a quiet farm runs no turn: ' + calm.map(r => r.status).join(','));
     t.ok((await call('needs.list')).result.items.length === 0, 'a quiet farm has nothing waiting');
-    t.ok((await P.request(port, 'GET', '/_test/state')).body.sockets === 1, 'the farm counts the welcomed sockets (a resting phone has none)');
+    const held = (await P.request(port, 'GET', '/_test/state')).body;
+    t.ok(held.sockets === 1, 'the farm counts the welcomed sockets (a resting phone has none)');
+    t.ok(Object.keys(held.socketsOf).length === 1 && Object.values(held.socketsOf)[0] === 1, 'and counts them per device: ' + JSON.stringify(held.socketsOf));
     await P.request(port, 'POST', '/_test/scenario', {});
     t.ok((await call('console.sessions', { view: 'summary' })).result.some(r => r.status === 'working'), 'the default scenario runs a turn again');
 

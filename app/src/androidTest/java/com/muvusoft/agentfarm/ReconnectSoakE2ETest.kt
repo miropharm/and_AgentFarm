@@ -73,8 +73,9 @@ class ReconnectSoakE2ETest {
         j.check("every missed event came", lost.isEmpty(), "${posted.size - lost.size} / ${posted.size}" + if (lost.isEmpty()) "" else " · lost $lost")
         val twice = posted.count { (got[it] ?: 0) > 1 }
         j.check("no event told twice", twice == 0, "$twice told more than once")
-        val sockets = JSONObject(FakeHost.get("/_test/state")).getInt("sockets")
-        j.check("the farm holds one socket", sockets == 1, "$sockets")
+        // Per device: the app's own link service holds its socket to the same farm beside this test's.
+        val sockets = JSONObject(FakeHost.get("/_test/state")).getJSONObject("socketsOf").optInt(farm.device)
+        j.check("the farm holds one socket of this device", sockets == 1, "$sockets")
         j.check("file descriptors", after.fds - before.fds <= MAX_MORE_FDS, "${before.fds} -> ${after.fds} (at most +$MAX_MORE_FDS)")
         j.check("threads", after.threads - before.threads <= MAX_MORE_THREADS, "${before.threads} -> ${after.threads} (at most +$MAX_MORE_THREADS)")
         j.check("heap after a collection", after.heapKb - before.heapKb <= MAX_MORE_HEAP_KB, "${before.heapKb} -> ${after.heapKb} KB (at most +$MAX_MORE_HEAP_KB KB)")

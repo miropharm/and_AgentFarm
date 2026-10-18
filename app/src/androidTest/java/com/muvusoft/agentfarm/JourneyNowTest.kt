@@ -1,6 +1,5 @@
 package com.muvusoft.agentfarm
 
-import android.view.KeyEvent
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasSetTextAction
@@ -13,7 +12,6 @@ import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.performScrollToKey
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import androidx.test.platform.app.InstrumentationRegistry
 import org.json.JSONObject
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -145,7 +143,7 @@ class JourneyNowTest : JourneyBase() {
                 rule.onNodeWithTag("composer-send").performClick()
                 until(2_000) { shown(hasText("Waiting on this phone", substring = true)) }
             }
-            backFrom()
+            backFrom("new-session")
             j.step("the farm answers: the words go once, only the head is read", taps = 1, targetMs = 10_000) {
                 FakeHost.post("/_test/sleep", "{\"asleep\":false}")
                 rule.onNodeWithTag("wake-go").performClick()
@@ -170,16 +168,6 @@ class JourneyNowTest : JourneyBase() {
     }
 
     private fun picked() = rule.onAllNodes(tagStarts("new-agent-") and isSelected()).fetchSemanticsNodes().isNotEmpty()
-
-    /** A sheet or a screen yields to Back; the first Back may only close the keyboard. */
-    private fun backFrom(tag: String = "new-session") {
-        repeat(3) {
-            if (rule.onAllNodes(hasTestTag(tag)).fetchSemanticsNodes().isEmpty()) return
-            InstrumentationRegistry.getInstrumentation().sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
-            rule.waitForIdle()
-        }
-        until { rule.onAllNodes(hasTestTag(tag)).fetchSemanticsNodes().isEmpty() }
-    }
 
     private fun pages() = calls().count { it.getString("op") == "sessions.recent" && args(it).has("cursor") }
 

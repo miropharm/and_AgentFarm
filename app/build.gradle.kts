@@ -84,6 +84,8 @@ dependencies {
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
     androidTestImplementation("androidx.test:runner:1.6.2")
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
+    // LeakCanary's heap analyzer, without its watcher: LeakCanary refuses a build that is not debuggable.
+    androidTestImplementation("com.squareup.leakcanary:shark-android:2.14")
     // createComposeRule's host activity must be declared by the app under test (testBuildType).
     releaseImplementation("androidx.compose.ui:ui-test-manifest")
 }

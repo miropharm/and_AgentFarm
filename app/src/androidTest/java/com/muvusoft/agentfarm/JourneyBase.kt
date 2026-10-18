@@ -5,6 +5,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.SystemClock
 import android.service.notification.StatusBarNotification
+import android.view.KeyEvent
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
@@ -61,6 +62,16 @@ abstract class JourneyBase {
     /** Placed on screen, the way the eye finds it; a row the list composed ahead of time is not. */
     protected fun shown(m: SemanticsMatcher) =
         rule.onAllNodes(m, useUnmergedTree = true).fetchSemanticsNodes().any { it.layoutInfo.isPlaced && !it.boundsInRoot.isEmpty }
+
+    /** A sheet or a screen yields to Back; the first Back may only close the keyboard. */
+    protected fun backFrom(tag: String) {
+        repeat(3) {
+            if (rule.onAllNodes(hasTestTag(tag)).fetchSemanticsNodes().isEmpty()) return
+            InstrumentationRegistry.getInstrumentation().sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
+            rule.waitForIdle()
+        }
+        until { rule.onAllNodes(hasTestTag(tag)).fetchSemanticsNodes().isEmpty() }
+    }
 
     /** The farm's answer on Now: its card, and no stale copy's banner above it. */
     protected fun fresh() = until(15_000) { shown(hasTestTag("running-c_dev")) && !shown(hasTestTag("stale")) }

@@ -48,6 +48,9 @@ for (const s of ['emulator-run', 'testlab-run', 'deliver']) {
 for (const m of yml.matchAll(/bash (scripts\/ci\/[\w-]+\.sh)/g)) {
     t.ok(exists(m[1]), `${m[1]} referenced by the workflow exists`);
 }
+for (const m of read('scripts/ci/emulator-run.sh').matchAll(/bash (scripts\/ci\/[\w-]+\.sh)/g)) {
+    t.ok(exists(m[1]), `${m[1]} called by the emulator run exists`);
+}
 for (const m of yml.matchAll(/\$\{\{\s*secrets\.(\w+)\s*\}\}/g)) {
     t.ok(m[1] === 'GCP_SA_KEY', `secret ${m[1]} is the only declared secret (GCP_SA_KEY)`);
 }

@@ -133,6 +133,9 @@ adb shell uiautomator dump /sdcard/ui.xml > /dev/null
 adb pull /sdcard/ui.xml "$OUT/main-font200-ui.xml" > /dev/null
 adb shell settings put system font_scale 1.0
 
+# Last, so no shot meets a sleeping screen: what the link costs while nothing happens.
+bash scripts/ci/battery-probe.sh "$PKG" "$OUT"
+
 adb logcat -d > "$OUT/logcat.txt"
 kill "$SHELL_LOG_PID" 2> /dev/null || true
 

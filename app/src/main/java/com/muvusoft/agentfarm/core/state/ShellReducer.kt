@@ -47,8 +47,9 @@ object ShellReducer {
     /** What a frame from a farm changes. Frames that concern a page (view.*) change nothing here. */
     fun onFrame(s: ShellState, farmId: String, frame: Frame, address: String, now: Long): ShellState = when (frame) {
         // Whether Agent Farm itself or its headless service answered is asked anew on every welcome (farm.away).
+        // A first welcome is where the phone starts: without it, what a drop before any event missed is never asked for.
         is Welcome -> update(s, farmId) {
-            it.copy(link = Link.Online(address, frame.scope, frame.features, now), away = null)
+            it.copy(link = Link.Online(address, frame.scope, frame.features, now), away = null, lastSeq = if (it.lastSeq == 0L) frame.lastSeq else it.lastSeq)
         }
         is Refuse -> update(s, farmId) { it.copy(link = Link.Refused(frame.reason, frame.detail, now, frame.minContract), away = null) }
         is EventFrame -> update(s, farmId) { event(it.copy(lastSeq = maxOf(it.lastSeq, frame.seq)), frame) }

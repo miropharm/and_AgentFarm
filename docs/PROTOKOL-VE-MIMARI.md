@@ -162,6 +162,8 @@ Tasarımın gerekçesi: vault projesi `10_Notes/A-PLN - Android Uygulaması Yeni
 - **Bekleyen sayısı 0'a inince** (`needs.changed`) o çiftliğin soru/izin bildirimleri, `session.ended` gelince
   o oturumunkiler telefondan kalkar.
 - **Olay numaraları yalnız artar.** `resumeAfter` sonrası olaylar verilir; tutulmayanlar için önce bir `gap`.
+  Konumu olmayan telefon (ilk bağlantı) ilk `welcome`'ın `lastSeq`'inden başlar; böylece henüz hiç olay
+  gelmeden kopan bağlantı, kopukken kaçanları da ister (`ShellReducer.onFrame`).
 - Sürüm uyuşmazlığı: `refuse` nedeni `contract`, gereken sürümle (`minContract`).
 - **Gizli değerler hiçbir çerçevede gezmez**; yalnız var olup olmadıkları.
 - **`spoken { text, lang }`** (`ask.opened`, `ask.answersSoon`, `permission.opened`, `turn.finished`,

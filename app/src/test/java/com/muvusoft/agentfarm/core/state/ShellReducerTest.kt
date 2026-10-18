@@ -51,6 +51,10 @@ class ShellReducerTest {
         val features = mapOf("remote.access" to FeatureAnswer(true))
         s = ShellReducer.onFrame(s, "farm_a", Welcome(FarmRef("farm_a", "M"), "dev_1", "manage", features, 57), "192.168.1.2:8378", 5)
         assertEquals(Link.Online("192.168.1.2:8378", "manage", features, 5), s.farm("farm_a")!!.link)
+        assertEquals(57L, ShellReducer.resumeAfter(s, "farm_a"))
+        s = ShellReducer.onFrame(s, "farm_a", EventFrame(60, "t", 1, empty), "x", 6)
+        s = ShellReducer.onFrame(s, "farm_a", Welcome(FarmRef("farm_a", "M"), "dev_1", "manage", features, 63), "192.168.1.2:8378", 7)
+        assertEquals(60L, ShellReducer.resumeAfter(s, "farm_a"))
         s = ShellReducer.onFrame(s, "farm_a", Refuse("revoked", "cihaz iptal edildi"), "x", 6)
         assertEquals(Link.Refused("revoked", "cihaz iptal edildi", 6), s.farm("farm_a")!!.link)
     }

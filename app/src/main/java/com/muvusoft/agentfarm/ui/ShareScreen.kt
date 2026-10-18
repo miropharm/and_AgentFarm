@@ -73,17 +73,18 @@ fun ShareScreen(shared: Shared, manager: ConnectionManager, onDone: () -> Unit) 
     LaunchedEffect(farmId, farmOnline) {
         targets = null
         val f = farmId ?: return@LaunchedEffect
-        if (!farmOnline) {
+        val list = if (!farmOnline) {
             agents = manager.state.value.farm(f)?.agents.orEmpty()
-            targets = manager.state.value.farm(f)?.sessions.orEmpty()
+            manager.state.value.farm(f)?.sessions.orEmpty()
         } else {
             val a = manager.request(f, "console.new")
             agents = if (a?.ok == true) Share.agents(a.result).also { manager.agents(f, it) } else emptyList()
             val r = manager.request(f, "console.sessions")
-            targets = if (r?.ok == true) Share.targets(r.result).also { manager.sessions(f, it) } else emptyList()
+            if (r?.ok == true) Share.targets(r.result).also { manager.sessions(f, it) } else emptyList()
         }
-        val list = targets.orEmpty()
+        // The pick before the list: a frame drawn between the two never shows the list with nothing picked.
         target = target?.takeIf { t -> Share.newAgent(t)?.let { it in agents } ?: list.any { it.id == t } } ?: list.firstOrNull()?.id
+        targets = list
     }
 
     Surface(Modifier.fillMaxSize().testTag("share")) {

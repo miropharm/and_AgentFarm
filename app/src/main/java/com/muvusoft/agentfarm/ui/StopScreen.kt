@@ -68,8 +68,10 @@ fun StopScreen(manager: ConnectionManager, onDone: () -> Unit) {
         running = null
         val f = farmId ?: return@LaunchedEffect
         val r = manager.request(f, "console.sessions")
-        running = if (r?.ok == true) Stop.running(r.result) else emptyList()
-        target = running?.firstOrNull { it.id == target }?.id ?: running?.firstOrNull()?.id
+        val list = if (r?.ok == true) Stop.running(r.result) else emptyList()
+        // The pick before the list: a frame drawn between the two never shows the list with nothing picked.
+        target = list.firstOrNull { it.id == target }?.id ?: list.firstOrNull()?.id
+        running = list
     }
 
     fun stop(farm: String, session: String) {

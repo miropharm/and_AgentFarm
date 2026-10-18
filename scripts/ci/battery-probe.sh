@@ -23,8 +23,12 @@ LOG="$OUT/battery.txt"
   sleep "$SECS"
   adb shell dumpsys batterystats "$PKG" > "$OUT/batterystats.txt"
   echo "service at end: $(adb shell dumpsys activity services "$PKG" | grep -c ServiceRecord) record(s)"
-  grep -iE 'cpu time|wake lock|wakeup alarm|wifi network|mobile network|foreground service|jobs?:|syncs?:|estimated power use' \
-    "$OUT/batterystats.txt" | head -40
+  # Only the app's own uid block: the dump also carries the system's wake locks and CPU time.
+  APPID=$(adb shell dumpsys package "$PKG" | grep -m1 -oE 'userId=[0-9]+' | cut -d= -f2)
+  APP="u0a$((${APPID:-10000} - 10000))"
+  echo "app uid: $APP"
+  grep -E "^ +UID $APP:" "$OUT/batterystats.txt"
+  awk -v head="  $APP:" '$0 == head { on = 1; print; next } on && !/^   / { exit } on' "$OUT/batterystats.txt" | head -40
   adb shell dumpsys notification --noredact | grep -A40 "pkg=$PKG" | grep -m2 -E 'android\.(title|text)='
 
   adb shell dumpsys battery reset

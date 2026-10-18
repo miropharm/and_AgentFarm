@@ -75,7 +75,7 @@ class HandsFreeE2ETest {
         while (true) {
             val record = shell("dumpsys activity services ${ctx.packageName}/.net.LinkService")
             line = record.lineSequence().map { it.trim() }.firstOrNull { it.contains("types=") || it.contains("foregroundServiceType") } ?: record.take(600)
-            val bits = Regex("(?:types|foregroundServiceType)=0x([0-9a-fA-F]+)").find(line)?.groupValues?.get(1)?.toLong(16)
+            val bits = Regex("(?:types|foregroundServiceType)=(?:0x)?([0-9a-fA-F]+)\\b").find(line)?.groupValues?.get(1)?.toLong(16)
             val held = (bits != null && bits and MICROPHONE != 0L) || Regex("types=\\S*microphone").containsMatchIn(line)
             if (held == want || SystemClock.elapsedRealtime() > end) {
                 if (held != want) throw AssertionError("the link service's record: $line")

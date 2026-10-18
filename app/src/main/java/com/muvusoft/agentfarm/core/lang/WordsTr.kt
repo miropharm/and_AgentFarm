@@ -181,4 +181,14 @@ internal val TURKISH: Map<String, String> = mapOf(
     "{0}. Sending." to "{0}. Gönderiyorum.",
     "Called off." to "Vazgeçildi.",
     "No link: it waits on this phone." to "Bağlantı yok: telefonda bekliyor.",
+    // core/handsfree/StatusCall.kt
+    "Agent Farm does not answer right now." to "Agent Farm şu an cevap vermiyor.",
+    "Agent Farm could not say how it is: it may need an update on the computer." to
+        "Agent Farm durumunu söyleyemedi: bilgisayarda güncellenmesi gerekebilir.",
+    // core/handsfree/VoiceNew.kt
+    "Which agent?" to "Hangi ajan?",
+    "What should {0} do?" to "{0} ne yapsın?",
+    "{0}: {1}. Opening." to "{0}: {1}. Açıyorum.",
+    "{0} is open." to "{0} açıldı.",
+    "Agent Farm did not open it." to "Agent Farm bunu açmadı.",
 )

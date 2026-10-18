@@ -112,12 +112,17 @@ data class PagesList(val pages: List<MenuPage>)
 @Serializable
 data class MenuPage(val id: String, val label: String, val group: String)
 
+/** `now.summary`: Now said by the farm as one sentence, its two counts, and its Console questions as ask.opened says them. */
+@Serializable
+data class NowSummary(val spoken: Spoken, val waiting: Int, val running: Int, val asks: List<AskOpened>)
+
 /** The model of each op's object answer (an array answer has none: its rows are the answer). */
 val OP_ANSWERS: Map<String, KSerializer<*>> = mapOf(
     "sessions.read" to ReadPage.serializer(),
     "sessions.recent" to RecentPage.serializer(),
     "needs.list" to NeedsList.serializer(),
     "pages.list" to PagesList.serializer(),
+    "now.summary" to NowSummary.serializer(),
 )
 
 /** The model of each op's rows. */
@@ -127,6 +132,7 @@ val OP_ROWS: Map<String, KSerializer<*>> = mapOf(
     "sessions.recent" to RecentRow.serializer(),
     "needs.list" to NeedRow.serializer(),
     "pages.list" to MenuPage.serializer(),
+    "now.summary" to AskOpened.serializer(),
 )
 
 object Ops {

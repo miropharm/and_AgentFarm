@@ -13,6 +13,7 @@ const { createFarm } = require('./farm');
 const { createTurns } = require('./turns');
 const { audit, rowsOf } = require('./audit');
 const { createLive } = require('./live');
+const { summaryOf } = require('./summary');
 
 /** One-way delay on everything the farm sends, so a round trip costs what it costs on that network. */
 const PROFILES = { none: 0, lan: 50, mobile: 300 };
@@ -172,6 +173,7 @@ function createHost(opts = {}) {
         if (op === 'console.interrupt' && args.id) { h.turns.stop(String(args.id)); }
         const asks = op === 'needs.act' && /^permission\|/.test(String(args.key || '')) ? h.world.rows.find(r => `permission|${r.sessionId}` === args.key) : null;
         if (asks) { h.turns.settle(asks.id, args.action === 'permission-allow' ? 'allowed' : 'denied'); }
+        if (op === 'now.summary') { return { ok: true, result: summaryOf(h.world, h.turns, args) }; }
         const run = h.world.ops[op] || OPS[op];
         if (!run) { return { ok: false, error: `unknown op ${op}` }; }
         try {

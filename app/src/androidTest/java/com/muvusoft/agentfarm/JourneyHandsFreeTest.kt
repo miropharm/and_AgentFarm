@@ -1,10 +1,14 @@
 package com.muvusoft.agentfarm
 
+import android.media.session.MediaController
 import android.os.SystemClock
+import android.view.KeyEvent
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.muvusoft.agentfarm.core.contract.Pairing
+import com.muvusoft.agentfarm.core.handsfree.Presses
 import com.muvusoft.agentfarm.core.handsfree.VoiceAnswer
+import com.muvusoft.agentfarm.core.handsfree.VoiceNew
 import com.muvusoft.agentfarm.core.pairing.PairingVerdict
 import com.muvusoft.agentfarm.core.speech.Utterance
 import com.muvusoft.agentfarm.core.speech.VoiceLanguage
@@ -40,6 +44,7 @@ class JourneyHandsFreeTest {
     private val loop = app.handsFree
     private val kept = Triple(loop.ready, loop.ears, loop.mouth)
     private val keptTurns = loop.turns
+    private val keptMode = app.prefs.handsFree
     private val said = CopyOnWriteArrayList<String>()
     private val words = ConcurrentLinkedQueue<String>()
     private val tones = AtomicInteger()
@@ -62,6 +67,10 @@ class JourneyHandsFreeTest {
 
     @After
     fun restore() {
+        if (app.prefs.handsFree != keptMode) {
+            app.prefs.handsFree = keptMode
+            LinkService.sync(ctx, anyFarm = app.store.load().isNotEmpty())
+        }
         loop.ready = kept.first
         loop.ears = kept.second
         loop.mouth = kept.third
@@ -170,6 +179,81 @@ class JourneyHandsFreeTest {
         FakeHost.post("/_test/event", "{\"type\":\"turn.finished\",\"data\":$data}")
         Thread.sleep(3_000)
         j.check("turns not chosen: the loop does not take a finished turn", said.isEmpty() && tones.get() == 1, "said ${said.toList()} · tones ${tones.get()}")
+        j.end()
+    }
+
+    /** The headset mode on, so the link service opens the button's media session; pressed through that session. */
+    private fun button(): MediaController {
+        app.prefs.handsFree = true
+        online()
+        until(5_000, "the headset button's media session") { app.headsetButton.token != null }
+        return MediaController(ctx, app.headsetButton.token!!)
+    }
+
+    private fun MediaController.press() {
+        dispatchMediaButtonEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_HEADSETHOOK))
+        dispatchMediaButtonEvent(KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_HEADSETHOOK))
+    }
+
+    private fun summaries() = Regex("\"op\":\"now\\.summary\"").findAll(FakeHost.get("/_test/state")).count()
+
+    @Test
+    fun onePressSaysHowTheFarmIsThenItsQuestionIsAnsweredByVoice() {
+        FakeHost.requireLink()
+        val c = button()
+        val question = "Hangi dal? (j13)"
+        // The question parks a real scripted turn; the mode is not ready meanwhile, so only the press reads it.
+        ready = false
+        val turn = FakeHost.post("/_test/turn", "{\"id\":\"c_psy\",\"stepMs\":20,\"ask\":{\"question\":\"$question\",\"options\":[\"master\",\"yeni dal\"]}}")
+        Thread.sleep(1_500)
+        ready = true
+        val before = summaries()
+        words += "Master"
+        val j = Journey("J13", "lan").begin()
+        j.step("one press: the farm says how it is", taps = 0, targetMs = Presses.GAP_MS + 1_000) {
+            c.press()
+            until(10_000, "the farm's sentence") { said.isNotEmpty() }
+        }
+        j.step("its question read, a tone, the words read back", taps = 0, targetMs = 3_000) {
+            until(10_000, "the read-back") { said.any { it == VoiceAnswer.readBack(lang, "master") } }
+        }
+        j.step("not called off: the answer goes to the question's card", taps = 0, targetMs = VoiceAnswer.CANCEL_MS + 1_000) {
+            until(10_000, "console.answer on the farm") { answered(question) }
+        }
+        j.check("the scripted turn parked on its question", turn.contains("started"), turn)
+        j.check("the farm was asked once, in the voice's language", summaries() - before == 1 && FakeHost.get("/_test/state").contains("\"lang\":\"${VoiceLanguage.locale(app.prefs.voiceLanguage, phoneLocale()).toLanguageTag()}\""), "now.summary ${summaries() - before}")
+        j.check("the farm's own sentence first, then its question", said.firstOrNull()?.let { Regex("wait|bekleyen").containsMatchIn(it) } == true && said.getOrNull(1)?.contains("Hangi dal?") == true, "said ${said.toList()}")
+        j.check("one tone, the option's own label to the card", tones.get() == 1 && FakeHost.get("/_test/state").contains("\"$question\":\"master\""), "tones ${tones.get()}")
+        j.end()
+    }
+
+    private fun opened(prompt: String) = FakeHost.get("/_test/state").let { it.contains("\"op\":\"console.new\"") && it.contains(prompt) }
+
+    @Test
+    fun twoPressesOpenANewSessionByVoice() {
+        FakeHost.requireLink()
+        val c = button()
+        val before = summaries()
+        val prompt = "Write the release note (j14)"
+        words += "Developer"
+        words += prompt
+        val j = Journey("J14", "lan").begin()
+        j.step("two presses: which agent, a tone", taps = 0, targetMs = 1_500) {
+            c.press()
+            Thread.sleep(150)
+            c.press()
+            until(10_000, "which agent") { said.any { it == VoiceNew.whichAgent(lang) } }
+        }
+        j.step("the agent named from the farm's list, what it should do, the words read back", taps = 0, targetMs = 3_000) {
+            until(10_000, "the read-back") { said.any { it == VoiceNew.readBack(lang, "developer", prompt) } }
+        }
+        j.step("not called off: the session opens and the phone says so", taps = 0, targetMs = VoiceAnswer.CANCEL_MS + 1_500) {
+            until(15_000, "console.new on the farm and its answer said") { opened(prompt) && said.any { it == VoiceNew.isOpen(lang, "developer") } }
+        }
+        val state = FakeHost.get("/_test/state")
+        j.check("two presses within the gap are not one press twice", summaries() == before, "now.summary ${summaries() - before}")
+        j.check("asked in order, one tone each", said.take(2) == listOf(VoiceNew.whichAgent(lang), VoiceNew.whatToDo(lang, "developer")) && tones.get() == 2, "said ${said.toList()} · tones ${tones.get()}")
+        j.check("one console.new, with the farm's agent and the words", state.split("\"agent\":\"developer\",\"prompt\":\"$prompt\"").size == 2, "console.new {agent: developer, prompt}")
         j.end()
     }
 

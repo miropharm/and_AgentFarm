@@ -191,6 +191,8 @@ Tasarımın gerekçesi: vault projesi `10_Notes/A-PLN - Android Uygulaması Yeni
   telefonun yerel Menü'sünün listesidir (`{ pages: [{ id, label, group }] }`, grup `work` · `info` ·
   `settings` · `more`): listeyi PC tutar (vsc `core/phoneMenu.ts`) ve PC'nin sunmadığı sayfayı vermez;
   telefon onu çizer, son kopyasını saklar ve satırı o sayfa olarak açar (`view.open`).
+  `now.summary { lang? }` → `{ spoken, waiting, running, asks }`: Now'un sesle okunacak tek cümlesi, saydığı
+  iki sayı ve beklenen Console soruları (`asks`, satırı `ask.opened`'ın verisi) — kulaklık düğmesi bunu okur.
   `sessions.recent { view: "page", cursor?, limit? }` → `{ rows, next }`: son etkinliği en yeni önce, `cursor`'dan
   sonra (imleç bir satırı adlar — etkinlik zamanı ve kimliği; üste yeni oturum düşse de sayfa kaymaz);
   `next` sonraki sayfanın imleci, son sayfada `null`; `limit` en çok 50, varsayılan 20. Satır hafiftir: `id`,
@@ -394,6 +396,25 @@ söylenen o oturumun bir sonraki talimatı olarak `console.send` ile gider (`Voi
 aynı çağrı). Bir soru cevaplanırken biten tur onun üstüne okunmaz; tur dinlenirken gelen soru turu keser. Emülatörde konuşma ve kulaklık olmadığından J11 tanıyıcıyı ve
 sesi döngünün dikişlerinden (`ears`, `mouth`, `ready`) besler; gerçek tanıma ve Bluetooth mikrofonu gerçek
 telefonda denenir.
+
+**Kulaklık düğmesiyle durum (S-10, `net/HeadsetButton`, `net/HeadsetStatus`).** Mod açıkken bağlantı servisi bir
+medya oturumu açar; kulaklığın düğmesi (hook, oynat/duraklat) sayılır (`core/handsfree/Presses`): tek basış,
+ardından 500 ms içinde ikinci gelmezse "durum"dur. Telefon çiftliğe sorar (`now.summary { lang }`, ses dilinin
+etiketiyle; odaktaki çiftlik, yoksa bağlı olan, yoksa ilk eşli; dinlenen bağlantı önce uyandırılır, 8 sn beklenir)
+ve cümleyi PC'nin kendi sözleriyle okur: seni bekleyenler, çalışan oturumlar ve ne zamandan beri (vsc
+`core/nowSpoken.ts`, Now'un kendi anlık görüntüsünden). Cevaptaki `asks` Now'un beklediği Console sorularıdır,
+her satır tam `ask.opened` olayının verisi: ilki ardından okunur ve J11'deki gibi sesle cevaplanır. Cevap
+gelmezse "Agent Farm şu an cevap vermiyor", op'u bilmeyen eski bir çiftlikte "güncellenmesi gerekebilir" denir
+(`core/handsfree/StatusCall`). Android düğmeyi en son ses çalan uygulamanın medya oturumuna verir: müzik
+dinlenirken düğme müziğindir; modun ana döngüsü düğmesiz çalışır. Emülatörde düğmeye o medya oturumunun
+kendisinden basılır (J13).
+
+**İki basışla sesli yeni oturum (S-11, `core/handsfree/VoiceNew`).** 500 ms içinde ikinci basış: "Hangi ajan?",
+ton, söylenen ad çiftliğin kendi listesinden seçenek gibi bulunur (`console.new` yalın; bağlantı yoksa son
+liste), bulunmazsa söylendiği gibi gider; "Ne yapsın?", ton, 15 sn dinleme; ikisi geri okunur ve 3 sn içinde
+vazgeçilmezse `console.new { agent, prompt }` ile açılır — paylaşımın ve yeni oturum sayfasının kapısı, ajanın son
+kurulumuyla. Çiftlik açtıysa "açıldı", reddettiyse (tanımadığı ajan, bütçe) kendi cümlesi okunur; cevap 15 sn
+içinde gelmezse çağrı giden kutusunda bekler ve "telefonda bekliyor" denir. Sessizlik hiçbir şey açmaz (J14).
 
 ## 12. Güvenlik kalkanı
 

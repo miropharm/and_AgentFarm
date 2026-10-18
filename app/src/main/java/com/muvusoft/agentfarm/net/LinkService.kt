@@ -67,6 +67,7 @@ class LinkService : Service() {
         AlertPoster.channels(this)
         foreground(build(StatusLine.of(app.manager.state.value, System.currentTimeMillis())), app.visible.on.value)
         app.manager.setFarms(app.store.load())
+        app.headsetButton.sync(prefs.handsFree)
         if (network == null) network = NetworkWatch(this) { app.manager.onNetwork(it) }.also { it.start() }
         if (seek == null) {
             val f = FarmFinder(this) { farm, address -> app.manager.onFound(farm, address) }
@@ -147,6 +148,7 @@ class LinkService : Service() {
         seek = null
         finder?.stop()
         finder = null
+        AgentFarmApp.of(this).headsetButton.sync(false)
         speaker.shutdown()
         super.onDestroy()
     }

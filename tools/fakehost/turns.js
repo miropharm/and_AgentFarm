@@ -51,7 +51,9 @@ function createTurns(f, emit) {
             const options = (a.options || ['Evet', 'Hayır']).map(label => ({ label }));
             t.askId = 'q' + t.turn;
             row.asking = { kind: 'question', tool: 'AskUserQuestion', questions: [{ question: a.question, header: a.header || 'Soru', multiSelect: false, options }], detail: a.question, waitingSince, autoAnswer: null };
-            emit('ask.opened', { session: id, agent: row.agent, askId: t.askId, question: a.question, options });
+            // kept as said: now.summary's asks are this very data (vsc askOpenedData)
+            t.opened = { session: id, agent: row.agent, askId: t.askId, question: a.question, options };
+            emit('ask.opened', { ...t.opened });
         } else {
             const p = plan.permission;
             t.permId = 'p' + t.turn;

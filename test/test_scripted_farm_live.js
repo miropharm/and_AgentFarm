@@ -91,6 +91,17 @@ async function main() {
     const log = await stats();
     t.ok(log.frames >= lives(s, 'w5').length && log.rows >= rows.length && log.bytes > 0, 'the log counts the frames, rows and bytes told');
 
+    // ---- now.summary (vsc core/nowSpoken.ts): the sentence, its counts, and an open question as its ask.opened said it
+    await P.request(port, 'POST', '/_test/turn', { id: 'c_psy', stepMs: 20, ask: { question: 'Hangi dal?', options: ['master', 'yeni dal'] } });
+    const opened = await s.waitFor(f => f.kind === 'event' && f.type === 'ask.opened' && f.data.session === 'c_psy', 2000);
+    const sum = (await call('now.summary', { lang: 'tr-TR' })).result;
+    t.ok(K.checkOp(c, 'now.summary', sum) === null, 'now.summary carries the contract\'s fields: ' + K.checkOp(c, 'now.summary', sum));
+    t.ok(sum.spoken.lang === 'tr' && sum.waiting === 2 && sum.asks.length === 1 && opened && JSON.stringify(sum.asks[0]) === JSON.stringify(opened.data),
+        'in the language asked, the open question counted beside the permission and given as its ask.opened data');
+    await call('console.answer', { id: 'c_psy', answer: 'master' });
+    const after = (await call('now.summary')).result;
+    t.ok(after.spoken.lang === 'en' && after.asks.length === 0 && after.waiting === 1, 'an answered question is no longer among the asks');
+
     // ---- a closed socket ends its watches
     s.conn.close();
     await P.tick(100);

@@ -6,10 +6,13 @@ import android.content.SharedPreferences
 import android.content.res.Configuration
 import com.muvusoft.agentfarm.core.handsfree.HandsFree
 import com.muvusoft.agentfarm.core.handsfree.HandsFreeState
+import com.muvusoft.agentfarm.core.handsfree.Presses
 import com.muvusoft.agentfarm.core.lang.Words
 import com.muvusoft.agentfarm.core.state.Link
 import com.muvusoft.agentfarm.net.HandsFreeLoop
 import com.muvusoft.agentfarm.net.Headset
+import com.muvusoft.agentfarm.net.HeadsetButton
+import com.muvusoft.agentfarm.net.HeadsetCommands
 import com.muvusoft.agentfarm.net.RecognizerEars
 import com.muvusoft.agentfarm.net.appLocale
 import com.muvusoft.agentfarm.core.notify.Alerts
@@ -48,6 +51,16 @@ class AgentFarmApp : Application() {
             it.ready = { HandsFree.state(prefs.handsFree, Headset.microphone(this), Headset.on(this)) == HandsFreeState.READY }
             it.ears = RecognizerEars(this)
             it.turns = { prefs.handsFreeTurns }
+        }
+    }
+    /** The headset button while the mode is on: one press says how the farm is, two open a session by voice. */
+    val headsetButton by lazy {
+        val commands = HeadsetCommands(scope, manager, handsFree, ::voiceLocale)
+        HeadsetButton(this) { kind ->
+            when (kind) {
+                Presses.Kind.ONE -> commands.status()
+                Presses.Kind.TWO -> commands.newSession()
+            }
         }
     }
     /** Whether a screen of the app is on: a farm's link is held open while it is (core/power/LinkRest). */

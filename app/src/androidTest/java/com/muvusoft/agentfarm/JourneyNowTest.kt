@@ -79,7 +79,6 @@ class JourneyNowTest : JourneyBase() {
             FakeHost.post("/_test/slow", """{"headMs":0,"pageMs":0}""")
             val early = pages()
             j.note(if (early > 1) "the copy's page came after the fresh head; the fresh end was asked in its place ($early pages)" else "the fresh head came before the scroll: the race was not set up")
-            fresh()
             for (k in 1..3) {
                 j.step("scroll: 20 more", taps = 1, targetMs = 1_000) { more(early + k) }
             }
@@ -156,7 +155,8 @@ class JourneyNowTest : JourneyBase() {
             j.step("the farm answers: the words go once, only the head is read", taps = 1, targetMs = 10_000) {
                 FakeHost.post("/_test/sleep", "{\"asleep\":false}")
                 rule.onNodeWithTag("wake-go").performClick()
-                until(15_000) { !shown(hasTestTag("stale")) && calls(before).count(::offlineNew) == 1 }
+                // the words and the fresh reads both go when the link is back, in no fixed order: both are waited for
+                until(15_000) { !shown(hasTestTag("stale")) && calls(before).let { c -> c.count(::offlineNew) == 1 && c.any { it.getString("op") == "sessions.recent" } } }
                 val back = calls(before).filter { it.getString("op") == "sessions.recent" }.map(::args)
                 assertTrue("the way back reads the head only: $back", back.isNotEmpty() && back.none { it.has("cursor") })
             }

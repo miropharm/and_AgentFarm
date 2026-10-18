@@ -22,7 +22,7 @@ import org.junit.runner.RunWith
 /**
  * Now's journeys on the scripted farm, on the LAN and on mobile data, in the order a person meets them: J1 open and
  * see (the copy at once, the fresh answer within the network's target, what waits above what runs), J8 the
- * history 20 at a time, J7 a new session up to its card, J9 the link drops and comes back (the copy and its age
+ * history 20 at a time, J7 a new session into its own Conversation and back to its card, J9 the link drops and comes back (the copy and its age
  * stay, a new session typed meanwhile waits on the phone, the way back reads only the head).
  */
 @RunWith(AndroidJUnit4::class)
@@ -97,13 +97,21 @@ class JourneyNowTest : JourneyBase() {
             j.step("the agent and the first message", taps = 1, targetMs = 1_000) {
                 rule.onNodeWithTag("new-agent-developer").performClick()
                 rule.onNodeWithTag("new-agent-developer").assertIsSelected()
-                rule.onNode(hasSetTextAction() and hasAnyAncestor(hasTestTag("new-session"))).performTextInput("Telefon ana ekranının testlerini çalıştır")
+                rule.onNode(hasSetTextAction() and hasAnyAncestor(hasTestTag("new-session"))).performTextInput(J7_WORDS)
             }
-            j.step("send: the session opens and runs", taps = 1, targetMs = freshMs) {
+            j.step("send: the new session opens in its own Conversation", taps = 1, targetMs = freshMs) {
                 rule.onNodeWithTag("composer-send").performClick()
-                until { shown(hasTestTag("running-c_new3")) && rule.onAllNodes(hasTestTag("new-session")).fetchSemanticsNodes().isEmpty() }
+                seen(
+                    freshMs + 10_000,
+                    "the sheet closed" to { rule.onAllNodes(hasTestTag("new-session")).fetchSemanticsNodes().isEmpty() },
+                    "its agent" to { shown(hasText("developer") and hasAnyAncestor(hasTestTag("conv-title"))) },
+                    "its first message" to { shown(said(J7_WORDS)) },
+                )
             }
-            j.note("the new session's own Conversation opens once it is native; until then its card runs on Now")
+            j.step("Back: Now, the new card running", taps = 1, targetMs = freshMs) {
+                backFrom("conv-list")
+                until(15_000) { shown(hasTestTag("running-c_new3")) }
+            }
             j.economy()
         } finally {
             s.close()
@@ -137,7 +145,7 @@ class JourneyNowTest : JourneyBase() {
                 rule.onNodeWithTag("composer-send").performClick()
                 until(2_000) { shown(hasText("Waiting on this phone", substring = true)) }
             }
-            closeSheet()
+            backFrom()
             j.step("the farm answers: the words go once, only the head is read", taps = 1, targetMs = 10_000) {
                 FakeHost.post("/_test/sleep", "{\"asleep\":false}")
                 rule.onNodeWithTag("wake-go").performClick()
@@ -163,14 +171,14 @@ class JourneyNowTest : JourneyBase() {
 
     private fun picked() = rule.onAllNodes(tagStarts("new-agent-") and isSelected()).fetchSemanticsNodes().isNotEmpty()
 
-    /** The sheet yields to Back; the first Back may only close the keyboard. */
-    private fun closeSheet() {
+    /** A sheet or a screen yields to Back; the first Back may only close the keyboard. */
+    private fun backFrom(tag: String = "new-session") {
         repeat(3) {
-            if (rule.onAllNodes(hasTestTag("new-session")).fetchSemanticsNodes().isEmpty()) return
+            if (rule.onAllNodes(hasTestTag(tag)).fetchSemanticsNodes().isEmpty()) return
             InstrumentationRegistry.getInstrumentation().sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
             rule.waitForIdle()
         }
-        until { rule.onAllNodes(hasTestTag("new-session")).fetchSemanticsNodes().isEmpty() }
+        until { rule.onAllNodes(hasTestTag(tag)).fetchSemanticsNodes().isEmpty() }
     }
 
     private fun pages() = calls().count { it.getString("op") == "sessions.recent" && args(it).has("cursor") }
@@ -179,5 +187,6 @@ class JourneyNowTest : JourneyBase() {
 
     private companion object {
         const val OFFLINE_WORDS = "Bağlantı yokken yazıldı: sürüm notunu hazırla"
+        const val J7_WORDS = "Telefon ana ekranının testlerini çalıştır"
     }
 }

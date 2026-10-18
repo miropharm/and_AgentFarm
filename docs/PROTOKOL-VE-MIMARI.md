@@ -247,7 +247,9 @@ Tasarımın gerekçesi: vault projesi `10_Notes/A-PLN - Android Uygulaması Yeni
 - **Yerel "yeni oturum"** (paylaşım, ses, widget) Telegram `/new` ile aynı kararı kullanır ve son ayarları
   devralır (`seedLastLaunch`). Köprüdeki `sessions.start` devralmadığı için kullanılmaz. Kapısı
   `console.new { agent, prompt?, attach? }`: argümansız çağrılınca açılabilecek ajanları (`agents`) verir;
-  telefondan gelince Telegram'ın günlük bütçesine sayılır, bütçe bitmişse `ok:false` ile reddeder.
+  telefondan gelince Telegram'ın günlük bütçesine sayılır, bütçe bitmişse `ok:false` ile reddeder. Açınca
+  `{ id, agent, note }` döner: Şimdi'nin paneli o `id`'nin kartını Konuşma'da açar (döküm kimliğini motor
+  adlandırınca Konuşma `console.sessions` özetinden sorar); Geri Şimdi'dir.
 - **Paylaşılan görsel** önce `console.stage { name, data (base64), mediaType }` ile PC'nin geçici ek klasörüne
   gider, dönen `path` mesajın `attach` listesine konur (`console.send` ya da `console.new`). Telefon yalnız
   kendi yüklediği (o klasördeki) yolları ekleyebilir; görsel en çok 5 MB, meşgul bir tura bekletilemez.

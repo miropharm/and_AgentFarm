@@ -41,7 +41,7 @@ private val KeySaver = Saver<ConversationKey?, String>(
 
 /**
  * A farm's Now, fed by its NowSource while it is in view. A row opens its Conversation over it and + the
- * new-session sheet; the Menu, a need with no session and a Conversation's details open the farm's own pages
+ * new-session sheet, whose session then opens in its Conversation; the Menu, a need with no session and a Conversation's details open the farm's own pages
  * (Back returns to where they were opened).
  */
 @Composable
@@ -157,9 +157,10 @@ fun NowRoute(
             farmId = farmId,
             state = state,
             manager = manager,
-            onOpened = {
+            // The session opened is followed in its Conversation; Back is Now, read fresh as it comes into view.
+            onOpened = { key ->
                 creating = false
-                scope.launch { source.refresh() }
+                if (key != null) conversation = key else scope.launch { source.refresh() }
             },
             onDismiss = { creating = false },
         )

@@ -32,6 +32,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.muvusoft.agentfarm.R
 import com.muvusoft.agentfarm.core.conversation.ComposerMode
+import com.muvusoft.agentfarm.core.conversation.ConversationKey
 import com.muvusoft.agentfarm.core.now.NewSession
 import com.muvusoft.agentfarm.core.now.NowState
 import com.muvusoft.agentfarm.core.share.Share
@@ -55,12 +56,13 @@ private const val OP_NEW = "console.new"
 /**
  * A new session from Now: an agent (the ones used last first) and the first message, typed or dictated, with a
  * picture. It opens through the farm's console.new with the agent's last launch setup, the door a share uses;
- * the farm's refusal (no such agent, today's budget spent) is said here. A farm that does not answer takes the
- * words into the outbox, from the agents it last listed; a picture waits for a farm that answers.
+ * the farm's refusal (no such agent, today's budget spent) is said here, and the session it opened is handed on
+ * as its Conversation. A farm that does not answer takes the words into the outbox, from the agents it last
+ * listed; a picture waits for a farm that answers.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun NewSessionSheet(farmId: String, state: NowState, manager: ConnectionManager, onOpened: () -> Unit, onDismiss: () -> Unit) {
+fun NewSessionSheet(farmId: String, state: NowState, manager: ConnectionManager, onOpened: (ConversationKey?) -> Unit, onDismiss: () -> Unit) {
     val context = LocalContext.current
     val flow = rememberSendFlow(manager)
     val online = state.link is Link.Online
@@ -87,7 +89,7 @@ fun NewSessionSheet(farmId: String, state: NowState, manager: ConnectionManager,
         agents = list
         agent = agent?.takeIf { it in list } ?: list.firstOrNull()
     }
-    LaunchedEffect(flow.delivered) { if (flow.delivered) onOpened() }
+    LaunchedEffect(flow.delivered) { if (flow.delivered) onOpened(NewSession.opened(agent.orEmpty(), flow.answer)) }
 
     val img = image
     val held = when {

@@ -1,9 +1,12 @@
 package com.muvusoft.agentfarm.core.now
 
+import com.muvusoft.agentfarm.core.contract.Codec
+import com.muvusoft.agentfarm.core.conversation.ConversationKey
 import com.muvusoft.agentfarm.core.session.Ask
 import com.muvusoft.agentfarm.core.session.AskKind
 import com.muvusoft.agentfarm.core.state.Link
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Test
 
 class NewSessionTest {
@@ -32,5 +35,24 @@ class NewSessionTest {
     fun withNothingUsedTheFarmsOrderStands() {
         val farm = listOf("b", "a")
         assertEquals(farm, NewSession.agents(farm, NowState("Ev PC", Link.Offline("unpaired", 0), 0)))
+    }
+
+    @Test
+    fun theOpenedSessionIsItsCardsConversationUnderTheAgentTheFarmNamed() {
+        val answer = Codec.json.parseToJsonElement("""{"id":"cs7-mvd8","agent":"developer","note":"▶ developer — a Console session is open"}""")
+        assertEquals(ConversationKey("cs7-mvd8", null, "developer", ""), NewSession.opened("Developer", answer))
+    }
+
+    @Test
+    fun aFarmThatNamesNoAgentLeavesThePickedOne() {
+        assertEquals(ConversationKey("c_new3", null, "developer", ""), NewSession.opened("developer", Codec.json.parseToJsonElement("""{"id":"c_new3"}""")))
+    }
+
+    @Test
+    fun anAnswerWithoutACardOpensNothing() {
+        assertNull(NewSession.opened("developer", null))
+        assertNull(NewSession.opened("developer", Codec.json.parseToJsonElement("""{"agents":["developer"]}""")))
+        assertNull(NewSession.opened("developer", Codec.json.parseToJsonElement("""{"id":"","agent":"developer"}""")))
+        assertNull(NewSession.opened("developer", Codec.json.parseToJsonElement("""["c_new3"]""")))
     }
 }

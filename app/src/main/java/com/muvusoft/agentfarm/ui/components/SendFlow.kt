@@ -20,6 +20,7 @@ import com.muvusoft.agentfarm.ui.lock.Destructive
 import com.muvusoft.agentfarm.ui.lock.rememberDestructiveConfirm
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.JsonElement
 
 /** A send the farm stopped at a gate: the yes goes back to the same farm and target, never to a new pick. */
 data class Asked(val farm: String, val target: String, val gate: String, val shared: Shared, val whom: String)
@@ -50,6 +51,10 @@ class SendFlow internal constructor(
     var delivered by mutableStateOf(false)
         private set
 
+    /** What the farm answered the delivered send with: the card a new session opened in, for one. */
+    var answer by mutableStateOf<JsonElement?>(null)
+        private set
+
     /** `whom` names the target in the outbox's receipt: the agent, or the session's agent. */
     fun send(farm: String, to: String, shared: Shared, whom: String, gate: String? = null) {
         val status = manager.state.value.farm(farm)
@@ -65,6 +70,7 @@ class SendFlow internal constructor(
             val ok = r?.ok == true
             outcome = Share.outcome(ok, r?.result, r?.error)
             asked = Share.asks(ok, r?.result)?.let { Asked(farm, to, it, shared, whom) }
+            answer = r?.result?.takeIf { ok && asked == null }
             delivered = ok && asked == null
             busy = false
         }

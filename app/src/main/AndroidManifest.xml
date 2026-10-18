@@ -6,8 +6,11 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_REMOTE_MESSAGING" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- The headset mode only: the link service holds the microphone while the mode is on (core/handsfree). -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
 
-    <!-- Dictation goes to whichever app answers RECOGNIZE_SPEECH; the shell never records audio itself. -->
+    <!-- Dictation on screen goes to whichever app answers RECOGNIZE_SPEECH; the shell listens itself only in the headset mode. -->
     <queries>
         <intent>
             <action android:name="android.speech.action.RECOGNIZE_SPEECH" />
@@ -51,7 +54,7 @@
         <service
             android:name=".net.LinkService"
             android:exported="false"
-            android:foregroundServiceType="remoteMessaging" />
+            android:foregroundServiceType="remoteMessaging|microphone" />
         <receiver
             android:name=".net.AlertActionReceiver"
             android:exported="false" />

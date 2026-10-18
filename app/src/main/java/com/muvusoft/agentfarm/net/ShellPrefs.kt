@@ -21,6 +21,11 @@ class ShellPrefs(context: Context) {
         get() = SpeakMode.of(prefs.getString(SPEAK_MODE, null))
         set(value) = prefs.edit().putString(SPEAK_MODE, value.key).apply()
 
+    /** The headset mode (core/handsfree/HandsFree): answers by voice through a headset. */
+    var handsFree: Boolean
+        get() = prefs.getBoolean(HANDS_FREE, false)
+        set(value) = prefs.edit().putBoolean(HANDS_FREE, value).apply()
+
     /** A BCP 47 tag, or "" to follow the phone's language (core/speech/VoiceLanguage). */
     var voiceLanguage: String
         get() = prefs.getString(VOICE_LANGUAGE, null) ?: VoiceLanguage.PHONE
@@ -66,6 +71,7 @@ class ShellPrefs(context: Context) {
         const val TOLD = "told."
         const val LOCK_ON_OPEN = "lockOnOpen"
         const val SPEAK_MODE = "speakMode"
+        const val HANDS_FREE = "handsFree"
         const val VOICE_LANGUAGE = "voiceLanguage"
         const val PUSH_TOKEN = "pushToken"
     }

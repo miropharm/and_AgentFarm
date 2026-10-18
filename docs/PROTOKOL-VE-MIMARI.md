@@ -367,6 +367,13 @@ Komut kutusundaki mikrofon: ZEP yüklüyse onun dikte Intent'i (`com.miropharm.t
 sonuç `ActivityResult` ile döner), değilse Android'in konuşma tanıma servisi. Kulaklık modunda tur özeti
 ve sorular TTS ile okunur.
 
+**Kulaklık modu (S-3; tasarım: vault `10_Notes/A-PLN - Kulaklık Modu (S-3) - … - 261018`).** Ayarlar'daki
+anahtar açıkken (`ShellPrefs.handsFree`) ve `RECORD_AUDIO` verilmişken bağlantı servisi ön plana mikrofon
+türüyle (`remoteMessaging|microphone`) gelir — yalnız uygulama öndeyken: Android arka plandan (örneğin push
+uyandırmasıyla) başlatılan mikrofonlu servisi reddeder; reddedilirse servis mikrofonsuz sürer
+(`core/handsfree/HandsFree.asksMicrophone`). Kulaklık yoksa mod bekler (`net/Headset`); dinleme ve sesle
+cevap sonraki alt kalemlerdedir (S-8…S-11).
+
 ## 12. Güvenlik kalkanı
 
 - **Yıkıcı eylemler** (silme, hard reset, hesap değişikliği) Agent Farm'ın şekil filtresinden geçer ve

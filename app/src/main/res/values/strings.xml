@@ -42,6 +42,11 @@
     <string name="voice_language_phone_value">Phone language → %1$s</string>
     <string name="voice_language_change">change the voice language</string>
     <string name="voice_missing">This phone has no %1$s voice yet: add one in the phone\'s text-to-speech settings. Until then nothing is read aloud.</string>
+    <string name="handsfree">Headset mode</string>
+    <string name="handsfree_detail">With the phone in your pocket: after a question is read aloud, answer it by voice through your headset. The microphone is used only through a headset, and only while this is on.</string>
+    <string name="handsfree_needs_microphone">The microphone permission is needed: turn this on again to be asked.</string>
+    <string name="handsfree_no_headset">No headset connected: the mode waits for one and reads nothing through the loudspeaker.</string>
+    <string name="handsfree_ready">Headset connected.</string>
     <string name="settings_battery">Battery optimization</string>
     <string name="settings_device">This device</string>
     <string name="device_line">%1$s %2$s · Android %3$s</string>

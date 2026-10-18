@@ -64,6 +64,7 @@ fun ShellApp(
     var lockOnOpen by remember { mutableStateOf(prefs.lockOnOpen) }
     var speakMode by remember { mutableStateOf(prefs.speakMode) }
     var voiceLanguage by remember { mutableStateOf(prefs.voiceLanguage) }
+    var handsFree by remember { mutableStateOf(prefs.handsFree) }
     val availability = OwnerCheck.availability(context)
     fun askOwner(title: String, then: (Boolean) -> Unit) = OwnerCheck.ask(context, title, null, then)
     LockGate(
@@ -99,6 +100,9 @@ fun ShellApp(
                 onSpeakMode = { prefs.speakMode = it; speakMode = it },
                 voiceLanguage = voiceLanguage,
                 onVoiceLanguage = { prefs.voiceLanguage = it; voiceLanguage = it },
+                handsFree = handsFree,
+                // The link service comes to the foreground again, with the microphone or without it, while the app is on screen.
+                onHandsFree = { prefs.handsFree = it; handsFree = it; LinkService.sync(context, anyFarm = store.load().isNotEmpty()) },
             ),
         )
     }
@@ -113,6 +117,8 @@ private data class SettingsUi(
     val onSpeakMode: (SpeakMode) -> Unit,
     val voiceLanguage: String,
     val onVoiceLanguage: (String) -> Unit,
+    val handsFree: Boolean,
+    val onHandsFree: (Boolean) -> Unit,
 )
 
 @Composable
@@ -196,6 +202,8 @@ private fun Shell(
             onSpeakMode = settings.onSpeakMode,
             voiceLanguage = settings.voiceLanguage,
             onVoiceLanguage = settings.onVoiceLanguage,
+            handsFree = settings.handsFree,
+            onHandsFree = settings.onHandsFree,
             onBack = { inSettings = false },
         )
         return

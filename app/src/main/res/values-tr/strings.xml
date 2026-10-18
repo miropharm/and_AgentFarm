@@ -40,6 +40,11 @@
     <string name="voice_language_phone_value">Telefonun dili → %1$s</string>
     <string name="voice_language_change">ses dilini değiştir</string>
     <string name="voice_missing">Bu telefonda henüz %1$s sesi yok: telefonun metin okuma ayarlarından bir ses ekle. O zamana kadar hiçbir şey sesli okunmaz.</string>
+    <string name="handsfree">Kulaklık modu</string>
+    <string name="handsfree_detail">Telefon cebindeyken: bir soru sesli okunduktan sonra cevabını kulaklığından sesle ver. Mikrofon yalnız kulaklıkla ve yalnız bu açıkken kullanılır.</string>
+    <string name="handsfree_needs_microphone">Mikrofon izni gerekiyor: izin istenmesi için bunu yeniden aç.</string>
+    <string name="handsfree_no_headset">Bağlı kulaklık yok: mod bir kulaklık bekliyor ve hoparlörden hiçbir şey okumaz.</string>
+    <string name="handsfree_ready">Kulaklık bağlı.</string>
     <string name="settings_battery">Pil optimizasyonu</string>
     <string name="settings_device">Bu cihaz</string>
     <string name="device_line">%1$s %2$s · Android %3$s</string>

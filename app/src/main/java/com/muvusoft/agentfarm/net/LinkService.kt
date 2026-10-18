@@ -9,6 +9,7 @@ import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.os.Build
 import android.os.IBinder
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
@@ -22,6 +23,7 @@ import com.muvusoft.agentfarm.core.contract.AskOpened
 import com.muvusoft.agentfarm.core.contract.SessionEnded
 import com.muvusoft.agentfarm.core.contract.TurnFinished
 import com.muvusoft.agentfarm.core.contract.Welcome
+import com.muvusoft.agentfarm.core.handsfree.HandsFree
 import com.muvusoft.agentfarm.core.link.Discovery
 import com.muvusoft.agentfarm.core.share.Share
 import com.muvusoft.agentfarm.core.state.Link
@@ -62,7 +64,7 @@ class LinkService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val app = AgentFarmApp.of(this)
         AlertPoster.channels(this)
-        ServiceCompat.startForeground(this, NOTIFICATION_ID, build(StatusLine.of(app.manager.state.value, System.currentTimeMillis())), type())
+        foreground(build(StatusLine.of(app.manager.state.value, System.currentTimeMillis())), app.visible.on.value)
         app.manager.setFarms(app.store.load())
         if (network == null) network = NetworkWatch(this) { app.manager.onNetwork(it) }.also { it.start() }
         if (seek == null) {
@@ -192,12 +194,24 @@ class LinkService : Service() {
             .build()
     }
 
-    private fun type(): Int =
-        if (Build.VERSION.SDK_INT >= 34) ServiceInfo.FOREGROUND_SERVICE_TYPE_REMOTE_MESSAGING else 0
+    /** In the foreground, with the microphone while the headset mode may have it (core/handsfree/HandsFree). */
+    private fun foreground(n: Notification, visible: Boolean) {
+        val base = if (Build.VERSION.SDK_INT >= 34) ServiceInfo.FOREGROUND_SERVICE_TYPE_REMOTE_MESSAGING else 0
+        val mic = Build.VERSION.SDK_INT >= 30 && HandsFree.asksMicrophone(prefs.handsFree, Headset.microphone(this), visible)
+        if (!mic) return ServiceCompat.startForeground(this, NOTIFICATION_ID, n, base)
+        // Refused all the same (the app left the screen as the service started): the link goes on without it.
+        try {
+            ServiceCompat.startForeground(this, NOTIFICATION_ID, n, base or ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE)
+        } catch (e: RuntimeException) {
+            Log.w(TAG, "the microphone was refused: $e")
+            ServiceCompat.startForeground(this, NOTIFICATION_ID, n, base)
+        }
+    }
 
     companion object {
         val CHANNEL = Channel.LINK.id
         const val NOTIFICATION_ID = 1
+        private const val TAG = "AFLink"
 
         /** How long a burst of the farm's frames is waited out before the running sessions are asked once. */
         private const val BURST_MS = 400L

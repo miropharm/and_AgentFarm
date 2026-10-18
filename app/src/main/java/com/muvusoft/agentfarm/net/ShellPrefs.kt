@@ -26,6 +26,11 @@ class ShellPrefs(context: Context) {
         get() = prefs.getBoolean(HANDS_FREE, false)
         set(value) = prefs.edit().putBoolean(HANDS_FREE, value).apply()
 
+    /** The headset mode also listens after a finished turn is read, for that session's next instruction. */
+    var handsFreeTurns: Boolean
+        get() = prefs.getBoolean(HANDS_FREE_TURNS, false)
+        set(value) = prefs.edit().putBoolean(HANDS_FREE_TURNS, value).apply()
+
     /** A BCP 47 tag, or "" to follow the phone's language (core/speech/VoiceLanguage). */
     var voiceLanguage: String
         get() = prefs.getString(VOICE_LANGUAGE, null) ?: VoiceLanguage.PHONE
@@ -72,6 +77,7 @@ class ShellPrefs(context: Context) {
         const val LOCK_ON_OPEN = "lockOnOpen"
         const val SPEAK_MODE = "speakMode"
         const val HANDS_FREE = "handsFree"
+        const val HANDS_FREE_TURNS = "handsFreeTurns"
         const val VOICE_LANGUAGE = "voiceLanguage"
         const val PUSH_TOKEN = "pushToken"
     }

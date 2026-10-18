@@ -39,6 +39,7 @@ class JourneyHandsFreeTest {
     private val app = AgentFarmApp.of(ctx)
     private val loop = app.handsFree
     private val kept = Triple(loop.ready, loop.ears, loop.mouth)
+    private val keptTurns = loop.turns
     private val said = CopyOnWriteArrayList<String>()
     private val words = ConcurrentLinkedQueue<String>()
     private val tones = AtomicInteger()
@@ -64,6 +65,7 @@ class JourneyHandsFreeTest {
         loop.ready = kept.first
         loop.ears = kept.second
         loop.mouth = kept.third
+        loop.turns = keptTurns
     }
 
     private fun online() {
@@ -142,6 +144,32 @@ class JourneyHandsFreeTest {
         ask("a_j11_not_ready", plain)
         Thread.sleep(3_000)
         j.check("the mode not ready: the loop does not take the question", said.isEmpty() && tones.get() == 1, "said ${said.toList()} · tones ${tones.get()}")
+        j.end()
+    }
+
+    @Test
+    fun afterAFinishedTurnTheWordsAreItsSessionsNextInstruction() {
+        FakeHost.requireLink()
+        online()
+        loop.turns = { true }
+        val j = Journey("J12", "lan").begin()
+        val instruction = "run the tests too (j12)"
+        words += instruction
+        j.step("the turn read, a tone, the instruction read back", taps = 0, targetMs = 3_000) {
+            val data = "{\"session\":\"c_dev\",\"agent\":\"developer\",\"title\":\"Tests\",\"summary\":\"The build is green (j12).\"}"
+            FakeHost.post("/_test/event", "{\"type\":\"turn.finished\",\"data\":$data}")
+            until(10_000, "the read-back") { said.any { it == VoiceAnswer.readBack(lang, instruction) } }
+        }
+        j.step("not called off: the instruction goes to its session", taps = 0, targetMs = VoiceAnswer.CANCEL_MS + 1_000) {
+            until(10_000, "console.send on the farm") { FakeHost.get("/_test/state").let { it.contains("console.send") && it.contains(instruction) } }
+        }
+        j.check("the turn's summary was read first", said.firstOrNull()?.contains("The build is green (j12).") == true, "said ${said.toList()}")
+        loop.turns = { false }
+        said.clear()
+        val data = "{\"session\":\"c_dev\",\"agent\":\"developer\",\"title\":\"Tests\",\"summary\":\"Done again (j12-off).\"}"
+        FakeHost.post("/_test/event", "{\"type\":\"turn.finished\",\"data\":$data}")
+        Thread.sleep(3_000)
+        j.check("turns not chosen: the loop does not take a finished turn", said.isEmpty() && tones.get() == 1, "said ${said.toList()} · tones ${tones.get()}")
         j.end()
     }
 

@@ -47,6 +47,7 @@ class AgentFarmApp : Application() {
         }.also {
             it.ready = { HandsFree.state(prefs.handsFree, Headset.microphone(this), Headset.on(this)) == HandsFreeState.READY }
             it.ears = RecognizerEars(this)
+            it.turns = { prefs.handsFreeTurns }
         }
     }
     /** Whether a screen of the app is on: a farm's link is held open while it is (core/power/LinkRest). */

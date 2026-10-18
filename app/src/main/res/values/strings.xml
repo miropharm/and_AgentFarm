@@ -47,6 +47,8 @@
     <string name="handsfree_needs_microphone">The microphone permission is needed: turn this on again to be asked.</string>
     <string name="handsfree_no_headset">No headset connected: the mode waits for one and reads nothing through the loudspeaker.</string>
     <string name="handsfree_ready">Headset connected.</string>
+    <string name="handsfree_turns">Also after a finished turn</string>
+    <string name="handsfree_turns_detail">When a finished turn is read aloud, say that session\'s next instruction.</string>
     <string name="settings_battery">Battery optimization</string>
     <string name="settings_device">This device</string>
     <string name="device_line">%1$s %2$s · Android %3$s</string>

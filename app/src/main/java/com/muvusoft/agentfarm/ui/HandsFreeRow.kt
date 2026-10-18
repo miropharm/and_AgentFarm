@@ -25,6 +25,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
+import com.muvusoft.agentfarm.AgentFarmApp
 import com.muvusoft.agentfarm.R
 import com.muvusoft.agentfarm.core.handsfree.HandsFree
 import com.muvusoft.agentfarm.core.handsfree.HandsFreeState
@@ -71,5 +72,27 @@ fun HandsFreeRow(on: Boolean, onChange: (Boolean) -> Unit) {
             HandsFreeState.READY -> R.string.handsfree_ready
         }
         line?.let { Text(stringResource(it), Modifier.padding(top = 4.dp).testTag("handsfree-state"), style = MaterialTheme.typography.bodySmall) }
+        if (on) TurnsRow()
+    }
+}
+
+/** Whether the mode also listens after a finished turn, for that session's next instruction (off: questions only). */
+@Composable
+private fun TurnsRow() {
+    val prefs = AgentFarmApp.of(LocalContext.current).prefs
+    var turns by remember { mutableStateOf(prefs.handsFreeTurns) }
+    Row(
+        Modifier.fillMaxWidth().heightIn(min = 48.dp).padding(top = 8.dp).toggleable(
+            value = turns,
+            role = Role.Switch,
+            onValueChange = { prefs.handsFreeTurns = it; turns = it },
+        ).testTag("handsfree-turns"),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(stringResource(R.string.handsfree_turns), style = MaterialTheme.typography.bodyLarge)
+            Text(stringResource(R.string.handsfree_turns_detail), style = MaterialTheme.typography.bodySmall)
+        }
+        Switch(checked = turns, onCheckedChange = null)
     }
 }

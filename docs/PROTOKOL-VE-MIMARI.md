@@ -386,7 +386,12 @@ bir seçeneği adlandırıyorsa (yazıldığı gibi, içinde geçen ya da baş k
 `console.answer` ile sorunun kartına gider (bildirim düğmesiyle aynı yol); bağlantı yoksa "telefonda bekliyor"
 denir. Sessizlik bir cevap değildir: hiçbir şey gitmez, telefon bir şey demez. Bir arama ses odağını alırsa
 dinleme biter ve kendiliğinden yeniden başlamaz. O kartın Konuşma'sı ekranda açıksa soru orada cevaplanır,
-dinlenmez. İzin istekleri sesle cevaplanmaz. Emülatörde konuşma ve kulaklık olmadığından J11 tanıyıcıyı ve
+dinlenmez. İzin istekleri sesle cevaplanmaz.
+
+**Tur sonundan sonra sesle talimat (S-9).** Kulaklık modunun altındaki "Bitmiş turdan sonra da" anahtarı
+açıkken (`ShellPrefs.handsFreeTurns`, kapalı başlar) bitmiş bir turun özeti okunur ve aynı döngüyle dinlenir;
+söylenen o oturumun bir sonraki talimatı olarak `console.send` ile gider (`VoiceAnswer.instruction`, paylaşımla
+aynı çağrı). Bir soru cevaplanırken biten tur onun üstüne okunmaz; tur dinlenirken gelen soru turu keser. Emülatörde konuşma ve kulaklık olmadığından J11 tanıyıcıyı ve
 sesi döngünün dikişlerinden (`ears`, `mouth`, `ready`) besler; gerçek tanıma ve Bluetooth mikrofonu gerçek
 telefonda denenir.
 

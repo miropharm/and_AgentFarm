@@ -41,6 +41,15 @@ class VoiceAnswerTest {
     }
 
     @Test
+    fun wordsAfterAFinishedTurnAreTheSessionsNextInstruction() {
+        val heard = VoiceAnswer.instruction("c_dev", " testleri de çalıştır ")!!
+        assertEquals("console.send", heard.call.op)
+        assertEquals("""{"id":"c_dev","text":"testleri de çalıştır"}""", heard.call.args.toString())
+        assertEquals("testleri de çalıştır", heard.words)
+        assertNull(VoiceAnswer.instruction("c_dev", " "))
+    }
+
+    @Test
     fun aShortUtteranceWithACancelWordCallsItOff() {
         assertTrue(VoiceAnswer.cancels("Vazgeç"))
         assertTrue(VoiceAnswer.cancels("iptal et"))

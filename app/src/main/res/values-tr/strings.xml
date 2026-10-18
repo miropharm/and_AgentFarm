@@ -45,6 +45,8 @@
     <string name="handsfree_needs_microphone">Mikrofon izni gerekiyor: izin istenmesi için bunu yeniden aç.</string>
     <string name="handsfree_no_headset">Bağlı kulaklık yok: mod bir kulaklık bekliyor ve hoparlörden hiçbir şey okumaz.</string>
     <string name="handsfree_ready">Kulaklık bağlı.</string>
+    <string name="handsfree_turns">Bitmiş turdan sonra da</string>
+    <string name="handsfree_turns_detail">Bitmiş bir tur sesli okununca o oturumun bir sonraki talimatını söyle.</string>
     <string name="settings_battery">Pil optimizasyonu</string>
     <string name="settings_device">Bu cihaz</string>
     <string name="device_line">%1$s %2$s · Android %3$s</string>

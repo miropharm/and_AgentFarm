@@ -3,6 +3,7 @@ package com.muvusoft.agentfarm.core.handsfree
 import com.muvusoft.agentfarm.core.lang.Words
 import com.muvusoft.agentfarm.core.session.AnswerCall
 import com.muvusoft.agentfarm.core.session.Answers
+import com.muvusoft.agentfarm.core.share.Share
 import java.text.Normalizer
 import java.util.Locale
 
@@ -68,6 +69,13 @@ object VoiceAnswer {
         val words = said.trim().takeIf { it.isNotEmpty() } ?: return null
         val picked = option(words, options)
         return if (picked != null) Heard(Answers.question(card, question, picked), picked) else Heard(Answers.free(card, words), words)
+    }
+
+    /** Words said after a finished turn: that session's next instruction (console.send); blank words become nothing. */
+    fun instruction(card: String, said: String): Heard? {
+        val words = said.trim().takeIf { it.isNotEmpty() } ?: return null
+        val (op, args) = Share.call(card, words, null, null)
+        return Heard(AnswerCall(op, args), words)
     }
 
     /** Read back before the answer goes, in the voice's language [lang]. */

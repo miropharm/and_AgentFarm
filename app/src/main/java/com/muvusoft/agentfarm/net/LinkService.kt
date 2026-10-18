@@ -92,8 +92,8 @@ class LinkService : Service() {
                         AlertPoster.post(this@LinkService, f.farm, it)
                         book.posted(f.farm, data, it)
                         val spoken = Speech.spokenOf(data)
-                        // The headset mode reads every question it may answer, whatever Read aloud says.
-                        val loop = data is AskOpened && Speech.of(it, SpeakMode.ASKS, null, spoken)?.let { u -> app.handsFree.ask(f.farm, u, data) } == true
+                        // The headset mode reads what it may answer (a question; a turn when asked for), whatever Read aloud says.
+                        val loop = Speech.of(it, SpeakMode.ASKS_AND_TURNS, (data as? TurnFinished)?.summary, spoken)?.let { u -> app.handsFree.take(f.farm, u, data) } == true
                         if (!loop) Speech.of(it, prefs.speakMode, (data as? TurnFinished)?.summary, spoken)?.let(speaker::say)
                     }
                 }

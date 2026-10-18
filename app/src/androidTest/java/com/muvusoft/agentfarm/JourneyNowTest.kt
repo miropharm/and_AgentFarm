@@ -108,7 +108,7 @@ class JourneyNowTest : JourneyBase() {
             }
             j.step("Back: Now, the new card running", taps = 1, targetMs = freshMs) {
                 backFrom("conv-list")
-                until(15_000) { shown(hasTestTag("running-c_new3")) }
+                until(15_000) { shown(tagStarts("running-c_new")) }
             }
             j.economy()
         } finally {

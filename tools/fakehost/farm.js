@@ -29,6 +29,9 @@ function rng(seed) {
 const pick = (r, list) => list[Math.floor(r() * list.length)];
 const hex = (r, n) => Array.from({ length: n }, () => Math.floor(r() * 16).toString(16)).join('');
 const uuid = r => `${hex(r, 8)}-${hex(r, 4)}-4${hex(r, 3)}-a${hex(r, 3)}-${hex(r, 12)}`;
+// A scenario starts the world again, but a farm never hands a card or a session id out twice: the phone keeps a
+// copy of each Conversation under its card, and a reused id would open the last scenario's talk.
+let handedOut = 0;
 
 /** A long markdown answer (past sessions.read's 4,000-character cut), the kind an agent really writes. */
 function longAnswer(n) {
@@ -181,14 +184,15 @@ function createFarm(opts = {}) {
             const first = prompt !== '' || (Array.isArray(a.attach) && a.attach.length > 0);
             const at = Math.max(Date.now(), opened + 1);
             opened = at;
+            const n = ++handedOut;
             const s = {
-                ...sessions[0], id: uuid(r), agent: a.agent, title: prompt.slice(0, 40) || 'New session', lastTs: at, engine: 'claude',
+                ...sessions[0], id: uuid(r).slice(0, 24) + String(n).padStart(12, '0'), agent: a.agent, title: prompt.slice(0, 40) || 'New session', lastTs: at, engine: 'claude',
                 producer: 'claude', storage: 'claude', origin: 'user', headless: false, launchedBy: null, turns: first ? 1 : 0, cost: 0, tokens: 0, wTokens: 0,
             };
             s.canonicalId = s.id;
             sessions.push(s);
             talks.set(s.id, first ? [{ role: 'user', text: prompt, turn: 1, ts: at }] : []);
-            const id = `c_new${rows.length}`;
+            const id = `c_new${n}`;
             rows.push(consoleRow({ id, agent: a.agent, sessionId: s.id, engine: 'claude', status: first ? 'working' : 'idle', cost: 0, turns: first ? 1 : 0, end: at }));
             return { id, agent: a.agent, note: `▶ ${a.agent} — a Console session is open${first ? '; its first turn is running' : '; it waits for its first message'}.` };
         },

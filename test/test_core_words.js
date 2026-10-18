@@ -9,12 +9,13 @@ const t = suite();
 const CORE = 'app/src/main/java/com/muvusoft/agentfarm/core/';
 const LIT = '"((?:[^"\\\\\\n]|\\\\.)*)"';
 
-const usedIn = src => [...src.matchAll(new RegExp('\\bWords\\.t\\(\\s*' + LIT, 'g'))].map(m => m[1]);
+// Words.t in the app's language, Words.tIn(lang, ...) in a named one (the read-aloud voice's).
+const usedIn = src => [...src.matchAll(new RegExp('\\bWords\\.t(?:\\(|In\\(\\s*[\\w.]+\\s*,)\\s*' + LIT, 'g'))].map(m => m[1]);
 const pairsIn = src => [...src.matchAll(new RegExp(LIT + '\\s+to\\s*\\n?\\s*' + LIT, 'g'))].map(m => [m[1], m[2]]);
 const blanks = s => (s.match(/\{\d\}/g) || []).sort().join(',');
 
 // The readers bite.
-t.ok(JSON.stringify(usedIn('Words.t("A {0}", x) + Words.t(\n "B")')) === '["A {0}","B"]', 'the key reader finds keys, also on the next line');
+t.ok(JSON.stringify(usedIn('Words.t("A {0}", x) + Words.t(\n "B") + Words.tIn(lang, "C")')) === '["A {0}","B","C"]', 'the key reader finds keys, also on the next line and in a named language');
 t.ok(JSON.stringify(pairsIn('"a {0}" to "b {0}",\n    "c" to\n        "d",')) === '[["a {0}","b {0}"],["c","d"]]', 'the catalog reader finds pairs, also wrapped');
 
 const used = new Map();

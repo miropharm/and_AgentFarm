@@ -4,7 +4,13 @@ import android.app.Application
 import android.content.Context
 import android.content.SharedPreferences
 import android.content.res.Configuration
+import com.muvusoft.agentfarm.core.handsfree.HandsFree
+import com.muvusoft.agentfarm.core.handsfree.HandsFreeState
 import com.muvusoft.agentfarm.core.lang.Words
+import com.muvusoft.agentfarm.core.state.Link
+import com.muvusoft.agentfarm.net.HandsFreeLoop
+import com.muvusoft.agentfarm.net.Headset
+import com.muvusoft.agentfarm.net.RecognizerEars
 import com.muvusoft.agentfarm.net.appLocale
 import com.muvusoft.agentfarm.core.notify.Alerts
 import com.muvusoft.agentfarm.net.AlertPoster
@@ -32,7 +38,17 @@ class AgentFarmApp : Application() {
     val store by lazy { FarmStore(this) }
     val prefs by lazy { ShellPrefs(this) }
     private val outbox by lazy { OutboxStore(this) }
-    val speaker by lazy { Speaker(this) { VoiceLanguage.locale(prefs.voiceLanguage, phoneLocale()) } }
+    val speaker by lazy { Speaker(this, ::voiceLocale) }
+    /** The headset mode's answer loop; it listens only while the mode is ready. */
+    val handsFree by lazy {
+        HandsFreeLoop(scope, speaker, ::voiceLocale, visible = { visible.on.value }) { farm, call ->
+            manager.call(farm, call.op, call.args)
+            manager.state.value.farm(farm)?.link is Link.Online
+        }.also {
+            it.ready = { HandsFree.state(prefs.handsFree, Headset.microphone(this), Headset.on(this)) == HandsFreeState.READY }
+            it.ears = RecognizerEars(this)
+        }
+    }
     /** Whether a screen of the app is on: a farm's link is held open while it is (core/power/LinkRest). */
     val visible = AppVisible()
     private val _language by lazy { MutableStateFlow(prefs.language()) }
@@ -62,6 +78,9 @@ class AgentFarmApp : Application() {
         registerActivityLifecycleCallbacks(visible)
         PushWakeService.setUp(this)
     }
+
+    /** The read-aloud voice's and the headset mode's language (Settings > Read aloud > Voice language). */
+    private fun voiceLocale() = VoiceLanguage.locale(prefs.voiceLanguage, phoneLocale())
 
     /** The phone's own language changed: the core's sentences follow when no farm's language stands over it. */
     override fun onConfigurationChanged(newConfig: Configuration) {

@@ -28,6 +28,7 @@ import com.muvusoft.agentfarm.core.link.Discovery
 import com.muvusoft.agentfarm.core.share.Share
 import com.muvusoft.agentfarm.core.state.Link
 import com.muvusoft.agentfarm.widget.StatusSurfaces
+import com.muvusoft.agentfarm.core.speech.SpeakMode
 import com.muvusoft.agentfarm.core.speech.Speech
 import com.muvusoft.agentfarm.core.notify.AlertBook
 import com.muvusoft.agentfarm.core.notify.Channel
@@ -90,7 +91,10 @@ class LinkService : Service() {
                     book.alertFor(f.farm, name, data)?.let {
                         AlertPoster.post(this@LinkService, f.farm, it)
                         book.posted(f.farm, data, it)
-                        Speech.of(it, prefs.speakMode, (data as? TurnFinished)?.summary, Speech.spokenOf(data))?.let(speaker::say)
+                        val spoken = Speech.spokenOf(data)
+                        // The headset mode reads every question it may answer, whatever Read aloud says.
+                        val loop = data is AskOpened && Speech.of(it, SpeakMode.ASKS, null, spoken)?.let { u -> app.handsFree.ask(f.farm, u, data) } == true
+                        if (!loop) Speech.of(it, prefs.speakMode, (data as? TurnFinished)?.summary, spoken)?.let(speaker::say)
                     }
                 }
             }

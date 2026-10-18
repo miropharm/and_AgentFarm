@@ -6,6 +6,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -17,6 +18,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import com.muvusoft.agentfarm.AgentFarmApp
 import com.muvusoft.agentfarm.R
 import com.muvusoft.agentfarm.core.conversation.ConversationKey
 import com.muvusoft.agentfarm.core.session.Answers
@@ -52,6 +54,12 @@ fun ConversationRoute(farmId: String, key: ConversationKey, manager: ConnectionM
         }
     }
     LaunchedEffect(source) { source.run() }
+    // Its question is answered here while it is on screen, not by the headset mode's voice.
+    DisposableEffect(key.card) {
+        val loop = AgentFarmApp.of(context).handsFree
+        loop.inFront = key.card
+        onDispose { if (loop.inFront == key.card) loop.inFront = null }
+    }
     BackHandler(onBack = onBack)
     val confirm = rememberDestructiveConfirm()
     val gateTitle = stringResource(R.string.share_confirm_title)

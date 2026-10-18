@@ -55,18 +55,23 @@ class Speaker(private val context: Context, private val language: () -> Locale) 
             .build()
     }
 
+    /** Hears when an utterance of [say] ends: its id, and whether it was said to its end. */
+    @Volatile
+    var ended: ((String, Boolean) -> Unit)? = null
+
     // Alerts arrive on the socket's coroutine, pages on the WebView's bridge thread, the engine answers on its
     // own: one lock for all of them.
+    /** False when it will not be said: no engine, said before, or no voice for its language. */
     @Synchronized
-    fun say(u: Utterance) {
-        if (!usable || !log.first(u.id)) return
+    fun say(u: Utterance): Boolean {
+        if (!usable || !log.first(u.id)) return false
         if (!ready) {
             if (u.interrupt) waiting.clear()
             waiting += u
             start()
-            return
+            return true
         }
-        if (apply(u.lang)) speak(u)
+        return apply(u.lang) && speak(u)
     }
 
     /** Read a page's text, cutting whatever this phone reads; [tell] hears every state, the last one idle. */
@@ -156,12 +161,12 @@ class Speaker(private val context: Context, private val language: () -> Locale) 
 
     // The engine copies its language, rate and audio attributes into each request as it is made, so an alert
     // and a reading each set their own before speaking and never change what the other has queued.
-    private fun speak(u: Utterance) {
-        val engine = tts ?: return
+    private fun speak(u: Utterance): Boolean {
+        val engine = tts ?: return false
         engine.setAudioAttributes(ALERT)
         engine.setSpeechRate(1f)
         val mode = if (u.interrupt) TextToSpeech.QUEUE_FLUSH else TextToSpeech.QUEUE_ADD
-        engine.speak(u.text, mode, null, u.id)
+        return engine.speak(u.text, mode, null, u.id) == TextToSpeech.SUCCESS
     }
 
     /** Plays the reading from its paragraph to the end, as one queue the engine works through. */
@@ -238,14 +243,19 @@ class Speaker(private val context: Context, private val language: () -> Locale) 
     private val progress = object : UtteranceProgressListener() {
         override fun onStart(utteranceId: String?) = heard(utteranceId, done = false, failed = false)
 
-        override fun onDone(utteranceId: String?) = heard(utteranceId, done = true, failed = false)
+        override fun onDone(utteranceId: String?) = heard(utteranceId, done = true, failed = false).also { said(utteranceId, true) }
 
         @Deprecated("Deprecated in Java")
-        override fun onError(utteranceId: String?) = heard(utteranceId, done = false, failed = true)
+        override fun onError(utteranceId: String?) = heard(utteranceId, done = false, failed = true).also { said(utteranceId, false) }
 
-        override fun onError(utteranceId: String?, errorCode: Int) = heard(utteranceId, done = false, failed = true)
+        override fun onError(utteranceId: String?, errorCode: Int) = heard(utteranceId, done = false, failed = true).also { said(utteranceId, false) }
 
-        override fun onStop(utteranceId: String?, interrupted: Boolean) = cut(utteranceId)
+        override fun onStop(utteranceId: String?, interrupted: Boolean) = cut(utteranceId).also { said(utteranceId, false) }
+    }
+
+    /** An alert's utterance ended (a page's pieces are the reading's own business). */
+    private fun said(id: String?, whole: Boolean) {
+        if (id != null && ReadingPiece.of(id) == null) ended?.invoke(id, whole)
     }
 
     private fun hold(): Boolean {

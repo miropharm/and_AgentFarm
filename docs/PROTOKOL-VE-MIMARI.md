@@ -374,7 +374,21 @@ anahtar açıkken (`ShellPrefs.handsFree`) ve `RECORD_AUDIO` verilmişken bağla
 türüyle (`remoteMessaging|microphone`) gelir — yalnız uygulama öndeyken: Android arka plandan (örneğin push
 uyandırmasıyla) başlatılan mikrofonlu servisi reddeder; reddedilirse servis mikrofonsuz sürer
 (`core/handsfree/HandsFree.asksMicrophone`). Kulaklık yoksa mod bekler (`net/Headset`); dinleme ve sesle
-cevap sonraki alt kalemlerdedir (S-8…S-11).
+cevap: aşağıda.
+
+**Sorudan sonra sesle cevap (S-8, `net/HandsFreeLoop`).** Mod hazırken (açık, izin var, kulaklık takılı) gelen
+bir `ask.opened` sorusu, Sesli okuma ayarı kapalı olsa da okunur; okunduktan sonra kısa bir ton çalar ve
+telefon 8 sn dinler (`net/Ears`: cihazdaki `SpeechRecognizer`, ses dili S-4'ünki; dinlerken ses odağını tek
+başına tutar, müzik durur; Bluetooth kulaklığın mikrofonu Android 12+ `setCommunicationDevice` ile). Söylenen
+bir seçeneği adlandırıyorsa (yazıldığı gibi, içinde geçen ya da baş kelimesi tek seçenek, ya da sırası:
+"ikincisi") o seçenek, değilse sözün kendisi cevaptır (`core/handsfree/VoiceAnswer`). Cevap geri okunur
+("master. Gönderiyorum."); 3 sn içinde "vazgeç" / "iptal" / "cancel" denmezse giden kutusundan
+`console.answer` ile sorunun kartına gider (bildirim düğmesiyle aynı yol); bağlantı yoksa "telefonda bekliyor"
+denir. Sessizlik bir cevap değildir: hiçbir şey gitmez, telefon bir şey demez. Bir arama ses odağını alırsa
+dinleme biter ve kendiliğinden yeniden başlamaz. O kartın Konuşma'sı ekranda açıksa soru orada cevaplanır,
+dinlenmez. İzin istekleri sesle cevaplanmaz. Emülatörde konuşma ve kulaklık olmadığından J11 tanıyıcıyı ve
+sesi döngünün dikişlerinden (`ears`, `mouth`, `ready`) besler; gerçek tanıma ve Bluetooth mikrofonu gerçek
+telefonda denenir.
 
 ## 12. Güvenlik kalkanı
 

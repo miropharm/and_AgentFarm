@@ -18,6 +18,10 @@ object Words {
     fun t(english: String, vararg args: Any?): String =
         fill(CATALOGS[lang]?.get(english) ?: english, args)
 
+    /** A sentence in [language] rather than the app's: the read-aloud voice speaks its own (core/speech/VoiceLanguage). */
+    fun tIn(language: String, english: String, vararg args: Any?): String =
+        fill(CATALOGS[language]?.get(english) ?: english, args)
+
     private val BLANK = Regex("\\{(\\d)\\}")
 
     private fun fill(sentence: String, args: Array<out Any?>): String =

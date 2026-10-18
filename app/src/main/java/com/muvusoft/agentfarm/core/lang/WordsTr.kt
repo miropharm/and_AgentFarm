@@ -177,4 +177,8 @@ internal val TURKISH: Map<String, String> = mapOf(
     "This phone has no voice for {0} - add one in the phone's text-to-speech settings." to
         "Bu telefonda {0} için ses yok - telefonun metin okuma ayarlarından bir tane ekle.",
     "The phone's voice could not read this." to "Telefonun sesi bunu okuyamadı.",
+    // core/handsfree/VoiceAnswer.kt
+    "{0}. Sending." to "{0}. Gönderiyorum.",
+    "Called off." to "Vazgeçildi.",
+    "No link: it waits on this phone." to "Bağlantı yok: telefonda bekliyor.",
 )

@@ -2,6 +2,18 @@
 
 User-facing changes to the Agent Farm Android app, newest first. Each build's release notes on the phone are read from its own heading here.
 
+## 0.2.9 - Headset mode: answer the farm by voice with the phone in your pocket (2026-10-18)
+
+- Headset mode, in Settings: with a headset on, a question is read aloud, a short tone plays and you answer by voice. What you said is read back, and unless you say "cancel" within 3 seconds it goes to the question. Silence sends nothing.
+- Also after a finished turn (a second switch under it): when a finished turn is read aloud, say that session's next instruction and it goes to the session the same way.
+- The microphone is used only while the mode is on, only through a headset (wired, USB or Bluetooth) and only for the few seconds after the tone; with no headset the mode waits and reads nothing through the loudspeaker. A question whose conversation is on screen is answered there, not by voice.
+- An answer said while the farm is unreachable waits on the phone and goes when the farm answers again.
+- A new session started from Now opens in its own conversation, and Back returns to Now with its card running.
+- A freshly paired phone whose link dropped before its first event no longer misses what came meanwhile.
+- The Stop and Share screens show the running turn picked at once.
+- Needs Agent Farm 4.3.0 or newer on the computer.
+- To try first: turn Headset mode on with your headset connected, let an agent ask you something and answer it by voice.
+
 ## 0.2.8 - The app's own Now, conversations and Menu, a link that rests to spare the battery, and your farm's language (2026-10-18)
 
 - The app opens on its own Now: what waits for you (answer a question or a permission right there), what is running, and your recent sessions. The last copy shows at once, then the fresh one; older sessions load as you scroll.
